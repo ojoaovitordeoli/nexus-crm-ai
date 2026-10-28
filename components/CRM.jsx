@@ -1,7 +1,7 @@
 'use client';
 import { useState,useEffect,useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { db, ready } from '../lib/supabase';
+import { db, ready, configStatus } from '../lib/supabase';
 const title={dashboard:'Visão geral',admin:'Super Admin','minha-area':'Minha operação',leads:'Leads e contatos',tasks:'Tarefas'};
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
 function Alert({children,error=false}){return <div className={'notice '+(error?'error':'')} role="alert">{children}</div>}
@@ -73,7 +73,7 @@ export default function CRM({section}){
  async function createTask(e){e.preventDefault();if(!taskName.trim()||!org)return;setSubmitting(true);setError('');const {error:e2}=await db.from('tasks').insert({organization_id:org,title:taskName.trim(),created_by:session.id});if(e2)setError(e2.message);else{setTaskName('');await fetchData()}setSubmitting(false)}
  async function completeTask(item){const status=item.status==='completed'?'pending':'completed';const {error:e2}=await db.from('tasks').update({status,completed_at:status==='completed'?new Date().toISOString():null}).eq('id',item.id).eq('organization_id',org);if(e2)setError(e2.message);else await fetchData()}
  const selectOrg=v=>{setOrg(v);localStorage.setItem('nexus-org',v)};
- if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Conexão pendente</h1><p className="muted">O site está publicado, mas ainda não tem as duas variáveis públicas do Supabase.</p><Alert>Configure no Netlify: <strong>NEXT_PUBLIC_SUPABASE_URL</strong> e <strong>NEXT_PUBLIC_SUPABASE_ANON_KEY</strong>. Depois execute um novo deploy com build.</Alert><p className="small muted">Não insira service_role ou senhas no código público.</p></div></div>;
+ if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Configuração pendente</h1><p className="muted">O site está publicado. Para habilitar o login, confira as configurações abaixo no Netlify.</p>{!configStatus.urlReady&&<Alert><strong>URL faltando ou inválida:</strong> NEXT_PUBLIC_SUPABASE_URL. Use o endereço completo https://SEU-PROJETO.supabase.co</Alert>}{!configStatus.keyReady&&<Alert><strong>Chave pública faltando ou com valor de exemplo:</strong> NEXT_PUBLIC_SUPABASE_ANON_KEY. Use a chave anon ou publishable do mesmo projeto.</Alert>}<p className="small muted">No Netlify, selecione escopo Builds e contexto Production. Depois salve e faça novo deploy com build. Nunca insira service_role nem senhas no código público.</p></div></div>;
  if(isLoading)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><p className="muted">Verificando sua sessão e conexão...</p></div></div>;
  if(isAuthScreen){
   return <div className="authwrap"><div className="glass auth"><HeaderLogo/><div className="eyebrow" style={{marginTop:32}}>ACESSO À PLATAFORMA</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
