@@ -85,7 +85,18 @@ export async function POST(request){
  ]);
  // Fail closed: never invent organization data and never transmit cross-tenant records.
  if(metrics.some(m=>m.error))return fail('Não foi possível consultar o contexto autorizado da empresa.',503);
- const aggregated={leads_empresa:metrics[0].count||0,tarefas_criadas_pelo_usuario:metrics[1].count||0,contatos_empresa:metrics[2].count||0};
+ const ownTasks=await ctx.db.from('tasks').select('title,status,priority,due_date,assigned_to,created_by')
+   .eq('organization_id',org)
+   .or('assigned_to.eq.'+ctx.user.id+',created_by.eq.'+ctx.user.id)
+   .order('due_date',{ascending:true,nullsFirst:false}).limit(20);
+ if(ownTasks.error)return fail('Não foi possível consultar suas tarefas autorizadas.',503);
+ const aggregated={
+   leads_empresa:metrics[0].count||0,
+   tarefas_criadas_pelo_usuario:metrics[1].count||0,
+   contatos_empresa:metrics[2].count||0,
+   tarefas_pessoais_amostra:(ownTasks.data||[]).map(t=>({titulo:String(t.title||'').slice(0,140),
+     situacao:t.status,prioridade:t.priority,prazo:t.due_date}))
+ };
  const {error:writeError}=await ctx.db.from('nexus_ai_messages').insert({
    organization_id:org,user_id:ctx.user.id,thread_id:thread.id,role:'user',content:question
  });
@@ -109,6 +120,6 @@ export async function POST(request){
       organization_id:org,user_id:ctx.user.id,thread_id:thread.id,role:'assistant',content:answer.slice(0,12000)
    });
    if(saved.error)return fail('A resposta foi gerada, mas não foi possível salvar no histórico.',503);
-   return out({thread,answer,scope:'Histórico pessoal e contagens permitidas da empresa.',persistent:true});
+   return out({thread,answer,scope:'Histórico pessoal, tarefas atribuídas/criadas por você e contagens permitidas da empresa.',persistent:true});
  }catch(e){return fail(e?.name==='TimeoutError'?'A IA excedeu o tempo de resposta. Sua pergunta ficou salva.':e.message||'Falha ao obter resposta.',502);}
 }
