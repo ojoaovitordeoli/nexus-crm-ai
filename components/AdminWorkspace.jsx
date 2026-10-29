@@ -101,18 +101,32 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
     if(action==='delete'&&confirmationName!==company.name)return;
     clearMessage();setSaving(true);
     try{
-      const {error:e2}=await db.rpc('admin_manage_organization',{
-        p_org_id:company.id,p_action:action,
-        p_confirm_name:action==='delete'?confirmationName:null
-      });
-      if(e2)throw e2;
+      if(action==='delete'){
+        const {error:e2}=await db.rpc('admin_manage_organization',{
+          p_org_id:company.id,p_action:action,p_confirm_name:confirmationName
+        });
+        if(e2)throw e2;
+      } else {
+        const {data:{session}}=await db.auth.getSession();
+        if(!session?.access_token)throw new Error('Faça login novamente.');
+        const response=await fetch('/api/admin/organizations',{
+          method:'POST',headers:{
+            'Content-Type':'application/json',
+            Authorization:'Bearer '+session.access_token
+          },
+          body:JSON.stringify({org_id:company.id,action})
+        });
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||'Falha ao atualizar empresa.');
+        if(data.warning)setSuccess(data.warning);
+      }
       setSuccess(action==='archive'?'Empresa arquivada. Ela saiu da operação, mas os dados foram preservados.':
         action==='restore'?'Empresa restaurada e disponível novamente.':'Empresa vazia excluída definitivamente.');
       setConfirm(null);setConfirmationName('');
       await load();if(onRefresh)await onRefresh();
     }catch(ex){
       setConfirm(null);setConfirmationName('');
-      setError(ex.message+(ex.message?.includes('schema cache')?' Execute o novo SQL de gerenciamento de empresas no Supabase.':''));
+      setError(ex.message+(action==='delete'&&ex.message?.includes('schema cache')?' Execute o SQL de exclusão protegida no Supabase.':''));
     }finally{setSaving(false)}
   }
   function askCompany(company,action){clearMessage();setConfirmationName('');setConfirm({company,action})}
