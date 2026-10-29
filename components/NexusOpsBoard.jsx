@@ -10,7 +10,7 @@ const completed=t=>['completed','done','cancelled'].includes(String(t?.status||'
 
 export default function NexusOpsBoard({data,counts,loading,organizationName,firstName,openTasks=[],overdueTasks=[],lastSync,pipelineStages=[]}){
   const dateNow=new Date();
-  const today=dateNow.toISOString().slice(0,10);
+  const today=[dateNow.getFullYear(),String(dateNow.getMonth()+1).padStart(2,'0'),String(dateNow.getDate()).padStart(2,'0')].join('-');
   const tasks=useMemo(()=>[...openTasks].filter(t=>!completed(t)).sort((a,b)=>{
     const aLate=a.due_date&&String(a.due_date).slice(0,10)<today;
     const bLate=b.due_date&&String(b.due_date).slice(0,10)<today;
