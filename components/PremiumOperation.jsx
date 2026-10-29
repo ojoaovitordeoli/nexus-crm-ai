@@ -1,5 +1,5 @@
 'use client';
-import {useMemo,useState} from 'react';
+import {useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
 import {
   Activity,ArrowDownRight,ArrowRight,ArrowUpRight,BarChart3,Briefcase,
@@ -13,7 +13,14 @@ import {db} from '../lib/supabase';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
-const date=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR'):'—';
+const date=v=>{
+  if(!v)return '—';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(String(v))){
+    const [year,month,day]=String(v).split('-');
+    return day+'/'+month+'/'+year;
+  }
+  return !isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR'):'—';
+};
 const display=(c)=>[c?.first_name,c?.last_name].filter(Boolean).join(' ')||'Contato sem nome';
 const label=v=>String(v||'Sem etapa').replace(/[_-]/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());
 const letters=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join('');
@@ -64,10 +71,27 @@ function Drawer({data,type='lead',onClose,readonly,stages=[],onStageChange,pendi
   </div>;
 }
 function PanelHeader({eyebrow,title,detail,right}){return <div className="nxp-page-head"><div><span className="nxp-kicker">{eyebrow}</span><h1>{title}</h1><p>{detail}</p></div>{right}</div>}
-function Metric({label,value,icon:Icon,tone,footer}){return <article className={'nxp-metric nxp-metric--'+tone}><div className="nxp-metric-top"><span>{label}</span><span className="nxp-metric-icon"><Icon size={20}/></span></div><strong>{value}</strong><div className="nxp-metric-bottom"><span className="nxp-metric-pip"/>{footer}</div></article>}
+function Metric({label,value,icon:Icon,tone,footer}){
+  const [shown,setShown]=useState(0);
+  useEffect(()=>{
+    if(typeof value!=='number')return;
+    const noMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if(noMotion){setShown(value);return}
+    const started=performance.now();let frame;
+    const tick=now=>{
+      const p=Math.min(1,(now-started)/800);
+      setShown(Math.round(value*(1-Math.pow(1-p,3))));
+      if(p<1)frame=requestAnimationFrame(tick);
+    };
+    frame=requestAnimationFrame(tick);
+    return ()=>cancelAnimationFrame(frame);
+  },[value]);
+  return <article className={'nxp-metric nxp-metric--'+tone}><div className="nxp-metric-top"><span>{label}</span><span className="nxp-metric-icon"><Icon size={20}/></span></div><strong>{typeof value==='number'?fmt(shown):value}</strong><div className="nxp-metric-bottom"><span className="nxp-metric-pip"/>{footer}</div></article>;
+}
 
 export function PremiumDashboard({data,counts,loading,organizationName,firstName,openTasks=[],overdueTasks=[],lastSync}){
   const [period,setPeriod]=useState(30);
+  const [hoverPoint,setHoverPoint]=useState(null);
   const {currentLeads,currentSales,currentAppointments,trend,stages}=useMemo(()=>{
     const now=new Date();const cut=now.getTime()-period*86400000;
     const cLeads=data.leads.filter(x=>new Date(x.created_at).getTime()>=cut);
@@ -84,6 +108,16 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
   },[data,period]);
   const recentIncome=currentSales.reduce((n,item)=>n+Number(item.value||0),0);
   const max=Math.max(1,...trend.map(d=>d.value));
+  const chartPoints=trend.map((d,i)=>[16+i*(268/6),105-(d.value/max)*90]);
+  const chartLine=chartPoints.map(([x,y],i)=>(i===0?'M':'L')+x+' '+y).join(' ');
+  const chartArea=chartLine+' L 284 110 L 16 110 Z';
+  const colors=['#5778f7','#39c6ad','#9981ed','#f1ba66','#8090ad'];
+  let cursor=0;
+  const slices=stages.map(([,count],i)=>{
+    const start=cursor;cursor+=100*count/Math.max(data.leads.length,1);
+    return colors[i]+' '+start+'% '+cursor+'%';
+  });
+  const donutStyle={background:stages.length?'conic-gradient('+slices.join(', ')+(cursor<100?', #e1e7f1 '+cursor+'% 100%':'')+')':'conic-gradient(#e2e8f4 0% 100%)'};
   const hour=new Date().getHours();
   const greeting=hour<12?'Bom dia':hour<18?'Boa tarde':'Boa noite';
   return <div className="nxp-premium">
@@ -96,19 +130,35 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
     </section>
     <div className="nxp-section-title"><div><span className="nxp-kicker">PERFORMANCE</span><h2>Visão da operação</h2><p>Indicadores dos registros disponíveis para a empresa.</p></div><div className="nxp-switch">{[7,30,90].map(d=><button type="button" className={d===period?'active':''} onClick={()=>setPeriod(d)} key={d}>{d} dias</button>)}</div></div>
     <div className="nxp-metrics">
-      <Metric tone="blue" icon={UsersRound} label="Leads no período" value={loading?'—':fmt(currentLeads.length)} footer="Até 250 registros recentes"/>
-      <Metric tone="green" icon={Wallet} label="Vendas registradas" value={loading?'—':fmt(currentSales.length)} footer={brl(recentIncome)+' em vendas do período'}/>
-      <Metric tone="violet" icon={CalendarDays} label="Agendamentos" value={loading?'—':fmt(currentAppointments.length)} footer="Criados no período"/>
-      <Metric tone="orange" icon={ListTodo} label="Tarefas abertas" value={loading?'—':fmt(openTasks.length)} footer={overdueTasks.length+' com prazo vencido'}/>
+      <Metric tone="blue" icon={UsersRound} label="Leads no período" value={loading?'—':currentLeads.length} footer="Até 250 registros recentes"/>
+      <Metric tone="green" icon={Wallet} label="Vendas registradas" value={loading?'—':currentSales.length} footer={brl(recentIncome)+' em vendas do período'}/>
+      <Metric tone="violet" icon={CalendarDays} label="Agendamentos" value={loading?'—':currentAppointments.length} footer="Criados no período"/>
+      <Metric tone="orange" icon={ListTodo} label="Tarefas abertas" value={loading?'—':openTasks.length} footer={overdueTasks.length+' com prazo vencido'}/>
     </div>
     <div className="nxp-analytics-grid">
       <section className="nxp-surface nxp-graph-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">AQUISIÇÃO</span><h3>Movimento de leads</h3><p>Novos registros nos últimos sete dias</p></div><div className="nxp-circle-icon"><Activity size={21}/></div></div>
-      <div className="nxp-graph"><div className="nxp-graph-grid">{[0,1,2,3].map(x=><span key={x}/>)}</div>{trend.map((d,i)=><div className="nxp-graph-cell" key={i}><span className="nxp-graph-value">{d.value||''}</span><div className="nxp-graph-bar-wrap"><div className={'nxp-graph-bar '+(i===6?'nxp-graph-bar--latest':'')} style={{height:Math.max(2,(d.value/max)*100)+'%'}}/></div><small>{d.name}</small></div>)}</div>
+      <div className="nxp-graph-line">
+        <svg className="nxp-graph-svg" viewBox="0 0 300 125" role="img" aria-label="Gráfico de leads por dia nos últimos sete dias">
+          <defs><linearGradient id="nxp-area-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#5c83f8" stopOpacity=".32"/><stop offset="100%" stopColor="#5c83f8" stopOpacity=".025"/></linearGradient></defs>
+          {[20,48,76,104].map(y=><line key={y} x1="14" y1={y} x2="287" y2={y} className="nxp-graph-line-grid"/>)}
+          <path d={chartArea} className="nxp-graph-line-area"/>
+          <path d={chartLine} className="nxp-graph-line-path" pathLength="100"/>
+          {chartPoints.map(([x,y],i)=><circle key={i} cx={x} cy={y} r="3.8" className="nxp-graph-line-dot"
+            onMouseEnter={()=>setHoverPoint(i)} onMouseLeave={()=>setHoverPoint(null)}
+            ><title>{trend[i].name}: {trend[i].value} leads</title></circle>)}
+        </svg>
+        <div className="nxp-graph-line-labels">{trend.map((d,i)=><span key={i}>{d.name}</span>)}</div>
+        {hoverPoint!==null&&<div className="nxp-chart-tooltip">{trend[hoverPoint].name}: {trend[hoverPoint].value} leads</div>}
+      </div>
       <div className="nxp-panel-bottom"><span><i className="nxp-legend"/> Leads cadastrados</span><Link href="/leads">Ver oportunidades <ArrowRight size={15}/></Link></div>
       </section>
       <section className="nxp-surface nxp-funnel-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">DISTRIBUIÇÃO</span><h3>Seu funil</h3><p>Etapas utilizadas pelos leads</p></div><div className="nxp-circle-icon"><BarChart3 size={21}/></div></div>
-      <div className="nxp-funnel-rows">{stages.map(([key,count],i)=><div className="nxp-funnel-row" key={key}><div><span>{label(key)}</span><strong>{fmt(count)}</strong></div><div className="nxp-track"><span style={{width:(100*count/Math.max(data.leads.length,1))+'%',background:['#5778f7','#7d8ff6','#9a81ea','#49c9aa','#edb569'][i]}}/></div></div>)}
-      {!stages.length&&<Empty title="Sem movimentações" detail="Quando os leads forem cadastrados, as etapas aparecerão aqui."/>}</div>
+      <div className="nxp-donut-layout">
+        <div className="nxp-donut" style={donutStyle}><span className="nxp-donut-inner"><strong>{fmt(data.leads.length)}</strong><small>leads</small></span></div>
+        <div className="nxp-donut-legend">{stages.map(([name,count],i)=><div key={name} title={label(name)+' — '+count+' leads'}>
+          <span><i style={{background:colors[i]}}/>{label(name)}</span><strong>{fmt(count)}</strong>
+        </div>)}{!stages.length&&<div className="nxp-quiet">Sem dados de distribuição.</div>}</div>
+      </div>
       <div className="nxp-panel-bottom"><span>Total no banco: {fmt(counts.leads)}</span><Link href="/leads">Abrir funil <ArrowRight size={15}/></Link></div></section>
     </div>
     <div className="nxp-analytics-grid nxp-analytics-grid--bottom">
