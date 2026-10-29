@@ -10,16 +10,18 @@ import {
   UserRound,UsersRound,X
 } from 'lucide-react';
 import {db} from '../lib/supabase';
+import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
   {path:'leads',label:'Leads',icon:UsersRound},
   {path:'contacts',label:'Contatos',icon:ContactRound},
+  {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
   {path:'minha-area',label:'Meu perfil',icon:UserRound}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',agenda:'Agenda',tasks:'Minhas tarefas','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp',agenda:'Agenda',tasks:'Minhas tarefas','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -197,47 +199,19 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-alert staff-alert--success" role="status"><CheckCircle2 size={16}/>{notice}</div>}
 
-        {section==='dashboard'&&<>
-          <div className="staff-welcome">
-            <div><span className="staff-kicker"><span className="staff-dot"/> SEU PAINEL DE TRABALHO</span><h1>{greeting}, {firstName}<span className="staff-wave">!</span></h1><p>Acompanhe sua operação, organize os próximos passos e mantenha tudo em movimento.</p><div className="staff-welcome-meta"><span><BriefcaseBusiness size={14}/>{currentOrganization.name}</span><span><Clock3 size={14}/>{lastSync?'Dados atualizados às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Carregando dados'}</span></div></div>
-            <div className="staff-welcome-side"><div><span className="staff-welcome-glyph"><TrendingUp size={28}/></span></div><span>Seu espaço, seus resultados.</span></div>
-          </div>
-          <div className="staff-section-head staff-overview-head"><div><h2>Resumo da operação</h2><p>Acompanhe os resultados da empresa selecionada.</p></div><div className="staff-switch">{[7,30,90].map(n=><button key={n} className={period===n?'active':''} onClick={()=>setPeriod(n)}>{n} dias</button>)}</div></div>
-          <div className="staff-stats">
-            <MiniStat index={0} tone="blue" icon={UsersRound} label="Novos leads" value={loading?'—':number(recentLeads.length)} description={'Últimos '+period+' dias; até 250 recentes'}/>
-            <MiniStat index={1} tone="purple" icon={CalendarDays} label="Agendamentos" value={loading?'—':number(recentAppointments.length)} description={'Criados nos últimos '+period+' dias'}/>
-            <MiniStat index={2} tone="green" icon={CheckCircle2} label="Vendas" value={loading?'—':number(recentSales.length)} description={money(recentSales.reduce((s,x)=>s+Number(x.value||0),0))+' em vendas recentes'}/>
-            <MiniStat index={3} tone="orange" icon={ListTodo} label="Tarefas em aberto" value={loading?'—':number(openTasks.length)} description={overdueTasks.length?overdueTasks.length+' com prazo vencido':'Sem prazos vencidos identificados'}/>
-          </div>
-          <div className="staff-dashboard-grid">
-            <section className="staff-card staff-chart-card"><div className="staff-card-heading"><div><h3>Entrada de leads</h3><p>Últimos 7 dias</p></div><span className="staff-card-accent"><Activity size={18}/></span></div><div className="staff-chart">
-              {trend.map((x,i)=><div className="staff-chart-col" key={i}><span className="staff-chart-label">{x.count||''}</span><div className="staff-chart-track"><span style={{height:Math.max(x.count?12:3,x.count/maxTrend*100)+'%'}} className={i===6?'latest':''}/></div><small>{x.day}</small></div>)}
-            </div><div className="staff-card-foot"><span><span className="staff-legend"/> Leads cadastrados</span><strong>{recentLeads.filter(l=>new Date(l.created_at).getTime()>=Date.now()-7*86400000).length} nos últimos 7 dias</strong></div></section>
-            <section className="staff-card staff-actions-card"><div className="staff-card-heading"><div><h3>Acessos rápidos</h3><p>Continue de onde parou</p></div><span className="staff-card-accent"><Activity size={18}/></span></div>
-              <Link href="/leads" className="staff-quick-link"><span className="staff-quick-icon staff-quick-icon--blue"><UsersRound size={20}/></span><span><strong>Consultar leads</strong><small>Histórico e contatos</small></span><ArrowRight size={17}/></Link>
-              <Link href="/tasks" className="staff-quick-link"><span className="staff-quick-icon staff-quick-icon--purple"><ListTodo size={20}/></span><span><strong>Organizar tarefas</strong><small>{openTasks.length} tarefas em aberto</small></span><ArrowRight size={17}/></Link>
-              <Link href="/agenda" className="staff-quick-link"><span className="staff-quick-icon staff-quick-icon--green"><CalendarDays size={20}/></span><span><strong>Ver agenda</strong><small>Agendamentos da empresa</small></span><ArrowRight size={17}/></Link>
-            </section>
-          </div>
-          <div className="staff-dashboard-grid staff-dashboard-grid--bottom">
-            <section className="staff-card staff-recent-card"><div className="staff-card-heading"><div><h3>Leads recentes</h3><p>Acompanhe os últimos contatos</p></div><Link href="/leads" className="staff-see-all">Ver todos <ArrowRight size={16}/></Link></div>{leadRows(data.leads,true)}</section>
-            <section className="staff-card staff-recent-tasks"><div className="staff-card-heading"><div><h3>Próximas tarefas</h3><p>O que precisa da sua atenção</p></div><Link href="/tasks" className="staff-see-all">Ver todas <ArrowRight size={16}/></Link></div>
-              {openTasks.slice(0,5).map(t=><div className="staff-task-preview" key={t.id}><span className="staff-checkbox-mock"/><div><strong>{t.title}</strong><small>{t.due_date?'Prazo: '+date(t.due_date):'Sem prazo definido'}</small></div>{t.due_date&&new Date(t.due_date).getTime()<Date.now()&&<Flame size={16} className="staff-overdue"/>}</div>)}
-              {!openTasks.length&&<Empty icon={CheckCircle2} title="Tudo organizado" description="Não há tarefas abertas neste momento."/>}
-            </section>
-          </div>
-        </>}
-
-        {section==='leads'&&<>
-          <div className="staff-page-header"><div><span className="staff-kicker">ATENDIMENTO / OPORTUNIDADES</span><h1>Leads da operação</h1><p>Consulte contatos e continue o atendimento no WhatsApp.</p></div><span className="staff-page-counter">{number(counts.leads)} leads registrados</span></div>
-          <section className="staff-card staff-data-card"><div className="staff-data-controls"><label className="staff-search"><Search size={18}/><input value={search} placeholder="Buscar por nome, telefone ou origem" onChange={e=>setSearch(e.target.value)} aria-label="Buscar leads"/></label><label className="staff-select"><span>Etapa</span><select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">Todas as etapas</option>{statuses.map(status=><option value={status} key={status}>{formatStatus(status)}</option>)}</select></label></div>{leadRows(filteredLeads)}<div className="staff-table-footer">{filteredLeads.length} registros exibidos · Até 250 leads recentes por empresa</div></section>
-        </>}
-
-        {section==='contacts'&&<>
-          <div className="staff-page-header"><div><span className="staff-kicker">RELACIONAMENTO</span><h1>Contatos</h1><p>Encontre pessoas e abra uma conversa no WhatsApp.</p></div><span className="staff-page-counter">{number(counts.contacts)} contatos registrados</span></div>
-          <section className="staff-card staff-data-card"><div className="staff-data-controls"><label className="staff-search"><Search size={18}/><input value={search} placeholder="Pesquisar nome ou telefone..." onChange={e=>setSearch(e.target.value)} aria-label="Buscar contatos"/></label></div>
-            <div className="staff-tablewrap"><table className="staff-table"><thead><tr><th>Contato</th><th>WhatsApp</th><th>Cadastro</th><th>Ação</th></tr></thead><tbody>{filteredContacts.map(c=><tr key={c.id}><td><div className="staff-person"><Initials name={nameOf(c)}/><div><strong>{nameOf(c)}</strong><small>Contato da empresa</small></div></div></td><td>{c.whatsapp||'—'}</td><td className="staff-soft">{date(c.created_at)}</td><td>{whatsApp(c.whatsapp)?<a className="staff-contact-link" href={whatsApp(c.whatsapp)} target="_blank" rel="noopener noreferrer"><MessageCircle size={16}/> Abrir WhatsApp <ArrowUpRight size={13}/></a>:<span className="staff-soft">Sem número</span>}</td></tr>)}</tbody></table>{!filteredContacts.length&&<Empty icon={ContactRound} title="Nenhum contato encontrado" description="Os contatos da operação aparecerão aqui."/>}</div><div className="staff-table-footer">{filteredContacts.length} registros exibidos · Até 250 contatos recentes</div></section>
-        </>}
+        {section==='dashboard'&&<PremiumDashboard
+          data={data} counts={counts} loading={loading}
+          organizationName={currentOrganization.name} firstName={firstName}
+          openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync}
+        />}
+        {section==='leads'&&<PremiumLeads
+          leads={data.leads} count={counts.leads} organizationId={organizationId}
+          readonly={readonly} onReload={load}
+        />}
+        {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts}/>}
+        {section==='whatsapp'&&<PremiumWhatsApp
+          organizationName={currentOrganization.name} contacts={data.contacts}
+        />}
 
         {section==='tasks'&&<>
           <div className="staff-page-header"><div><span className="staff-kicker">ORGANIZAÇÃO / ROTINA</span><h1>Minhas tarefas</h1><p>Organize as atividades da sua empresa e mantenha tudo em dia.</p></div><span className="staff-page-counter">{openTasks.length} em aberto</span></div>
