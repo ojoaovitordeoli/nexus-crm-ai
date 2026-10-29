@@ -5,6 +5,18 @@ CRM multiempresa com painel operacional, Super Admin, dashboard, funil de leads,
 **Ambiente principal:** https://nexus-crm-ai.onrender.com  
 **Hospedagem:** Render · **Banco/Auth:** Supabase · **Código:** Next.js 15.5.28, React 19.2.9.
 
+## Novas integrações experimentais (PR #7)
+
+**Ainda não estão conectadas em produção.** Foram incluídos no código os seguintes módulos:
+
+- `/whatsapp`: sessão WhatsApp pessoal ou Business via QR e gateway externo Evolution API (não oficial e sujeita a restrições). O módulo Cloud API anterior permanece em `/whatsapp-oficial`.
+- `/insights`: chatbot pessoal por usuário/empresa, com histórico persistente e tarefas atribuídas/criadas pelo usuário como contexto após consentimento. Análise agregada anterior em `/insights-analise`.
+- `/ads`: contas Meta Ads, gasto, campanhas e indicadores por empresa, consulta autorizada somente leitura; saldo disponível só aparece quando os campos apropriados retornam essa informação.
+- Migração nova: `supabase/20261029_nexus_personal_ai_direct_wa_ads.sql`; variáveis adicionais no `.env.example`.
+- Documentação completa: [Integrações Nexus 2026](docs/integracoes-nexus-direto-ia-meta-20261029.md).
+
+Antes de comercializar, hospedar e homologar o gateway, aplicar migração, configurar tokens e testar isolamento de usuários/empresas e permissões. Build e screenshots com dados simulados não comprovam conexão com serviços externos.
+
 ## Estado dos módulos
 
 | Módulo | Situação |
