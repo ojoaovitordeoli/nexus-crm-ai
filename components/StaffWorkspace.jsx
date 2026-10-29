@@ -226,7 +226,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='dashboard'&&<PremiumDashboard
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
-          openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync}
+          openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}
         />}
         {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId}
