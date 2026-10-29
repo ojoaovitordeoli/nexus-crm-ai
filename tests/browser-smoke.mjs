@@ -42,4 +42,4 @@ try{
  if(failures.length){for(const f of failures)console.error('BROWSER FAILURE:',f);process.exitCode=1;}
  else console.log('Browser smoke passed without page exceptions for unauthenticated routes.');
 }catch(e){console.error('Browser diagnostic failed:',e.stack);process.exitCode=1;}
-finally{await browser?.close().catch(()=>{});server.kill('SIGTERM');}
+finally{await browser?.close().catch(()=>{});server.kill('SIGTERM');server.stdout.destroy();server.stderr.destroy();}
