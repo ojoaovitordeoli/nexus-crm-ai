@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {adminSupabase,authorizeTenant} from '../../../../lib/tenant-session';
+import {allowedAutomationRole} from '../../../../lib/workflow-security.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -14,13 +15,15 @@ export async function GET(request){
   const organizationId=new URL(request.url).searchParams.get('org_id');
   const ctx=await authRequest(request,organizationId);
   if(ctx.error)return fail(ctx.error,ctx.status);
-  const [connections,messages]=await Promise.all([
+  const [connections,messages,configured]=await Promise.all([
     ctx.admin.from('whatsapp_connections')
       .select('id,phone_number_id,display_name,status,created_at,activated_at')
       .eq('organization_id',organizationId).order('created_at',{ascending:false}).limit(20),
     ctx.admin.from('whatsapp_messages')
       .select('id,wa_id,direction,message_type,text_body,delivery_status,occurred_at,connection_id')
-      .eq('organization_id',organizationId).order('occurred_at',{ascending:false}).limit(250)
+      .eq('organization_id',organizationId).order('occurred_at',{ascending:false}).limit(250),
+    ctx.admin.from('whatsapp_connection_secrets')
+      .select('connection_id').eq('organization_id',organizationId).limit(20)
   ]);
   if(connections.error||messages.error){
     const err=connections.error||messages.error;
@@ -33,7 +36,10 @@ export async function GET(request){
     connections:connections.data||[],
     messages:messages.data||[],
     verified_server:Boolean(process.env.META_APP_SECRET&&process.env.META_WEBHOOK_VERIFY_TOKEN),
-    can_register:ctx.role==='AGENCY_ADMIN'
+    can_register:ctx.role==='AGENCY_ADMIN',
+    can_send:allowedAutomationRole(ctx.role),
+    configured_connection_ids:configured.error?[]:(configured.data||[]).map(x=>x.connection_id),
+    outbound_schema_ready:!configured.error&&Boolean(process.env.META_TOKEN_ENCRYPTION_KEY)
   });
 }
 
