@@ -1,6 +1,7 @@
 'use client';
 
-import {useCallback,useEffect,useMemo,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import {
   Activity,ArrowRight,ArrowUpRight,Bell,BriefcaseBusiness,CalendarDays,
@@ -12,6 +13,7 @@ import {
 import {db} from '../lib/supabase';
 import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
+import MotionCalendar from './MotionCalendar';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -69,10 +71,26 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [taskFilter,setTaskFilter]=useState('open');
   const [period,setPeriod]=useState(30);
   const [mobileOpen,setMobileOpen]=useState(false);
+  const router=useRouter();
+  const navTimer=useRef(null);
+  const [navigationOut,setNavigationOut]=useState(false);
   const [lastSync,setLastSync]=useState(null);
   const [globalSearch,setGlobalSearch]=useState('');
   const [searchOpen,setSearchOpen]=useState(false);
   const [notificationsOpen,setNotificationsOpen]=useState(false);
+  useEffect(()=>()=>{if(navTimer.current)clearTimeout(navTimer.current)},[]);
+  useEffect(()=>{setNavigationOut(false)},[section]);
+  const navigate=(event,path)=>{
+    if(path===section||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey){
+      setMobileOpen(false);return;
+    }
+    if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){setMobileOpen(false);return;}
+    event.preventDefault();
+    setMobileOpen(false);
+    setNavigationOut(true);
+    if(navTimer.current)clearTimeout(navTimer.current);
+    navTimer.current=setTimeout(()=>router.push('/'+path),165);
+  };
   const currentOrganization=organizations.find(o=>o.id===organizationId);
   const activeMember=members.find(m=>m.organization_id===organizationId&&m.status==='active');
   const role=activeMember?.role||'';
@@ -254,7 +272,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       {organizations.length>1&&<label className="staff-company-choice"><span>Alternar empresa</span><select value={organizationId} onChange={e=>onOrganizationChange(e.target.value)}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
       <div className="staff-nav-title">MENU PRINCIPAL</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {MENU.map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={()=>setMobileOpen(false)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={19} strokeWidth={1.9}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}
+        {MENU.map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={19} strokeWidth={1.9}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
     </aside>
@@ -301,6 +319,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         </div>
       </header>
       <div className="staff-body">
+        <div key={section+'-'+organizationId} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
         {!assigned?<div className="staff-no-access"><span><BriefcaseBusiness size={30}/></span><h2>Seu espaço de trabalho ainda não foi liberado.</h2><p>Peça ao responsável para vincular seu usuário a uma empresa ativa em Super Admin → Acessos.</p><button className="staff-btn staff-btn--outline" onClick={onSignOut}>Sair da conta</button></div>:<>
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
@@ -344,7 +363,11 @@ export default function StaffWorkspace({section,session,profile,organizations,me
 
         {section==='agenda'&&<>
           <div className="staff-page-header"><div><span className="staff-kicker">COMPROMISSOS</span><h1>Agenda da operação</h1><p>Crie compromissos reais e acompanhe os agendamentos da empresa.</p></div><span className="staff-page-counter">{number(counts.appointments)} agendamentos</span></div>
-          {!readonly&&<section className="staff-card staff-agenda-create">
+          <MotionCalendar appointments={data.appointments} readonly={readonly} onPick={day=>{
+            setAppointmentStart(day+'T09:00');
+            document.getElementById('staff-agenda-form')?.scrollIntoView({behavior:'smooth',block:'center'});
+          }}/>
+          {!readonly&&<section className="staff-card staff-agenda-create" id="staff-agenda-form">
             <div className="staff-card-heading"><div><h3>Novo agendamento</h3><p>Registre um compromisso no calendário da empresa.</p></div><CalendarDays size={20}/></div>
             <form className="staff-agenda-form" onSubmit={createAppointment}>
               <label>Título<input required minLength={2} maxLength={190} placeholder="Ex.: Reunião com cliente" value={appointmentTitle} onChange={e=>setAppointmentTitle(e.target.value)}/></label>
@@ -378,6 +401,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           <section className="staff-card staff-profile-card"><h3>Empresas vinculadas</h3><p>Você só acessa operações autorizadas.</p>{organizations.filter(x=>x.status==='active').map(o=><div key={o.id} className="staff-linked-org"><span className="staff-linked-icon"><BriefcaseBusiness size={20}/></span><span><strong>{o.name}</strong><small>{ROLES[members.find(m=>m.organization_id===o.id)?.role]||'Colaborador'}</small></span>{o.id===organizationId&&<CheckCircle2 size={18}/>}</div>)}</section></div>
         </>}
         </>}
+        </div>
       </div>
     </main>
   </div>;
