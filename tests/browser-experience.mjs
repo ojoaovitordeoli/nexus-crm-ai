@@ -67,6 +67,15 @@ try{
       stages:[],warnings:[],read_only:false};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
   });
+  await page.route('**/api/personal-ai**',async route=>route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify({threads:[],configured:false})
+  }));
+  await page.route('**/api/meta-ads**',async route=>route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify({accounts:[],manager:true,connected:false})
+  }));
+  await page.route('**/api/direct-whatsapp**',async route=>route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify({connections:[],bridge_configured:false})
+  }));
   const jwt=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
   const token=[jwt({alg:'HS256',typ:'JWT'}),jwt({sub:userId,role:'authenticated',aud:'authenticated',exp:2000000000}),'mock'].join('.');
   await page.evaluate(({user,token})=>{
@@ -111,7 +120,18 @@ try{
   const bounds=await dialog.boundingBox();
   if(!bounds||bounds.x<0||bounds.x+bounds.width>400)throw new Error('Command dialog overflows mobile viewport');
   await page.screenshot({path:'test-artifacts/command-mobile.png'});
-  console.log('PASS: login transitions, authenticated dashboard, Ctrl+K, search, menu click, task shortcut, mobile dialog');
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({width:1440,height:900});
+  await page.goto(host+'/insights',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Seu copiloto de trabalho.'}).waitFor({timeout:12000});
+  await page.screenshot({path:'test-artifacts/ai-chat.png',fullPage:true});
+  await page.goto(host+'/ads',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Visão dos anúncios.'}).waitFor({timeout:12000});
+  await page.screenshot({path:'test-artifacts/meta-ads.png',fullPage:true});
+  await page.goto(host+'/whatsapp',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Seu WhatsApp dentro do CRM.'}).waitFor({timeout:12000});
+  await page.screenshot({path:'test-artifacts/direct-whatsapp.png',fullPage:true});
+  console.log('PASS: login, command center, mobile and three new integration screens');
   if(errors.length)throw new Error(errors.join('\n').slice(0,2500));
 }catch(e){
   console.error('BROWSER SMOKE FAILED:',e.stack||e);
