@@ -102,10 +102,12 @@ try{
   mkdirSync('test-artifacts',{recursive:true});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
   await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
+  await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
   await page.keyboard.press('Control+k');
   await dialog.waitFor({state:'visible'});
+  await page.waitForTimeout(650); // capture fully opaque command dialog, not entry animation
   const bounds=await dialog.boundingBox();
   if(!bounds||bounds.x<0||bounds.x+bounds.width>400)throw new Error('Command dialog overflows mobile viewport');
   await page.screenshot({path:'test-artifacts/command-mobile.png'});
