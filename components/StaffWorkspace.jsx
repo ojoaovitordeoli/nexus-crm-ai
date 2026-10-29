@@ -75,6 +75,14 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const navTimer=useRef(null);
   const [navigationOut,setNavigationOut]=useState(false);
   const [motionReplay,setMotionReplay]=useState(0);
+  const spotlight=(event)=>{
+    const surface=event.target?.closest?.('.nxp-metric,.nxp-surface,.nxp-contact-card,.nxp-lead-card');
+    if(!surface)return;
+    const bounds=surface.getBoundingClientRect();
+    if(!bounds.width||!bounds.height)return;
+    surface.style.setProperty('--pointer-x',((event.clientX-bounds.left)/bounds.width*100)+'%');
+    surface.style.setProperty('--pointer-y',((event.clientY-bounds.top)/bounds.height*100)+'%');
+  };
   const [lastSync,setLastSync]=useState(null);
   const [globalSearch,setGlobalSearch]=useState('');
   const [searchOpen,setSearchOpen]=useState(false);
@@ -322,7 +330,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         </div>
       </header>
       <div className="staff-body">
-        <div key={section+'-'+organizationId+'-'+motionReplay} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
+        <div key={section+'-'+organizationId+'-'+motionReplay} onPointerMove={spotlight} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
         {!assigned?<div className="staff-no-access"><span><BriefcaseBusiness size={30}/></span><h2>Seu espaço de trabalho ainda não foi liberado.</h2><p>{isSuperAdmin?'Selecione uma empresa ativa no painel Super Admin para acompanhar a operação.':'Peça ao responsável para vincular seu usuário a uma empresa ativa em Super Admin → Acessos.'}</p>{isSuperAdmin&&<Link className="staff-btn staff-btn--primary" href="/admin">Selecionar empresa <ArrowRight size={16}/></Link>}<button className="staff-btn staff-btn--outline" onClick={onSignOut}>Sair da conta</button></div>:<>
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
