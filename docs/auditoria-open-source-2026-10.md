@@ -28,7 +28,7 @@ Arquivos principais: `components/CRM.jsx`, `components/StaffWorkspace.jsx`, `com
 | 8 | [Mastra](https://github.com/mastra-ai/mastra) | Core Apache-2.0; EE comercial | Agentes TypeScript, workflow e ferramentas | Isolar prompts e credenciais por organização |
 | 9 | [Langfuse](https://github.com/langfuse/langfuse) | Core MIT; EE restrita | Observabilidade, avaliação, custos e rastreabilidade de agentes | Cuidado com dados pessoais nos traces |
 | 10 | [Chatwoot](https://github.com/chatwoot/chatwoot) | Community MIT; EE comercial | Referência de caixa de entrada omnichannel, times, mensagens e etiquetas | Aplicação Rails/Vue; conectar API ou adaptar conceitos, não copiar stack toda |
-| 11 | [Driver.js](https://github.com/driverjs/driver.js) | MIT | Tour para novos funcionários e demonstração comercial | Tour deve funcionar com os seletores reais |
+| 11 | [Driver.js](https://github.com/nilbuild/driver.js) | MIT | Tour para novos funcionários e demonstração comercial | **Implementado** no workspace; validação visual no navegador ainda pendente |
 | 12 | [AI SDK](https://github.com/vercel/ai) | Verificar licença do pacote | Chat e streaming de agentes sem prender a um provedor | Escolher provedor, configurar limites e proteção contra abuso |
 | 13 | [Meta WhatsApp Cloud API samples](https://github.com/fbsamples/whatsapp-api-examples) | Meta Platform Policy | Webhooks assinados, recebimento e envio oficial | Precisa cadastro Meta, token, número e autorização por empresa |
 | Referência | [n8n](https://github.com/n8n-io/n8n) | Sustainable Use License, **não open source OSI** | Inspiração e automações internas, sujeito à licença | Não embutir/revender como parte do SaaS sem analisar acordo comercial |
@@ -80,4 +80,5 @@ Fontes primárias de licença e funcionalidade: READMEs, LICENSE de cada projeto
 ## Estado após esta auditoria
 - P0 security PR: https://github.com/ojoaovitordeoli/nexus-crm-ai/pull/1 (branch draft, separado de produção).
 - Command Center Ctrl+K: implementado no main com cmdk MIT, sujeito à validação autenticada no navegador.
+- Tour guiado: implementado no main com Driver.js MIT; início manual pelo usuário, sujeito à validação visual e de acessibilidade no navegador.
 - As demais integrações permanecem recomendações, não serviços ativos.
