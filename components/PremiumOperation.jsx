@@ -119,12 +119,15 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
     const cSales=data.sales.filter(x=>new Date(x.created_at).getTime()>=cut);
     const cAppts=data.appointments.filter(x=>new Date(x.created_at).getTime()>=cut);
     const trend=Array.from({length:7},(_,i)=>{
-      const day=new Date(now);day.setHours(0,0,0,0);day.setDate(day.getDate()-(6-i));
-      const finish=day.getTime()+86400000;
-      return {name:day.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''),value:data.leads.filter(l=>{const t=new Date(l.created_at).getTime();return t>=day.getTime()&&t<finish}).length};
+      const bucketMs=period*86400000/7;
+      const start=now.getTime()-(7-i)*bucketMs;
+      const finish=now.getTime()-(6-i)*bucketMs;
+      const marker=new Date(finish);
+      return {name:period===7?marker.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''):marker.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),
+        value:data.leads.filter(l=>{const t=new Date(l.created_at).getTime();return t>=start&&t<finish}).length};
     });
     const groups=new Map();
-    data.leads.forEach(l=>{
+    cLeads.forEach(l=>{
       const currentStage=pipelineStages.find(s=>s.id===l.pipeline_stage_id);
       const k=currentStage?.name||(pipelineStages.length?'Sem etapa':l.status||'Sem etapa');
       groups.set(k,(groups.get(k)||0)+1);
@@ -138,11 +141,11 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
   const chartArea=chartLine+' L 284 110 L 16 110 Z';
   const colors=['#5778f7','#39c6ad','#9981ed','#f1ba66','#8090ad'];
   let cursor=0;
-  const slices=stages.map(([,count],i)=>{
-    const start=cursor;cursor+=100*count/Math.max(data.leads.length,1);
-    return colors[i]+' '+start+'% '+cursor+'%';
+  const segments=stages.map(([name,count],i)=>{
+    const offset=cursor,percent=100*count/Math.max(currentLeads.length,1);
+    cursor+=percent;
+    return {name,count,color:colors[i],percent,offset};
   });
-  const donutStyle={background:stages.length?'conic-gradient('+slices.join(', ')+(cursor<100?', #e1e7f1 '+cursor+'% 100%':'')+')':'conic-gradient(#e2e8f4 0% 100%)'};
   const hour=new Date().getHours();
   const greeting=hour<12?'Bom dia':hour<18?'Boa tarde':'Boa noite';
   return <div className="nxp-premium">
@@ -161,8 +164,8 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
       <Metric tone="orange" icon={ListTodo} label="Tarefas abertas" value={loading?'—':openTasks.length} footer={overdueTasks.length+' com prazo vencido'}/>
     </div>
     <div className="nxp-analytics-grid">
-      <section className="nxp-surface nxp-graph-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">AQUISIÇÃO</span><h3>Movimento de leads</h3><p>Novos registros nos últimos sete dias</p></div><div className="nxp-circle-icon"><Activity size={21}/></div></div>
-      <div className="nxp-graph-line">
+      <section className="nxp-surface nxp-graph-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">AQUISIÇÃO</span><h3>Movimento de leads</h3><p>Distribuição nos últimos {period} dias</p></div><div className="nxp-circle-icon"><Activity size={21}/></div></div>
+      <div key={"trend-"+period} className="nxp-graph-line">
         <svg className="nxp-graph-svg" viewBox="0 0 300 125" role="img" aria-label="Gráfico de leads por dia nos últimos sete dias">
           <defs><linearGradient id="nxp-area-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#5c83f8" stopOpacity=".32"/><stop offset="100%" stopColor="#5c83f8" stopOpacity=".025"/></linearGradient></defs>
           {[20,48,76,104].map(y=><line key={y} x1="14" y1={y} x2="287" y2={y} className="nxp-graph-line-grid"/>)}
@@ -179,12 +182,22 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
       </section>
       <section className="nxp-surface nxp-funnel-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">DISTRIBUIÇÃO</span><h3>Seu funil</h3><p>Etapas utilizadas pelos leads</p></div><div className="nxp-circle-icon"><BarChart3 size={21}/></div></div>
       <div className="nxp-donut-layout">
-        <div className="nxp-donut" style={donutStyle}><span className="nxp-donut-inner"><strong>{fmt(data.leads.length)}</strong><small>leads</small></span></div>
+        <div key={"donut-"+period} className="nxp-donut nxp-donut--svg">
+          <svg viewBox="0 0 160 160" className="nxp-donut-svg" role="img" aria-label="Distribuição de leads por etapa">
+            <circle cx="80" cy="80" r="63" pathLength="100" className="nxp-donut-base"/>
+            {segments.map((segment,i)=><circle key={segment.name} cx="80" cy="80" r="63" pathLength="100"
+              className="nxp-donut-segment" stroke={segment.color} strokeDashoffset={-segment.offset}
+              style={{'--segment-dash':segment.percent+' 100',animationDelay:(i*130+570)+'ms'}}>
+              <title>{label(segment.name)}: {segment.count} leads</title>
+            </circle>)}
+          </svg>
+          <span className="nxp-donut-inner"><strong>{fmt(currentLeads.length)}</strong><small>leads</small></span>
+        </div>
         <div className="nxp-donut-legend">{stages.map(([name,count],i)=><div key={name} title={label(name)+' — '+count+' leads'}>
           <span><i style={{background:colors[i]}}/>{label(name)}</span><strong>{fmt(count)}</strong>
         </div>)}{!stages.length&&<div className="nxp-quiet">Sem dados de distribuição.</div>}</div>
       </div>
-      <div className="nxp-panel-bottom"><span>Total no banco: {fmt(counts.leads)}</span><Link href="/leads">Abrir funil <ArrowRight size={15}/></Link></div></section>
+      <div className="nxp-panel-bottom"><span>{fmt(currentLeads.length)} no período · {fmt(counts.leads)} no banco</span><Link href="/leads">Abrir funil <ArrowRight size={15}/></Link></div></section>
     </div>
     <div className="nxp-analytics-grid nxp-analytics-grid--bottom">
       <section className="nxp-surface"><div className="nxp-panel-head"><div><span className="nxp-kicker">PRIORIDADES</span><h3>Próximas tarefas</h3><p>O que ainda precisa ser feito</p></div><Link href="/tasks" className="nxp-icon-link">Ver todas <ArrowRight size={15}/></Link></div>
