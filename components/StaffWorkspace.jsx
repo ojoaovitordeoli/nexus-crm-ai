@@ -81,7 +81,6 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const router=useRouter();
   const navTimer=useRef(null);
   const [navigationOut,setNavigationOut]=useState(false);
-  const [motionReplay,setMotionReplay]=useState(0);
   const [commandOpen,setCommandOpen]=useState(false);
   const [tourLoading,setTourLoading]=useState(false);
   const spotlight=(event)=>{
@@ -350,7 +349,6 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         router.push(target);
       }}
       onRefresh={()=>{load()}}
-      onReplay={()=>{if(section==='dashboard')setMotionReplay(v=>v+1);else router.push('/dashboard')}}
     />
     <aside className={'staff-sidebar '+(mobileOpen?'staff-sidebar--open':'')}>
       <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={23}/></div><div><strong>NEXUS <span>CRM</span></strong><small>WORKSPACE</small></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
@@ -415,7 +413,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       </header>
       <nav className="nexus-module-strip" aria-label="Módulos da operação"><span className="nexus-module-strip-label">NX / WORKSPACE</span>{MENU.map(({path,label,icon:Icon},i)=><span key={path} style={{display:'contents'}}>{(i===4||i===9)&&<span className="nexus-module-strip-separator" aria-hidden="true"/>}<Link href={'/'+path} aria-current={section===path?'page':undefined} onClick={e=>navigate(e,path)}><Icon size={15}/>{label}</Link></span>)}{isSuperAdmin&&<Link href="/admin" className="nexus-module-strip-admin"><ShieldCheck size={15}/> Super Admin</Link>}</nav>
       <div className="staff-body">
-        <div key={section+'-'+organizationId+'-'+motionReplay} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
+        <div key={section+'-'+organizationId} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
         {!assigned?<div className="staff-no-access"><span><BriefcaseBusiness size={30}/></span><h2>Seu espaço de trabalho ainda não foi liberado.</h2><p>{isSuperAdmin?'Selecione uma empresa ativa no painel Super Admin para acompanhar a operação.':'Peça ao responsável para vincular seu usuário a uma empresa ativa em Super Admin → Acessos.'}</p>{isSuperAdmin&&<Link className="staff-btn staff-btn--primary" href="/admin">Selecionar empresa <ArrowRight size={16}/></Link>}<button className="staff-btn staff-btn--outline" onClick={onSignOut}>Sair da conta</button></div>:<>
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
