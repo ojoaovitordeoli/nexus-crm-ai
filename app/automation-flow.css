@@ -1,0 +1,15 @@
+/* React Flow preview of the actual NEXUS follow-up rule */
+.nx-workflow-preview{margin-bottom:18px}
+.nx-flow-canvas{height:265px;margin:0 22px;border:1px solid var(--nx-border);border-radius:14px;overflow:hidden;background:radial-gradient(circle at 40% 32%,rgba(177,215,255,.19),transparent 50%),#f8fbff}
+.nx-flow-canvas .react-flow{background:transparent}
+.nx-flow-canvas .react-flow__node{white-space:normal;line-height:1.6}
+.nx-flow-canvas .react-flow__node:hover{box-shadow:0 10px 29px rgba(70,124,214,.16)!important;cursor:pointer}
+.nx-flow-canvas .react-flow__controls{border:1px solid rgba(82,126,214,.17);box-shadow:0 8px 18px rgba(36,86,163,.08);border-radius:9px;overflow:hidden}
+.nx-flow-canvas .react-flow__controls-button{background:#fff;color:#4271e7;border-bottom-color:rgba(85,123,194,.14)}
+.nx-flow-canvas .react-flow__attribution{font-size:9px;opacity:.65}
+.nx-flow-note{padding:14px 25px 22px;margin:0;font-size:10px;color:var(--nx-muted);line-height:1.65}
+.nx-flow-loading{height:265px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--nx-muted)}
+.dark .nx-flow-canvas{background:radial-gradient(circle at 47% 30%,rgba(49,105,170,.25),transparent 55%),#0c2136}
+.dark .nx-flow-canvas .react-flow__background{opacity:.42}
+@media(max-width:580px){.nx-flow-canvas{margin:0 15px;height:220px}.nx-flow-note{padding:13px 18px 20px}}
+@media(prefers-reduced-motion:reduce){.nx-flow-canvas .react-flow__edge.animated path{animation:none!important}}
