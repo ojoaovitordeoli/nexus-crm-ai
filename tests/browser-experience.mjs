@@ -131,6 +131,14 @@ try{
   await page.goto(host+'/whatsapp',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'Seu WhatsApp dentro do CRM.'}).waitFor({timeout:12000});
   await page.screenshot({path:'test-artifacts/direct-whatsapp.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  for(const route of ['insights','ads','whatsapp']){
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.locator('.nxc-page,.nxad-page,.nxwa-page').first().waitFor({timeout:10000});
+    const size=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+    if(size.document>size.viewport+3)throw new Error(route+' integration overflows mobile viewport ('+size.document+' vs '+size.viewport+')');
+    await page.screenshot({path:'test-artifacts/mobile-'+route+'.png',fullPage:true});
+  }
   console.log('PASS: login, command center, mobile and three new integration screens');
   if(errors.length)throw new Error(errors.join('\n').slice(0,2500));
 }catch(e){
