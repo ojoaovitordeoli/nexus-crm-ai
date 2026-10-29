@@ -178,6 +178,10 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
 export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,stages=[],onOperation,onReload}){
   const [mode,setMode]=useState('board');
   const [query,setQuery]=useState('');
+  useEffect(()=>{
+    const q=new URLSearchParams(window.location.search).get('q');
+    if(q)setQuery(q);
+  },[]);
   const [filter,setFilter]=useState('all');
   const [selected,setSelected]=useState(null);
   const [busy,setBusy]=useState('');
@@ -235,6 +239,10 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
 
 export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,onReload}){
   const [query,setQuery]=useState('');
+  useEffect(()=>{
+    const q=new URLSearchParams(window.location.search).get('q');
+    if(q)setQuery(q);
+  },[]);
   const [showCreate,setShowCreate]=useState(false);
   const [newName,setNewName]=useState('');
   const [newPhone,setNewPhone]=useState('');
