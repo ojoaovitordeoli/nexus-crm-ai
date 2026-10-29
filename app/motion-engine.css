@@ -104,3 +104,13 @@
   .staff-motion-scene--leaving{opacity:1!important}
   .nxp-graph-line-path{stroke-dashoffset:0!important}
 }
+
+/* Donut em SVG: cada faixa cresce de 0 até o percentual real. */
+.nxp-donut--svg{background:transparent!important;overflow:visible;animation:none!important}
+.nxp-donut--svg::after{display:none!important}
+.nxp-donut-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform:rotate(-90deg)}
+.nxp-donut-base{fill:none;stroke:rgba(130,161,209,.14);stroke-width:23}
+.nxp-donut-segment{fill:none;stroke-width:23;stroke-linecap:butt;stroke-dasharray:var(--segment-dash);animation:nexus-ring-grow .92s var(--motion-ease) both}
+@keyframes nexus-ring-grow{0%{stroke-dasharray:0 100;opacity:.2}100%{stroke-dasharray:var(--segment-dash);opacity:1}}
+.nxp-donut--svg .nxp-donut-inner{position:relative;z-index:1}
+@media(prefers-reduced-motion:reduce){.nxp-donut-segment{animation:none!important;stroke-dasharray:var(--segment-dash)!important}}
