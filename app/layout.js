@@ -9,5 +9,6 @@ import './v4-reporting.css';
 import './motion-engine.css';
 import './motion-calendar.css';
 import './motion-studio.css';
+import './command-center.css';
 export const metadata = { title: 'NEXUS CRM AI', description: 'Central de controle e operação' };
 export default function RootLayout({children}) {return <html lang="pt-BR"><body>{children}</body></html>}
