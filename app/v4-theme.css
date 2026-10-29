@@ -1,0 +1,209 @@
+/* NEXUS CRM · Glassy V4 visual system. V4 appearance, V5 navigation, original identity. */
+:root{
+  --app-bg:#f4f7fc;--panel:rgba(255,255,255,.85);--panel-solid:#fff;
+  --panel-soft:#edf4ff;--text-main:#15213d;--text-muted:#7887a1;
+  --border-soft:rgba(77,121,190,.16);--brand-blue:#356dff;
+  --brand-blue-soft:#dce8ff;--success:#39d6c3;--warning:#f5b84b;
+  --danger:#ed6b76;--shadow-panel:0 18px 50px rgba(44,84,144,.075);
+  --bg:#f4f7fc;--text:#15213d;--muted:#7887a1;
+  --line:rgba(77,121,190,.15);--panel:rgba(255,255,255,.88);
+  --solid:#fff;--accent:#356dff;
+}
+body:not(.dark){background:
+  radial-gradient(circle at 88% 7%,rgba(167,203,255,.21),transparent 32%),
+  radial-gradient(circle at 8% 86%,rgba(197,234,255,.16),transparent 31%),#f4f7fc}
+body.dark{
+  --app-bg:#091526;--panel:rgba(20,42,62,.88);--panel-solid:#13283c;
+  --panel-soft:#17344c;--text-main:#eef5ff;--text-muted:#95abc4;
+  --border-soft:rgba(155,202,245,.15);--brand-blue:#8eafff;
+  --brand-blue-soft:rgba(99,145,255,.14);
+  --bg:#091526;--text:#eef5ff;--muted:#95abc4;
+  --line:rgba(155,202,245,.15);--solid:#13283c;--accent:#8eafff;
+  background:radial-gradient(circle at 82% 6%,rgba(41,91,153,.22),transparent 43%),#091526
+}
+.staff-shell{
+  --staff-text:var(--text-main);--staff-muted:var(--text-muted);
+  --staff-bg:var(--app-bg);--staff-surface:var(--panel-solid);
+  --staff-border:var(--border-soft);--staff-accent:var(--brand-blue);
+  background:transparent;
+}
+.staff-sidebar{
+  color:#667998;background:rgba(255,255,255,.91);
+  border-right:1px solid var(--border-soft);
+  box-shadow:8px 0 45px rgba(49,83,141,.032);
+  backdrop-filter:blur(19px);-webkit-backdrop-filter:blur(19px);
+}
+.staff-logo strong{color:#122e55}
+.staff-logo strong span{color:#356dff}
+.staff-logo small{color:#91a5c4}
+.staff-logo-icon{
+  background:linear-gradient(140deg,#356dff,#7bacff);
+  color:#fff;box-shadow:0 10px 20px rgba(53,109,255,.18)
+}
+.staff-workspace-picker{
+  background:linear-gradient(117deg,#f7faff,#edf4ff);
+  border-color:rgba(82,127,203,.13);
+}
+.staff-workspace-icon{background:rgba(58,114,245,.095);color:#3666d6}
+.staff-workspace-picker small{color:#90a2bc}
+.staff-workspace-picker strong{color:#243b65}
+.staff-workspace-picker>svg{color:#88a1ca}
+.staff-nav-title{color:#9baec7}
+.staff-nav-item{color:#6f819e;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease}
+.staff-nav-item svg{color:#8598b5}
+.staff-nav-item:hover{color:#315bd1;background:rgba(68,113,229,.065)}
+.staff-nav-item--active{
+  color:#2858cf;background:linear-gradient(100deg,rgba(53,109,255,.13),rgba(92,150,253,.055));
+  border-color:rgba(65,115,243,.12);box-shadow:inset 3px 0 #4b7cf5
+}
+.staff-nav-item--active svg{color:#356dff}
+.staff-nav-dot{background:#3b74f1}
+.staff-session{border-color:var(--staff-border)}
+.staff-session strong{color:#213b62}
+.staff-session small{color:#8b9cb5}
+.staff-session .staff-initials{background:linear-gradient(135deg,#dce8ff,#b9d4ff);color:#3568dd}
+.staff-logout{
+  background:rgba(75,118,211,.035);color:#7188aa;border-color:var(--staff-border)
+}
+.staff-logout:hover{background:rgba(79,120,213,.1);color:#2752b8}
+.staff-topbar{
+  height:77px;background:rgba(255,255,255,.48);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.staff-breadcrumb{gap:8px}
+.staff-body{padding-top:33px}
+.staff-icon-button{transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease}
+.staff-icon-button:hover{transform:translateY(-1px);box-shadow:0 6px 15px rgba(54,89,161,.08)}
+.staff-company-choice{color:#7b8ca9}
+.staff-company-choice select{background:#eef4ff;border-color:rgba(71,119,203,.16);color:#274069}
+.staff-company-choice select option{background:#fff;color:#274069}
+.nxp-premium{
+  --nxp-ink:var(--text-main);--nxp-muted:var(--text-muted);
+  --nxp-surface:var(--panel-solid);--nxp-border:var(--border-soft);
+  --nxp-accent:var(--brand-blue);--nxp-shadow:var(--shadow-panel)
+}
+.nxp-surface,.nxp-metric,.staff-card,.staff-stat{
+  background:var(--panel)!important;
+  border:1px solid var(--border-soft)!important;
+  box-shadow:var(--shadow-panel);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)
+}
+.nxp-surface{border-radius:23px}
+.nxp-metric{border-radius:20px}
+.nxp-metric:hover,.nxp-contact-card:hover,.nxp-lead-card:hover{
+  border-color:rgba(77,126,237,.26)!important
+}
+.nxp-presentation{
+  background:
+    radial-gradient(circle at 81% 16%,rgba(119,166,255,.15),transparent 32%),
+    linear-gradient(110deg,rgba(255,255,255,.94),rgba(236,245,255,.91));
+  color:#14284b;border:1px solid rgba(84,125,197,.14);
+  box-shadow:0 22px 58px rgba(54,87,148,.085);
+  backdrop-filter:blur(18px)
+}
+.nxp-presentation::before{
+  opacity:.6;background-image:
+  linear-gradient(rgba(118,165,234,.075) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(118,165,234,.075) 1px,transparent 1px)
+}
+.nxp-presentation h1{color:#172b52}
+.nxp-presentation h1 em{
+  background:linear-gradient(95deg,#2f67f5,#389ad8);
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.nxp-presentation p{color:#71819e}
+.nxp-presentation .nxp-overline{color:#5574b2}
+.nxp-presentation-actions .nxp-white-button{
+  background:linear-gradient(110deg,#356dff,#4d8afc);
+  color:#fff;border-color:rgba(53,109,255,.6);
+  box-shadow:0 9px 20px rgba(58,109,240,.14)
+}
+.nxp-presentation-actions .nxp-white-button:hover{box-shadow:0 12px 24px rgba(58,109,240,.22)}
+.nxp-live-text,.nxp-presentation-foot span{color:#6f91b8}
+.nxp-orbit{border-color:rgba(76,121,218,.18)}
+.nxp-orbit--two{border-color:rgba(70,120,222,.16)}
+.nxp-orbit-logo{
+  background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(208,228,255,.74));
+  border-color:rgba(87,138,229,.25);
+  color:#4a79e1;box-shadow:0 24px 49px rgba(68,107,177,.12),inset 0 0 22px rgba(180,207,255,.35)
+}
+.nxp-orbit-glow{background:#8ebfff}
+.nxp-leads-summary,.nxp-contact-banner{
+  color:#1a335e;
+  background:
+    radial-gradient(circle at 85% 13%,rgba(132,187,255,.15),transparent 42%),
+    linear-gradient(105deg,rgba(255,255,255,.95),rgba(234,244,255,.92));
+  border:1px solid var(--border-soft);
+  box-shadow:var(--shadow-panel);
+  backdrop-filter:blur(14px)
+}
+.nxp-leads-summary .nxp-kicker,.nxp-contact-banner .nxp-overline{color:#5776b1}
+.nxp-leads-summary small,.nxp-contact-banner p{color:#8393ae}
+.nxp-leads-summary>div:nth-child(2),.nxp-leads-summary>div:nth-child(3){border-color:var(--border-soft)}
+.nxp-leads-summary-decoration{color:#6c91e9;opacity:.15}
+.nxp-contact-banner-metric{
+  color:#31599d;background:rgba(231,241,255,.82);
+  border-color:rgba(90,137,213,.15)
+}
+.nxp-contact-banner-metric span{color:#8297b7}
+.nxp-wa-shell{
+  background:
+    radial-gradient(circle at 80% 13%,rgba(113,168,251,.16),transparent 38%),
+    linear-gradient(110deg,#f9fcff,#eaf3ff);
+  border:1px solid var(--border-soft);color:#223c68;
+  box-shadow:var(--shadow-panel)
+}
+.nxp-wa-hero .nxp-kicker{color:#5271b8}
+.nxp-wa-hero p{color:#7c8da9}
+.nxp-wa-hero-icon{color:#119e84;background:rgba(41,180,149,.1);border-color:rgba(41,180,149,.15)}
+.nxp-wa-actions .nxp-button--ghost{color:#3d6099;border-color:var(--border-soft)}
+.nxp-wa-display{background:radial-gradient(circle at center,rgba(125,173,243,.17),transparent 68%)}
+.nxp-wa-device{background:rgba(49,99,177,.12);border-color:rgba(114,152,215,.3)}
+.nxp-wa-device-top,.nxp-wa-device-bottom{color:#6382b2}
+.nxp-wa-placeholder span{background:rgba(67,125,210,.22)}
+.dark .staff-sidebar{
+  color:#a7b8d1;background:rgba(14,30,48,.94);
+  border-color:rgba(145,185,233,.1)
+}
+.dark .staff-logo strong{color:#f1f6ff}
+.dark .staff-logo small{color:#7e96bc}
+.dark .staff-workspace-picker{background:rgba(65,109,163,.1);border-color:rgba(159,196,241,.1)}
+.dark .staff-workspace-picker strong{color:#e6f0ff}
+.dark .staff-workspace-picker small,.dark .staff-nav-title{color:#7e96b7}
+.dark .staff-nav-item{color:#94aac8}
+.dark .staff-nav-item svg{color:#819cc2}
+.dark .staff-nav-item:hover{color:#c7dcff;background:rgba(117,161,238,.1)}
+.dark .staff-nav-item--active{color:#bad0ff;background:rgba(94,144,244,.17);border-color:rgba(119,163,239,.12);box-shadow:inset 3px 0 #8aafff}
+.dark .staff-nav-item--active svg{color:#9bb9ff}
+.dark .staff-session strong{color:#eaf3ff}
+.dark .staff-session small{color:#8ba1bc}
+.dark .staff-logout{color:#9eb5d1;background:rgba(109,151,208,.08)}
+.dark .staff-logout:hover{color:#eaf3ff}
+.dark .staff-company-choice{color:#9aaecb}
+.dark .staff-company-choice select{background:#1d344f;color:#e6f2ff;border-color:rgba(137,179,227,.13)}
+.dark .staff-company-choice select option{background:#1d344f;color:#e6f2ff}
+.dark .staff-topbar{background:rgba(15,33,53,.48)}
+.dark .nxp-surface,.dark .nxp-metric,.dark .staff-card,.dark .staff-stat{
+  background:rgba(20,42,62,.86)!important;
+  border-color:rgba(155,202,245,.13)!important;
+  box-shadow:0 18px 46px rgba(0,0,0,.13)
+}
+.dark .nxp-presentation{
+  background:radial-gradient(circle at 83% 11%,rgba(91,145,227,.15),transparent 43%),linear-gradient(110deg,rgba(15,37,59,.93),rgba(27,58,83,.88));
+  border-color:rgba(155,202,245,.15);color:#f0f6ff;box-shadow:0 22px 48px rgba(0,0,0,.15)
+}
+.dark .nxp-presentation h1{color:#f0f6ff}
+.dark .nxp-presentation h1 em{background:linear-gradient(95deg,#85a9ff,#70e2d8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dark .nxp-presentation p{color:#afc2d9}
+.dark .nxp-presentation .nxp-overline,.dark .nxp-live-text,.dark .nxp-presentation-foot span{color:#9cb7de}
+.dark .nxp-orbit-logo{background:linear-gradient(130deg,#183b5f,#264b74);border-color:rgba(170,208,251,.16);color:#bddeff}
+.dark .nxp-leads-summary,.dark .nxp-contact-banner,.dark .nxp-wa-shell{background:radial-gradient(circle at 80% 14%,rgba(57,111,189,.1),transparent 38%),linear-gradient(110deg,#142d46,#1c3a55);color:#f0f6ff;border-color:rgba(155,202,245,.14)}
+.dark .nxp-leads-summary .nxp-kicker,.dark .nxp-contact-banner .nxp-overline,.dark .nxp-wa-hero .nxp-kicker{color:#9fbafd}
+.dark .nxp-leads-summary small,.dark .nxp-contact-banner p,.dark .nxp-wa-hero p{color:#9db5cf}
+.dark .nxp-contact-banner-metric{background:rgba(104,147,212,.1);color:#d7e9ff}
+.dark .nxp-contact-banner-metric span{color:#a6bcd2}
+.dark .nxp-wa-device{background:rgba(104,147,212,.1)}
+.dark .nxp-wa-device-top,.dark .nxp-wa-device-bottom{color:#b5cbe9}
+.dark .nxp-wa-actions .nxp-button--ghost{color:#c5ddf4}
+@media(max-width:800px){.staff-sidebar{background:rgba(255,255,255,.98)}.dark .staff-sidebar{background:rgba(14,30,48,.98)}}
+@media(prefers-reduced-motion:reduce){.nxp-orbit,.nxp-orbit-logo{animation:none!important}}
