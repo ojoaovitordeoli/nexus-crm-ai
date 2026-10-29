@@ -38,6 +38,45 @@ try{
     failures.push('Application error displayed on '+url);
   if((response?.status()||0)>=500)failures.push('HTTP 5xx loading '+url);
  }
+ // Simulate an authorized user using test-only, fake Supabase responses.
+ // This detects crashes in the operational workspace that the login smoke cannot see.
+ const fakeUserId='d44b4e72-3279-4477-8c1e-e3d14dc3ee99';
+ const fakeOrgId='73bf7bcb-9b3a-427e-9851-a892e17328de';
+ const fakeUser={id:fakeUserId,aud:'authenticated',role:'authenticated',email:'teste@example.invalid',
+  app_metadata:{provider:'email',providers:['email']},user_metadata:{},created_at:'2026-01-01T00:00:00Z'};
+ const profile={id:fakeUserId,full_name:'Usuário de Teste',is_super_admin:false,status:'active'};
+ const org={id:fakeOrgId,name:'Empresa de Teste',status:'active',plan:'test'};
+ await page.route('https://qhizuqcdxivdvjtefofz.supabase.co/**',async route=>{
+  const req=route.request();
+  const url=new URL(req.url());
+  const name=url.pathname.split('/').pop();
+  const headers={'access-control-allow-origin':'*','content-type':'application/json'};
+  if(url.pathname.startsWith('/auth/v1/user'))
+    return route.fulfill({status:200,headers,body:JSON.stringify(fakeUser)});
+  const records=name==='profiles'?
+    (url.searchParams.has('id')?profile:[profile]):
+    name==='organization_members'?[{organization_id:fakeOrgId,role:'AGENCY_ADMIN',status:'active',organization:org}]:
+    name==='organizations'?[org]:[];
+  return route.fulfill({status:200,headers,body:JSON.stringify(records)});
+ });
+ const jwtPart=obj=>Buffer.from(JSON.stringify(obj)).toString('base64url');
+ const fakeToken=[jwtPart({alg:'HS256',typ:'JWT'}),jwtPart({sub:fakeUserId,role:'authenticated',aud:'authenticated',exp:2000000000}),'test'].join('.');
+ await page.goto(origin+'/login');
+ await page.evaluate(({user,token})=>{
+  const session={access_token:token,token_type:'bearer',expires_in:99999999,
+   expires_at:2000000000,refresh_token:'mock-refresh-token',user};
+  localStorage.setItem('sb-qhizuqcdxivdvjtefofz-auth-token',JSON.stringify(session));
+ },{user:fakeUser,token:fakeToken});
+ const errorsBefore=failures.length;
+ const signedResponse=await page.goto(origin+'/dashboard',{waitUntil:'domcontentloaded',timeout:30000});
+ await page.waitForTimeout(3400);
+ const signed=await page.evaluate(()=>({body:document.body?.innerText?.slice(0,600),url:location.pathname}));
+ console.log(JSON.stringify({route:'/dashboard (mock signed-in user)',status:signedResponse?.status(),signed,errorCount:failures.length-errorsBefore}));
+ if(/Application error: a client-side exception has occurred/i.test(signed.body))
+   failures.push('Client exception on authenticated dashboard');
+ if(!signed.body?.includes('Visão geral')&&!signed.body?.includes('Workspace'))
+   failures.push('Authenticated workspace did not render');
+
  await browser.close();
  if(failures.length){for(const f of failures)console.error('BROWSER FAILURE:',f);process.exitCode=1;}
  else console.log('Browser smoke passed without page exceptions for unauthenticated routes.');
