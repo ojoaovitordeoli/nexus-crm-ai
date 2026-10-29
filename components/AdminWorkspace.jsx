@@ -48,6 +48,19 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
   const [lastSync,setLastSync] = useState(null);
 
   const clearMessage = ()=>{setError('');setSuccess('');};
+  async function sendAccess(input){
+    const {data:{session}}=await db.auth.getSession();
+    if(!session?.access_token)throw new Error('Sua sessão expirou. Entre novamente.');
+    const response=await fetch('/api/admin/access',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},
+      body:JSON.stringify(input)
+    });
+    let result;
+    try{result=await response.json()}catch{throw new Error('Não foi possível ler a resposta do servidor.')}
+    if(!response.ok)throw new Error(result?.error||'Falha ao atualizar o acesso.');
+    return result;
+  }
   const load = useCallback(async()=>{
     if(!db||!isAdmin)return;
     setLoading(true);
@@ -153,11 +166,11 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
     if(!selectedUser||!selectedCompany){setError('Escolha usuário e empresa.');return}
     setSaving(true);
     try{
-      const {error:e2}=await db.rpc('admin_add_member',{
-        p_user_id:selectedUser,p_org_id:selectedCompany,p_role:role
+      const result=await sendAccess({
+        action:'assign',user_id:selectedUser,org_id:selectedCompany,role
       });
-      if(e2)throw e2;
-      setSuccess('Acesso à empresa configurado.');await load();
+      setSuccess(result.message+(result.warning?' '+result.warning:''));
+      await load();
     }catch(ex){setError('Não foi possível vincular o usuário: '+ex.message)}
     finally{setSaving(false)}
   }
@@ -165,19 +178,23 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
     const next=current==='active'?'suspended':'active';
     if(!window.confirm((next==='suspended'?'Suspender':'Reativar')+' este usuário?'))return;
     clearMessage();setSaving(true);
-    const {error:e2}=await db.rpc('admin_set_profile_status',{p_user_id:id,p_status:next});
-    if(e2)setError('Não foi possível atualizar: '+e2.message);
-    else{setSuccess('Status atualizado.');await load()}
-    setSaving(false);
+    try{
+      const result=await sendAccess({action:'user_status',user_id:id,status:next});
+      setSuccess(result.message+(result.warning?' '+result.warning:''));
+      await load();
+    }catch(ex){setError('Não foi possível atualizar: '+ex.message)}
+    finally{setSaving(false)}
   }
   async function changeMemberStatus(item){
     const next=item.status==='active'?'removed':'active';
     if(!window.confirm(next==='removed'?'Remover o acesso deste usuário à empresa?':'Restaurar este acesso?'))return;
     clearMessage();setSaving(true);
-    const {error:e2}=await db.rpc('admin_set_member_status',{p_member_id:item.id,p_status:next});
-    if(e2)setError('Não foi possível atualizar: '+e2.message);
-    else{setSuccess('Permissão atualizada.');await load()}
-    setSaving(false);
+    try{
+      const result=await sendAccess({action:'member_status',member_id:item.id,status:next});
+      setSuccess(result.message+(result.warning?' '+result.warning:''));
+      await load();
+    }catch(ex){setError('Não foi possível atualizar: '+ex.message)}
+    finally{setSaving(false)}
   }
   const companyNameById=id=>companies.find(c=>c.id===id)?.name||'Empresa não encontrada';
   const userNameById=id=>users.find(u=>u.id===id)?.full_name||'Usuário não encontrado';
