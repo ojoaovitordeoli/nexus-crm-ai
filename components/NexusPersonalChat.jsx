@@ -61,7 +61,7 @@ export default function NexusPersonalChat({organizationId}){
       {busy&&<div className="nxc-typing">Consultando a IA...</div>}
     </div>
     <form onSubmit={send} className="nxc-compose"><textarea value={draft} onChange={e=>setDraft(e.target.value)} rows={3} maxLength={3000} placeholder="Pergunte algo sobre seu trabalho..." aria-label="Sua mensagem para a IA"/>
-     <div className="nxc-compose-bottom"><label><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/> Autorizo enviar a pergunta e o histórico desta conversa ao provedor de IA.</label><button disabled={!configured||busy||!consent||draft.trim().length<2} type="submit"><Send size={16}/> {busy?'Enviando':'Enviar'}</button></div>
+     <div className="nxc-compose-bottom"><label><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/> Autorizo enviar minha pergunta, o histórico e até 20 tarefas atribuídas ou criadas por mim ao provedor de IA.</label><button disabled={!configured||busy||!consent||draft.trim().length<2} type="submit"><Send size={16}/> {busy?'Enviando':'Enviar'}</button></div>
      <small>Não inclua senhas ou informações sensíveis. A IA não envia mensagens a clientes nem muda dados do CRM.</small>
     </form>
    </section>
