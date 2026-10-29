@@ -2,6 +2,8 @@
 
 import {useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+const NexusAutomationGraph=dynamic(()=>import('./NexusAutomationGraph'),{ssr:false,loading:()=> <div className="nx-flow-loading">Preparando visualização do fluxo...</div>});
 import {
   Activity,ArrowRight,CheckCircle2,ChevronDown,Clock3,
   GitBranch,Info,Layers3,PauseCircle,PlayCircle,Plus,
@@ -87,6 +89,14 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
     <div className="nx-workflow-illustration" aria-hidden="true"><span className="nx-workflow-node"><Layers3 size={22}/><small>Lead mudou</small></span><ArrowRight size={20}/><span className="nx-workflow-node"><Zap size={22}/><small>Regra</small></span><ArrowRight size={20}/><span className="nx-workflow-node"><CheckCircle2 size={22}/><small>Tarefa</small></span></div></section>
     {error&&<div className="nx-workflow-alert nx-workflow-alert--error" role="alert"><Info size={18}/><span>{error}</span>{error.includes('migração')&&<a href="https://github.com/ojoaovitordeoli/nexus-crm-ai/blob/main/supabase/20261028_automation_whatsapp_foundation.sql" target="_blank" rel="noopener noreferrer">Ver arquivo SQL</a>}</div>}
     {notice&&<div className="nx-workflow-alert nx-workflow-alert--ok" role="status"><CheckCircle2 size={18}/>{notice}</div>}
+    <section className="nx-workflow-card nx-workflow-preview">
+      <div className="nx-workflow-card-head nx-workflow-card-head--static">
+        <span><Workflow size={20}/><strong>Visualização interativa do fluxo</strong></span>
+        <small>Atualiza com os campos abaixo</small>
+      </div>
+      <NexusAutomationGraph stageName={stages.find(x=>x.id===stage)?.name} taskTitle={title} delayDays={days}/>
+      <p className="nx-flow-note">Clique nos blocos para editar o gatilho ou a tarefa no formulário. O diagrama representa a regra configurada; para executá-la, salve e ative a regra.</p>
+    </section>
     <div className="nx-workflow-layout">
       <section className="nx-workflow-card">
         <button className="nx-workflow-card-head" type="button" onClick={()=>setExpanded(v=>!v)} aria-expanded={expanded}>
@@ -96,8 +106,8 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
           <p className="nx-workflow-intro">Configure um gatilho e uma ação. A regra começa pausada e só executa depois de você ativá-la.</p>
           <form onSubmit={create} className="nx-workflow-form">
             <label>Nome da automação<input value={name} maxLength={100} minLength={3} required placeholder="Ex.: Follow-up dos interessados" onChange={e=>setName(e.target.value)}/></label>
-            <label>Quando o lead mudar para<select value={stage} required onChange={e=>setStage(e.target.value)}><option value="">Selecione uma etapa...</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-            <label>Tarefa a ser criada<input value={title} maxLength={180} minLength={3} required onChange={e=>setTitle(e.target.value)}/></label>
+            <label>Quando o lead mudar para<select id="nx-workflow-stage" value={stage} required onChange={e=>setStage(e.target.value)}><option value="">Selecione uma etapa...</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+            <label>Tarefa a ser criada<input id="nx-workflow-task" value={title} maxLength={180} minLength={3} required onChange={e=>setTitle(e.target.value)}/></label>
             <label>Prazo para execução da tarefa<select value={days} onChange={e=>setDays(e.target.value)}>{Array.from({length:15},(_,i)=>i).map(n=><option key={n} value={n}>{n===0?'Hoje':n===1?'Em 1 dia':'Em '+n+' dias'}</option>)}</select></label>
             <button type="submit" disabled={busy||readonly||!canManage||loading||!stage} className="nx-workflow-primary"><Plus size={17}/>{busy?'Salvando...':'Criar regra'}</button>
             {!canManage&&<p className="nx-workflow-help">Apenas administradores e gerentes podem gerenciar regras.</p>}
