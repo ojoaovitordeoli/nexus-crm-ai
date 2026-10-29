@@ -75,7 +75,8 @@ export default function NexusCommandMenu({
     open={open}
     onOpenChange={onOpenChange}
     label="Central de Comandos NEXUS"
-    className="nexus-command-dialog"
+    contentClassName="nexus-command-dialog"
+    className="nexus-command-root"
     overlayClassName="nexus-command-overlay"
     shouldFilter={false}
     loop>
