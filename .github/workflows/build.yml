@@ -2,6 +2,8 @@ name: Verify Next.js build
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 jobs:
   build:
@@ -14,4 +16,5 @@ jobs:
           cache: npm
           cache-dependency-path: package.json
       - run: npm install --no-audit --no-fund
+      - run: npm test
       - run: npm run build
