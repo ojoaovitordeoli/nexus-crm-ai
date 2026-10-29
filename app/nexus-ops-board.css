@@ -23,7 +23,7 @@
 .staff-command-trigger{background:#302f2b!important;color:#f9f5ea!important;border-color:#302f2b!important;}
 .staff-global-search{background:#fffefb!important;border-radius:8px!important;border-color:#d9d6ce!important;}
 .staff-body{max-width:1600px;padding:30px clamp(20px,4vw,68px) 90px;}
-.staff-motion-scene,.staff-motion-scene *{animation-duration:.01ms!important;}
+.staff-motion-scene,.staff-motion-scene *{animation-duration:.18s!important;}
 .staff-motion-scene--leaving{opacity:1!important;transform:none!important;}
 .nexus-module-strip{display:flex;align-items:center;gap:6px;padding:10px clamp(20px,4vw,68px);background:#f8f6f0;border-bottom:1px solid #dbd8d0;overflow-x:auto;scrollbar-width:thin;}
 .nexus-module-strip-label{margin-right:16px;color:#898b83;font:700 10px ui-monospace,Consolas,monospace;letter-spacing:.11em;white-space:nowrap;}
@@ -135,3 +135,29 @@
 @media(max-width:860px){.staff-sidebar{display:flex;position:fixed;top:0;left:0;transform:translateX(-105%);max-height:100vh;z-index:1000;}.staff-sidebar--open{transform:translateX(0);}.staff-topbar-left>.staff-icon-button{display:grid;}.nexus-module-strip{display:none;}.staff-topbar{padding:0 18px;}.staff-body{padding:20px 15px 70px;}.nxo-indicators{grid-template-columns:repeat(2,minmax(0,1fr));}.nxo-indicator:nth-child(2){border-right:0;}.nxo-indicator:nth-child(-n+2){border-bottom:1px solid #d9d7cf;}.nxo-editorial{grid-template-columns:1fr;}.nxo-editorial-meta{display:none;}.nxo-editorial-copy{padding:28px 24px;}}
 @media(max-width:510px){.staff-tour-button,.staff-top-avatar{display:none!important;}.nxo-editorial h1{font-size:37px;}.nxo-indicator{padding:16px;}.nxo-indicator>strong{font-size:34px;}.nxo-indicator small{font-size:10px;}.nxo-panel-header{padding:20px 16px;}.nxo-panel-header h2{font-size:24px;}.nxo-task-item,.nxo-activity-row,.nxo-action{padding-left:15px;padding-right:15px;}.nxo-stage{grid-template-columns:20px minmax(75px,1fr) minmax(50px,.8fr) 25px;gap:7px;padding:11px 14px;}}
 @media(prefers-reduced-motion:reduce){.nxo-board *{transition:none!important;animation:none!important;}}
+
+
+/* WhatsApp: inbox is a workspace, not a promotional banner. */
+.staff-shell .nx-inbox-head h1{font-size:clamp(29px,3.2vw,43px);}
+.staff-shell .nx-inbox-head p{max-width:720px;}
+.staff-shell .nx-inbox-conn{border-radius:4px;box-shadow:none;flex-wrap:wrap;}
+.staff-shell .nx-inbox-conn>.nx-inbox-button{margin-left:auto;font-size:11px;padding:9px 12px;}
+.staff-shell .nx-inbox-list{background:#f8f7f1;}
+.staff-shell .nx-inbox-thread{background:#fffdf8;}
+.staff-shell .nx-inbox-conversation.selected{background:#ebe9df!important;border-left-color:#a65b3d!important;}
+.staff-shell .nx-inbox-button--primary{background:#30382f;border-color:#30382f;color:#fff;}
+.staff-shell .nx-inbox-button--primary:hover{background:#a15a3c;}
+.nxo-inbox-footer{display:block!important;padding:0!important;background:#faf9f4;border-top:1px solid #d8d7ce;}
+.nxo-inbox-composer{width:100%;display:grid;gap:10px;padding:16px 19px;}
+.nxo-inbox-composer>label{font:700 10px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;color:#786d60;text-transform:uppercase;}
+.nxo-inbox-composer textarea{width:100%;min-height:82px;max-height:190px;padding:13px 14px;border:1px solid #d4d3c9;border-radius:3px;resize:vertical;outline:none;box-sizing:border-box;color:#292c28;background:#fffefa;font:13px/1.6 Arial,system-ui,sans-serif;}
+.nxo-inbox-composer textarea:focus{border-color:#b17459;box-shadow:0 0 0 2px #e9dbcd;}
+.nxo-inbox-composer>div{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.nxo-inbox-composer small{color:#777b70;font-size:10px;line-height:1.5;max-width:390px;}
+.nxo-inbox-composer button{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
+.nxo-inbox-unavailable{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:16px 19px;color:#74776f;font-size:11px;}
+.nxo-inbox-unavailable>span{flex:1;line-height:1.6;}
+.nxo-inbox-unavailable>a{display:inline-flex;align-items:center;gap:7px;color:#8e563e;text-decoration:none;font-weight:700;white-space:nowrap;}
+.dark .nxo-inbox-footer{background:#262e27;border-color:#404940;}
+.dark .nxo-inbox-composer textarea{background:#29352b;border-color:#4c5b4d;color:#fff;}
+@media(max-width:620px){.nxo-inbox-composer>div{align-items:stretch;flex-direction:column;}.nxo-inbox-composer button{justify-content:center;}}
