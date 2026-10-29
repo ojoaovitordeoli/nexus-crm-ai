@@ -10,7 +10,7 @@ export async function POST(request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || 'https://qhizuqcdxivdvjtefofz.supabase.co';
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secret) return NextResponse.json({
-    error: 'Falta SUPABASE_SERVICE_ROLE_KEY no ambiente de Functions do Netlify.'
+    error: 'A chave SUPABASE_SERVICE_ROLE_KEY não está disponível no servidor. No Render, abra Environment, confira a variável e salve com redeploy.'
   },{status:503});
   const header = request.headers.get('authorization') || '';
   if (!header.startsWith('Bearer ')) return NextResponse.json({
