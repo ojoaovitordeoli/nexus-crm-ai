@@ -14,6 +14,7 @@ import {db} from '../lib/supabase';
 import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
 import MotionCalendar from './MotionCalendar';
+import NexusCommandMenu from './NexusCommandMenu';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -75,6 +76,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const navTimer=useRef(null);
   const [navigationOut,setNavigationOut]=useState(false);
   const [motionReplay,setMotionReplay]=useState(0);
+  const [commandOpen,setCommandOpen]=useState(false);
   const spotlight=(event)=>{
     const surface=event.target?.closest?.('.nxp-metric,.nxp-surface,.nxp-contact-card,.nxp-lead-card');
     if(!surface)return;
@@ -275,6 +277,18 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   if(section==='admin')return <main className="staff-denied"><ShieldCheck size={34}/><h1>Acesso restrito</h1><p>Este painel é exclusivo do Super Admin.</p><Link href="/dashboard">Voltar ao painel</Link></main>;
 
   return <div className="staff-shell">
+    <NexusCommandMenu open={commandOpen} onOpenChange={setCommandOpen}
+      dark={dark} onTheme={onToggleTheme}
+      isSuperAdmin={isSuperAdmin}
+      leads={data.leads} contacts={data.contacts} tasks={data.tasks}
+      onNavigate={(path,query)=>{
+        const target='/'+path+(query?'?q='+encodeURIComponent(query):'');
+        if(path===section&&query){window.location.assign(target);return}
+        router.push(target);
+      }}
+      onRefresh={()=>{load()}}
+      onReplay={()=>{if(section==='dashboard')setMotionReplay(v=>v+1);else router.push('/dashboard')}}
+    />
     <aside className={'staff-sidebar '+(mobileOpen?'staff-sidebar--open':'')}>
       <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={23}/></div><div><strong>NEXUS <span>CRM</span></strong><small>WORKSPACE</small></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>SEU ESPAÇO</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}</div>
@@ -294,6 +308,10 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           <div className="staff-breadcrumb"><span>NEXUS / Workspace</span><ChevronRight size={15}/><strong>{page}</strong></div>
         </div>
         <div className="staff-topbar-right">
+          <button type="button" className="staff-command-trigger" onClick={()=>setCommandOpen(true)}
+            aria-label="Abrir paleta de comandos Ctrl K" title="Comandos rápidos (Ctrl + K)">
+            <Zap size={16}/><span>Comandos</span><kbd>Ctrl K</kbd>
+          </button>
           <div className="staff-global-search">
             <Search size={16}/>
             <input type="search" aria-label="Busca geral de leads, contatos e tarefas" placeholder="Buscar em sua operação..."
