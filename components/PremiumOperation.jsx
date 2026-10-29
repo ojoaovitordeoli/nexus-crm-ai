@@ -89,7 +89,7 @@ function Metric({label,value,icon:Icon,tone,footer}){
   return <article className={'nxp-metric nxp-metric--'+tone}><div className="nxp-metric-top"><span>{label}</span><span className="nxp-metric-icon"><Icon size={20}/></span></div><strong>{typeof value==='number'?fmt(shown):value}</strong><div className="nxp-metric-bottom"><span className="nxp-metric-pip"/>{footer}</div></article>;
 }
 
-export function PremiumDashboard({data,counts,loading,organizationName,firstName,openTasks=[],overdueTasks=[],lastSync}){
+export function PremiumDashboard({data,counts,loading,organizationName,firstName,openTasks=[],overdueTasks=[],lastSync,pipelineStages=[]}){
   const [period,setPeriod]=useState(30);
   const [hoverPoint,setHoverPoint]=useState(null);
   const {currentLeads,currentSales,currentAppointments,trend,stages}=useMemo(()=>{
@@ -103,9 +103,13 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
       return {name:day.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''),value:data.leads.filter(l=>{const t=new Date(l.created_at).getTime();return t>=day.getTime()&&t<finish}).length};
     });
     const groups=new Map();
-    data.leads.forEach(l=>{const k=l.status||'Sem etapa';groups.set(k,(groups.get(k)||0)+1)});
+    data.leads.forEach(l=>{
+      const currentStage=pipelineStages.find(s=>s.id===l.pipeline_stage_id);
+      const k=currentStage?.name||(pipelineStages.length?'Sem etapa':l.status||'Sem etapa');
+      groups.set(k,(groups.get(k)||0)+1);
+    });
     return {currentLeads:cLeads,currentSales:cSales,currentAppointments:cAppts,trend,stages:[...groups.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5)};
-  },[data,period]);
+  },[data,period,pipelineStages]);
   const recentIncome=currentSales.reduce((n,item)=>n+Number(item.value||0),0);
   const max=Math.max(1,...trend.map(d=>d.value));
   const chartPoints=trend.map((d,i)=>[16+i*(268/6),105-(d.value/max)*90]);
