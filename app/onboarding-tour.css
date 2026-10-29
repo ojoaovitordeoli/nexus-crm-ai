@@ -1,0 +1,17 @@
+/* Onboarding powered by Driver.js (MIT) */
+.staff-tour-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:39px;padding:0 12px;border-radius:11px;border:1px solid rgba(64,112,231,.17);color:var(--staff-accent);background:var(--staff-surface);font-size:10px;font-weight:850;cursor:pointer;transition:transform .18s,box-shadow .18s}
+.staff-tour-button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 7px 18px rgba(47,83,161,.095);border-color:rgba(64,112,231,.33)}
+.staff-tour-button:disabled{opacity:.5;cursor:wait}
+.nexus-tour-popover.driver-popover{border:1px solid rgba(92,145,240,.23)!important;border-radius:18px!important;background:rgba(255,255,255,.97)!important;backdrop-filter:blur(18px);box-shadow:0 24px 70px rgba(13,38,87,.25)!important;padding:20px 22px!important;font-family:'DM Sans',system-ui,sans-serif!important;max-width:min(365px,calc(100vw - 36px))!important}
+.nexus-tour-popover .driver-popover-title{font:850 17px/1.4 Manrope,'DM Sans',sans-serif!important;letter-spacing:-.04em;color:#182f5a!important}
+.nexus-tour-popover .driver-popover-description{color:#647893!important;font-size:12px!important;line-height:1.75!important;margin-top:8px!important}
+.nexus-tour-popover .driver-popover-progress-text{color:#8598b1!important;font-size:10px!important}
+.nexus-tour-popover .driver-popover-next-btn,.nexus-tour-popover .driver-popover-done-btn{background:linear-gradient(110deg,#396ef6,#5b8cfb)!important;color:white!important;border:0!important;border-radius:9px!important;font-size:11px!important;font-weight:850!important;text-shadow:none!important;padding:10px 14px!important}
+.nexus-tour-popover .driver-popover-prev-btn{background:#eef4ff!important;color:#3867d8!important;border:1px solid rgba(76,118,222,.15)!important;border-radius:9px!important;font-size:11px!important;font-weight:800!important;text-shadow:none!important;padding:9px 13px!important}
+.nexus-tour-popover .driver-popover-close-btn{color:#8fa1ba!important}
+.dark .nexus-tour-popover.driver-popover{background:#13283d!important;border-color:rgba(158,200,241,.2)!important}
+.dark .nexus-tour-popover .driver-popover-title{color:#e8f3ff!important}
+.dark .nexus-tour-popover .driver-popover-description{color:#9ab1cd!important}
+@media(max-width:1420px){.staff-tour-button span{display:none}.staff-tour-button{width:39px;padding:0}}
+@media(max-width:700px){.staff-tour-button{height:35px;width:35px}.nexus-tour-popover.driver-popover{padding:17px!important}}
+@media(prefers-reduced-motion:reduce){.staff-tour-button{transition:none!important}}
