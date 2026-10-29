@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
+import {PremiumReports,PremiumSettings} from './PremiumReporting';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -19,9 +20,11 @@ const MENU=[
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
+  {path:'reports',label:'Relatórios',icon:Activity},
+  {path:'settings',label:'Configurações',icon:ShieldCheck},
   {path:'minha-area',label:'Meu perfil',icon:UserRound}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp',agenda:'Agenda',tasks:'Minhas tarefas','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -316,6 +319,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           organizationName={currentOrganization.name} contacts={data.contacts}
         />}
 
+        {section==='reports'&&<PremiumReports data={data} counts={counts} orgName={currentOrganization.name} readonly={readonly}/>}
+        {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark}/>}
         {section==='tasks'&&<>
           <div className="staff-page-header"><div><span className="staff-kicker">ORGANIZAÇÃO / ROTINA</span><h1>Minhas tarefas</h1><p>Organize as atividades da sua empresa e mantenha tudo em dia.</p></div><span className="staff-page-counter">{openTasks.length} em aberto</span></div>
           <section className="staff-card staff-task-page">
