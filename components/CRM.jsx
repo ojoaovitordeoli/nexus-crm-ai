@@ -101,7 +101,7 @@ export default function CRM({section}){
  if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Configuração pendente</h1><p className="muted">O site está publicado. Para habilitar o login, confira as variáveis no ambiente da hospedagem.</p>{!configStatus.urlReady&&<Alert><strong>URL faltando ou inválida:</strong> NEXT_PUBLIC_SUPABASE_URL. Use o endereço completo https://SEU-PROJETO.supabase.co</Alert>}{!configStatus.keyReady&&<Alert><strong>Chave pública faltando ou com valor de exemplo:</strong> NEXT_PUBLIC_SUPABASE_ANON_KEY. Use a chave anon ou publishable do mesmo projeto.</Alert>}<p className="small muted">No Render, configure as variáveis de ambiente do serviço. Depois salve e faça novo deploy com build. Nunca insira service_role nem senhas no código público.</p></div></div>;
  if(isLoading)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><p className="muted">Verificando sua sessão e conexão...</p></div></div>;
  if(isAuthScreen){
-  return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(authSwitching?'auth--switching':'')}>
+  return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(authSwitching?'auth--switching ':'')+(forgot?'auth--recover':'')}>
    <div className="auth-v4-aura" aria-hidden="true"/>
    <div className="auth-v4-top"><HeaderLogo/><span>ACESSO SEGURO</span></div>
    <div className="auth-v4-blade" aria-hidden="true" onAnimationEnd={()=>setAuthSwitching(false)}/>
@@ -115,6 +115,15 @@ export default function CRM({section}){
    </form>{section==='login'&&<p style={{textAlign:'center',marginTop:20}}><button className="linkbtn" type="button" onClick={toggleRecovery}>{forgot?'Voltar ao login':'Esqueci minha senha'}</button></p>}
    <p className="small muted" style={{textAlign:'center',marginTop:28}}>NEXUS CRM AI · Acesso protegido pelo Supabase</p>
    </div>
+   <aside className="auth-v4-cover" aria-label="Apresentação do NEXUS">
+     <div className="auth-v4-cover-orbit" aria-hidden="true"><span/><span/><span/></div>
+     <div className="auth-v4-cover-inner">
+       <span className="auth-v4-cover-kicker">NEXUS / OPERATIONS INTELLIGENCE</span>
+       <h2>{forgot?'Seu próximo passo começa aqui.':section==='reset-password'?'Segurança para continuar.':'Sua operação, em outra dimensão.'}</h2>
+       <p>Visibilidade para decidir. Clareza para atender. Um espaço de trabalho feito para evoluir com sua empresa.</p>
+       <span className="auth-v4-cover-foot"><span/> Plataforma multiempresa · Acesso protegido</span>
+     </div>
+   </aside>
   </div></div>;
  }
  if(!session)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Sessão encerrada</h1><p className="muted">Entre com seu e-mail e senha para acessar o CRM.</p><a className="btn primary" href="/login">Ir para login</a></div></div>;
