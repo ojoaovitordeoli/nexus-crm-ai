@@ -55,6 +55,14 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [search,setSearch]=useState('');
   const [statusFilter,setStatusFilter]=useState('all');
   const [taskTitle,setTaskTitle]=useState('');
+  const [taskPriority,setTaskPriority]=useState('medium');
+  const [taskDueDate,setTaskDueDate]=useState('');
+  const [appointmentTitle,setAppointmentTitle]=useState('');
+  const [appointmentStart,setAppointmentStart]=useState('');
+  const [appointmentType,setAppointmentType]=useState('meeting');
+  const [appointmentLocation,setAppointmentLocation]=useState('');
+  const [stages,setStages]=useState([]);
+  const [appointmentFilter,setAppointmentFilter]=useState('upcoming');
   const [taskFilter,setTaskFilter]=useState('open');
   const [period,setPeriod]=useState(30);
   const [mobileOpen,setMobileOpen]=useState(false);
@@ -68,46 +76,37 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const page=PAGES[section]||'Visão geral';
 
   useEffect(()=>{setSearch('');setStatusFilter('all');setMobileOpen(false)},[section,organizationId]);
+  const operation=useCallback(async(payload=null)=>{
+    if(!db)throw new Error('Conexão com Supabase indisponível.');
+    const {data:{session:authSession},error:sessionError}=await db.auth.getSession();
+    if(sessionError||!authSession?.access_token)throw new Error('Sua sessão expirou. Entre novamente.');
+    const method=payload?'POST':'GET';
+    const response=await fetch(payload?'/api/operation':'/api/operation?org_id='+encodeURIComponent(organizationId),{
+      method,
+      headers:{Authorization:'Bearer '+authSession.access_token,...(payload?{'Content-Type':'application/json'}:{})},
+      ...(payload?{body:JSON.stringify({org_id:organizationId,...payload})}:{})
+    });
+    const result=await response.json().catch(()=>null);
+    if(!response.ok)throw new Error(result?.error||'Falha de comunicação com o servidor.');
+    return result;
+  },[organizationId]);
   const load=useCallback(async()=>{
-    if(!db||!validOrg){
+    if(!validOrg){
       setData({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
       setCounts({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
-      setLoading(false);return;
+      setStages([]);setLoading(false);return;
     }
     setLoading(true);setError('');
     try{
-      const [leads,tasks,contacts,appointments,sales,leadCount,taskCount,contactCount,appointmentCount,saleCount]=await Promise.all([
-        db.from('leads').select('id,source,status,temperature,created_at,contact:contacts(id,first_name,last_name,whatsapp)').eq('organization_id',organizationId).order('created_at',{ascending:false}).limit(250),
-        db.from('tasks').select('id,title,status,priority,due_date,created_at,created_by').eq('organization_id',organizationId).order('created_at',{ascending:false}).limit(250),
-        db.from('contacts').select('id,first_name,last_name,whatsapp,created_at').eq('organization_id',organizationId).order('created_at',{ascending:false}).limit(250),
-        db.from('appointments').select('*').eq('organization_id',organizationId).order('created_at',{ascending:false}).limit(250),
-        db.from('sales').select('id,value,created_at').eq('organization_id',organizationId).order('created_at',{ascending:false}).limit(250),
-        db.from('leads').select('id',{head:true,count:'exact'}).eq('organization_id',organizationId),
-        db.from('tasks').select('id',{head:true,count:'exact'}).eq('organization_id',organizationId),
-        db.from('contacts').select('id',{head:true,count:'exact'}).eq('organization_id',organizationId),
-        db.from('appointments').select('id',{head:true,count:'exact'}).eq('organization_id',organizationId),
-        db.from('sales').select('id',{head:true,count:'exact'}).eq('organization_id',organizationId)
-      ]);
-      const results={leads,tasks,contacts,appointments,sales};
-      const working={};
-      const issues=[];
-      Object.entries(results).forEach(([key,result])=>{
-        if(result.error){issues.push(key+': '+result.error.message);working[key]=[]}
-        else working[key]=result.data||[];
-      });
-      setData(working);
-      setCounts({
-        leads:leadCount.error?working.leads.length:(leadCount.count||0),
-        tasks:taskCount.error?working.tasks.length:(taskCount.count||0),
-        contacts:contactCount.error?working.contacts.length:(contactCount.count||0),
-        appointments:appointmentCount.error?working.appointments.length:(appointmentCount.count||0),
-        sales:saleCount.error?working.sales.length:(saleCount.count||0)
-      });
-      if(issues.length)setError('Alguns módulos ainda não carregaram: '+issues.join(' · ')+'. Verifique as tabelas e permissões da operação no Supabase.');
+      const result=await operation();
+      setData(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
+      setCounts(result.counts||{leads:0,contacts:0,appointments:0,sales:0,tasks:0});
+      setStages(result.stages||[]);
+      if(result.warnings?.length)setError('Algumas informações não puderam ser carregadas: '+result.warnings.join(' · '));
       setLastSync(new Date());
-    }catch(e){setError('Não foi possível carregar esta operação: '+e.message)}
+    }catch(e){setError('Não foi possível carregar a empresa: '+e.message)}
     finally{setLoading(false)}
-  },[organizationId,validOrg]);
+  },[validOrg,operation]);
   useEffect(()=>{load()},[load]);
 
   const since=useMemo(()=>Date.now()-period*86400000,[period]);
@@ -143,21 +142,46 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   },[data.leads]);
 
   async function createTask(e){
-    e.preventDefault();if(!validOrg||readonly||!taskTitle.trim()||saving)return;
+    e.preventDefault();
+    if(!validOrg||readonly||!taskTitle.trim()||saving)return;
     setSaving(true);setError('');setNotice('');
-    const {error:err}=await db.from('tasks').insert({organization_id:organizationId,title:taskTitle.trim(),created_by:session.id});
-    if(err)setError('Não foi possível criar a tarefa: '+err.message);
-    else{setTaskTitle('');setNotice('Tarefa cadastrada.');await load()}
-    setSaving(false);
+    try{
+      const res=await operation({action:'task_create',title:taskTitle.trim(),priority:taskPriority,due_date:taskDueDate||null});
+      setTaskTitle('');setTaskDueDate('');setTaskPriority('medium');
+      await load();setNotice(res.message||'Tarefa criada.');
+    }catch(e){setError('Não foi possível criar a tarefa: '+e.message)}
+    finally{setSaving(false)}
   }
   async function changeTask(t){
     if(!validOrg||readonly||saving)return;
     setSaving(true);setError('');setNotice('');
     const complete=!['completed','done'].includes(String(t.status||'').toLowerCase());
-    const {error:err}=await db.from('tasks').update({status:complete?'completed':'pending',completed_at:complete?new Date().toISOString():null}).eq('id',t.id).eq('organization_id',organizationId);
-    if(err)setError('Não foi possível atualizar a tarefa: '+err.message);
-    else{setNotice(complete?'Tarefa concluída.':'Tarefa reaberta.');await load()}
-    setSaving(false);
+    try{
+      const res=await operation({action:'task_status',id:t.id,status:complete?'completed':'pending'});
+      await load();setNotice(res.message||'Tarefa atualizada.');
+    }catch(e){setError('Não foi possível atualizar a tarefa: '+e.message)}
+    finally{setSaving(false)}
+  }
+  async function createAppointment(e){
+    e.preventDefault();
+    if(!validOrg||readonly||saving||!appointmentStart||!appointmentTitle.trim())return;
+    setSaving(true);setError('');setNotice('');
+    try{
+      const start=new Date(appointmentStart).toISOString();
+      const res=await operation({action:'appointment_create',title:appointmentTitle.trim(),start_at:start,type:appointmentType,location:appointmentLocation.trim()});
+      setAppointmentTitle('');setAppointmentStart('');setAppointmentLocation('');
+      await load();setNotice(res.message||'Agendamento criado.');
+    }catch(e){setError('Falha ao agendar: '+e.message)}
+    finally{setSaving(false)}
+  }
+  async function updateAppointment(a,next){
+    if(!validOrg||readonly||saving)return;
+    setSaving(true);setError('');setNotice('');
+    try{
+      const res=await operation({action:'appointment_status',id:a.id,status:next});
+      await load();setNotice(res.message||'Agendamento atualizado.');
+    }catch(e){setError('Falha ao atualizar agendamento: '+e.message)}
+    finally{setSaving(false)}
   }
   const assigned=organizationId&&validOrg;
   const displayName=(profile?.full_name||session?.email||'Colaborador').trim();
@@ -206,9 +230,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         />}
         {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId}
-          readonly={readonly} onReload={load}
+          readonly={readonly} stages={stages} onOperation={operation} onReload={load}
         />}
-        {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts}/>}
+        {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='whatsapp'&&<PremiumWhatsApp
           organizationName={currentOrganization.name} contacts={data.contacts}
         />}
@@ -216,7 +240,17 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='tasks'&&<>
           <div className="staff-page-header"><div><span className="staff-kicker">ORGANIZAÇÃO / ROTINA</span><h1>Minhas tarefas</h1><p>Organize as atividades da sua empresa e mantenha tudo em dia.</p></div><span className="staff-page-counter">{openTasks.length} em aberto</span></div>
           <section className="staff-card staff-task-page">
-            {!readonly&&<form className="staff-new-task" onSubmit={createTask}><span className="staff-new-task-icon"><ListTodo size={19}/></span><input placeholder="O que precisa ser feito?" required maxLength={200} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)}/><button disabled={saving||!taskTitle.trim()} type="submit" className="staff-btn staff-btn--primary"><Plus size={18}/> Adicionar tarefa</button></form>}
+            {!readonly&&<form className="staff-new-task" onSubmit={createTask}>
+              <span className="staff-new-task-icon"><ListTodo size={19}/></span>
+              <input placeholder="O que precisa ser feito?" aria-label="Título da tarefa" required minLength={2} maxLength={190} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)}/>
+              <select className="staff-quick-field" value={taskPriority} onChange={e=>setTaskPriority(e.target.value)} aria-label="Prioridade">
+                <option value="low">Baixa</option><option value="medium">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
+              </select>
+              <input className="staff-date-input" type="date" value={taskDueDate} onChange={e=>setTaskDueDate(e.target.value)} aria-label="Prazo da tarefa"/>
+              <button disabled={saving||taskTitle.trim().length<2} type="submit" className="staff-btn staff-btn--primary">
+                <Plus size={18}/>{saving?'Salvando...':'Adicionar tarefa'}
+              </button>
+            </form>}
             {readonly&&<div className="staff-readonly"><ShieldCheck size={18}/> Seu perfil é somente leitura. Você pode acompanhar tarefas, mas não editá-las.</div>}
             <div className="staff-data-controls staff-task-controls"><div className="staff-switch">{[['open','Em aberto'],['done','Concluídas'],['all','Todas']].map(([id,label])=><button key={id} onClick={()=>setTaskFilter(id)} className={taskFilter===id?'active':''}>{label}</button>)}</div><label className="staff-search"><Search size={17}/><input placeholder="Buscar tarefa" value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
             <div className="staff-task-list">{filteredTasks.map(t=><div key={t.id} className="staff-task-row"><button type="button" disabled={readonly||saving} className={'staff-task-check '+(['completed','done'].includes(String(t.status||'').toLowerCase())?'staff-task-check--done':'')} onClick={()=>changeTask(t)} title="Alterar status da tarefa"><Check size={15}/></button><div className="staff-task-copy"><strong className={['completed','done'].includes(String(t.status||'').toLowerCase())?'staff-task-complete':''}>{t.title}</strong><small>{t.due_date?'Prazo: '+date(t.due_date):'Sem prazo definido'}{t.priority?' · Prioridade: '+formatStatus(t.priority):''}</small></div><Chip value={t.status}/></div>)}</div>
@@ -225,13 +259,32 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         </>}
 
         {section==='agenda'&&<>
-          <div className="staff-page-header"><div><span className="staff-kicker">COMPROMISSOS</span><h1>Agenda</h1><p>Consulte os agendamentos registrados na sua empresa.</p></div><span className="staff-page-counter">{number(counts.appointments)} agendamentos</span></div>
-          <section className="staff-card staff-data-card"><div className="staff-card-heading staff-appointment-heading"><div><h3>Agendamentos cadastrados</h3><p>Os dados abaixo são carregados diretamente do banco.</p></div><CalendarDays size={21}/></div>
-            <div className="staff-appointment-list">{data.appointments.map(a=>{
-              const starts=a.scheduled_at||a.start_at||a.starts_at||a.appointment_at||a.appointment_date||a.date;
-              const label=a.title||a.name||a.subject||'Agendamento';
-              return <div className="staff-appointment-row" key={a.id}><span className="staff-appointment-icon"><CalendarDays size={21}/></span><div><strong>{label}</strong><small>{starts?'Data agendada: '+dayTime(starts):'Data e horário não disponíveis neste registro'}</small></div>{a.status&&<Chip value={a.status}/>}</div>
-            })}</div>{!data.appointments.length&&<Empty icon={CalendarDays} title="Nenhum agendamento encontrado" description="Seus agendamentos aparecerão aqui quando forem cadastrados."/>}<div className="staff-table-footer">Até 250 registros recentes. A criação de agendamentos depende da integração do módulo de agenda.</div>
+          <div className="staff-page-header"><div><span className="staff-kicker">COMPROMISSOS</span><h1>Agenda da operação</h1><p>Crie compromissos reais e acompanhe os agendamentos da empresa.</p></div><span className="staff-page-counter">{number(counts.appointments)} agendamentos</span></div>
+          {!readonly&&<section className="staff-card staff-agenda-create">
+            <div className="staff-card-heading"><div><h3>Novo agendamento</h3><p>Registre um compromisso no calendário da empresa.</p></div><CalendarDays size={20}/></div>
+            <form className="staff-agenda-form" onSubmit={createAppointment}>
+              <label>Título<input required minLength={2} maxLength={190} placeholder="Ex.: Reunião com cliente" value={appointmentTitle} onChange={e=>setAppointmentTitle(e.target.value)}/></label>
+              <label>Data e horário<input required type="datetime-local" value={appointmentStart} onChange={e=>setAppointmentStart(e.target.value)}/></label>
+              <label>Tipo<select value={appointmentType} onChange={e=>setAppointmentType(e.target.value)}>
+                <option value="meeting">Reunião</option><option value="call">Ligação</option><option value="followup">Retorno</option><option value="visit">Visita</option><option value="consultation">Consulta</option><option value="exam">Exame</option>
+              </select></label>
+              <label>Local (opcional)<input maxLength={220} placeholder="Online ou endereço" value={appointmentLocation} onChange={e=>setAppointmentLocation(e.target.value)}/></label>
+              <button className="staff-btn staff-btn--primary" disabled={saving||!appointmentTitle.trim()||!appointmentStart} type="submit"><Plus size={17}/>{saving?'Salvando...':'Agendar compromisso'}</button>
+            </form>
+          </section>}
+          <section className="staff-card staff-data-card">
+            <div className="staff-card-heading staff-appointment-heading"><div><h3>Agendamentos da empresa</h3><p>Os registros são salvos no Supabase, não no Google Calendar.</p></div>
+              <div className="staff-switch">{[['upcoming','Próximos'],['all','Todos']].map(([id,v])=><button type="button" className={appointmentFilter===id?'active':''} key={id} onClick={()=>setAppointmentFilter(id)}>{v}</button>)}</div>
+            </div>
+            <div className="staff-appointment-list">{data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&!['cancelled','completed'].includes(a.status))).map(a=><div className="staff-appointment-row" key={a.id}>
+              <span className="staff-appointment-icon"><CalendarDays size={21}/></span><div><strong>{a.title||'Agendamento'}</strong><small>{dayTime(a.start_at)}{a.location?' · '+a.location:''}</small></div>
+              <Chip value={a.status}/>
+              {!readonly&&<select className="staff-appt-status" aria-label={'Status de '+a.title} value={a.status||'scheduled'} disabled={saving} onChange={e=>updateAppointment(a,e.target.value)}>
+                <option value="scheduled">Agendado</option><option value="confirmed">Confirmado</option><option value="completed">Concluído</option><option value="cancelled">Cancelado</option><option value="no_show">Não compareceu</option>
+              </select>}
+            </div>)}</div>
+            {!data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&!['cancelled','completed'].includes(a.status))).length&&<Empty icon={CalendarDays} title="Nenhum agendamento neste filtro" description="Crie um agendamento ou escolha a opção Todos."/>}
+            <div className="staff-table-footer">Agenda interna do NEXUS CRM. Sincronização externa depende de uma integração autorizada.</div>
           </section>
         </>}
 
