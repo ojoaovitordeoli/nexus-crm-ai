@@ -2,7 +2,7 @@ import {spawn} from 'node:child_process';
 import {chromium} from 'playwright';
 
 const origin='http://127.0.0.1:3000';
-const server=spawn('npm',['start'],{env:{...process.env,PORT:'3000'},stdio:['ignore','pipe','pipe']});
+const server=spawn(process.execPath,['node_modules/next/dist/bin/next','start'],{env:{...process.env,PORT:'3000'},stdio:['ignore','pipe','pipe']});
 let serverLog='';
 server.stdout.on('data',b=>{serverLog+=b.toString();});
 server.stderr.on('data',b=>{serverLog+=b.toString();});
