@@ -1,0 +1,129 @@
+/* NEXUS Motion Studio — visible, restrained, replayable interactions.
+   V4 visual; V5 navigation; film 3 entrance choreography. */
+.staff-replay-button{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  height:39px;white-space:nowrap;border:1px solid rgba(64,112,241,.21);
+  background:linear-gradient(125deg,rgba(61,118,255,.1),rgba(100,155,253,.06));
+  color:var(--staff-accent);font-size:10px;font-weight:850;
+  border-radius:11px;padding:0 13px;cursor:pointer;
+  transition:transform .18s,box-shadow .18s,background .18s,border-color .18s;
+}
+.staff-replay-button:hover{background:linear-gradient(125deg,rgba(61,118,255,.18),rgba(100,155,253,.09));box-shadow:0 8px 18px rgba(50,91,200,.1);transform:translateY(-2px);border-color:rgba(64,112,241,.36)}
+.staff-replay-button:active{transform:scale(.97)}
+.staff-replay-button svg{width:14px;height:14px}
+.staff-super-admin-link{margin-top:9px;border-top:1px solid var(--staff-border)!important;border-radius:8px!important;color:var(--staff-accent)}
+.staff-super-admin-link svg:last-child{margin-left:auto}
+.staff-motion-scene--dashboard .nxp-analytics-grid:not(.nxp-analytics-grid--bottom) .nxp-surface:nth-child(1){
+  animation:nexus-panel-reveal .67s cubic-bezier(.2,.8,.2,1) .67s both!important;
+}
+.staff-motion-scene--dashboard .nxp-analytics-grid:not(.nxp-analytics-grid--bottom) .nxp-surface:nth-child(2){
+  animation:nexus-panel-reveal .67s cubic-bezier(.2,.8,.2,1) .78s both!important;
+}
+.staff-motion-scene--dashboard .nxp-analytics-grid--bottom .nxp-surface:nth-child(1){
+  animation:nexus-panel-reveal .62s cubic-bezier(.2,.8,.2,1) .91s both!important;
+}
+.staff-motion-scene--dashboard .nxp-analytics-grid--bottom .nxp-surface:nth-child(2){
+  animation:nexus-panel-reveal .62s cubic-bezier(.2,.8,.2,1) 1.04s both!important;
+}
+.staff-motion-scene--dashboard .nxp-timeline-panel{
+  animation:nexus-panel-reveal .64s cubic-bezier(.2,.8,.2,1) 1.12s both!important;
+}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(1){animation:nexus-card-build .58s cubic-bezier(.2,.8,.2,1) .31s both!important}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(2){animation:nexus-card-build .58s cubic-bezier(.2,.8,.2,1) .42s both!important}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(3){animation:nexus-card-build .58s cubic-bezier(.2,.8,.2,1) .53s both!important}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(4){animation:nexus-card-build .58s cubic-bezier(.2,.8,.2,1) .64s both!important}
+.staff-motion-scene--dashboard .nxp-presentation{animation:nexus-hero-arrive .78s cubic-bezier(.2,.8,.2,1) .05s both!important}
+.staff-motion-scene--dashboard .nxp-graph-line-path{
+  stroke-dasharray:100;stroke-dashoffset:100;
+  animation:nxp-draw 1.45s cubic-bezier(.2,.8,.2,1) 1.13s both!important;
+}
+.staff-motion-scene--dashboard .nxp-donut-segment{
+  animation:nexus-ring-grow 1.15s cubic-bezier(.2,.8,.2,1) both!important;
+}
+.staff-motion-scene--dashboard .nxp-orbit--one{animation:nexus-orbit-reveal .84s cubic-bezier(.2,.8,.2,1) .34s both}
+.staff-motion-scene--dashboard .nxp-orbit-logo{animation:nexus-emblem-reveal 1.15s cubic-bezier(.2,.8,.2,1) .42s both}
+.staff-motion-scene--dashboard .nxp-orbit-glow{animation:nexus-glow-reveal 1.55s ease-out .25s both}
+@keyframes nexus-orbit-reveal{from{opacity:0;transform:scale(.6) rotate(-30deg)}to{opacity:1;transform:scale(1) rotate(-30deg)}}
+@keyframes nexus-emblem-reveal{from{opacity:0;transform:translateY(20px) rotate(-26deg) scale(.7);filter:blur(9px)}to{opacity:1;transform:translateY(0) rotate(-12deg) scale(1);filter:blur(0)}}
+@keyframes nexus-glow-reveal{from{opacity:0;transform:scale(.4)}50%{opacity:.27}to{opacity:.12;transform:scale(1)}}
+/* Single sweep when a scene starts, not a perpetual shimmer */
+.staff-motion-scene--dashboard .nxp-presentation:after{
+  height:3px;bottom:0;left:0;right:0;
+  background:linear-gradient(90deg,transparent 0%,#4e86ff 30%,#40d6bf 51%,#6ea3ff 67%,transparent);
+  transform-origin:left;
+  animation:nexus-stage-beam 1.25s cubic-bezier(.2,.8,.2,1) .23s both;
+}
+@keyframes nexus-stage-beam{0%{opacity:0;transform:scaleX(.03)}26%{opacity:1}100%{opacity:.55;transform:scaleX(1)}}
+.nxp-timeline-panel{margin-top:18px}
+.nxp-timeline{position:relative;padding:0 24px 12px}
+.nxp-timeline:before{
+  content:'';position:absolute;left:44px;top:12px;bottom:26px;width:1px;
+  background:linear-gradient(to bottom,rgba(64,112,242,.26),rgba(64,112,242,.05));pointer-events:none
+}
+.nxp-timeline-row{
+  display:flex;align-items:center;gap:14px;position:relative;min-height:67px;
+  padding:11px 8px 11px 0;color:var(--staff-text);
+  text-decoration:none;border-bottom:1px solid var(--staff-border);
+  border-radius:9px;transition:background-color .17s,transform .17s
+}
+.nxp-timeline-row:hover{background:rgba(75,120,232,.04);transform:translateX(3px)}
+.nxp-timeline-row:last-child{border-bottom:0}
+.nxp-timeline-marker{
+  display:grid;place-items:center;flex-shrink:0;width:39px;height:39px;
+  border:1px solid rgba(85,124,210,.14);background:var(--staff-surface);
+  color:#4874ef;border-radius:12px;position:relative;z-index:1
+}
+.nxp-timeline-row--sale .nxp-timeline-marker{color:#17a58b;background:rgba(41,188,149,.06)}
+.nxp-timeline-row--task .nxp-timeline-marker{color:#9675dc;background:rgba(142,112,220,.065)}
+.nxp-timeline-row--appointment .nxp-timeline-marker{color:#db9a46;background:rgba(225,164,70,.07)}
+.nxp-timeline-copy{display:grid;gap:5px;flex:1;min-width:0}
+.nxp-timeline-copy strong{font-size:11px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nxp-timeline-copy small{font-size:10px;color:var(--staff-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nxp-timeline-row time{font-size:10px;color:var(--staff-muted);white-space:nowrap}
+.nxp-timeline-row>svg:last-child{color:#9bb0cd;flex-shrink:0}
+.staff-motion-scene--dashboard .nxp-timeline-row{animation:nexus-timeline-build .42s cubic-bezier(.2,.8,.2,1) var(--entry-delay,1s) both}
+@keyframes nexus-timeline-build{from{opacity:0;transform:translate3d(-11px,8px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+.nxp-metric::after{
+  background:radial-gradient(225px circle at var(--pointer-x,50%) var(--pointer-y,15%),rgba(71,125,255,.12),transparent 66%)!important;
+  opacity:0!important;transition:opacity .22s ease;pointer-events:none;
+}
+.nxp-metric:hover::after{opacity:1!important}
+.nxp-surface,.nxp-contact-card,.nxp-lead-card{position:relative;isolation:isolate}
+.nxp-surface::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(300px circle at var(--pointer-x,50%) var(--pointer-y,0%),rgba(98,155,247,.072),transparent 62%);
+  opacity:0;transition:opacity .22s
+}
+.nxp-surface:hover::before{opacity:1}
+.dark .nxp-surface::before{
+  background:radial-gradient(300px circle at var(--pointer-x,50%) var(--pointer-y,0%),rgba(99,185,238,.085),transparent 63%)
+}
+/* visible transitions for views and agenda, without blocking actions */
+.staff-motion-scene--agenda .motion-calendar-grid{animation:nexus-calendar-open .72s cubic-bezier(.2,.8,.2,1) .08s both!important}
+.staff-motion-scene--agenda .staff-agenda-create{animation:nexus-panel-reveal .58s cubic-bezier(.2,.8,.2,1) .27s both!important}
+.staff-motion-scene--agenda .staff-data-card{animation:nexus-panel-reveal .58s cubic-bezier(.2,.8,.2,1) .43s both!important}
+.staff-motion-scene--leads .nxp-board-column,.staff-motion-scene--contacts .nxp-contact-card{
+  animation-duration:.62s!important
+}
+@media(max-width:1160px){
+  .staff-replay-button span{display:none}
+  .staff-replay-button{width:39px;padding:0}
+}
+@media(max-width:550px){
+  .staff-replay-button{height:35px;width:35px;border-radius:9px}
+  .nxp-timeline{padding:0 15px 10px}
+  .nxp-timeline:before{left:35px}
+  .nxp-timeline-row{gap:10px}
+  .nxp-timeline-marker{width:36px;height:36px}
+  .nxp-timeline-row time{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ .staff-motion-scene--dashboard .nxp-metric,.staff-motion-scene--dashboard .nxp-presentation,
+ .staff-motion-scene--dashboard .nxp-surface,.staff-motion-scene--dashboard .nxp-timeline-row,
+ .staff-motion-scene--agenda .motion-calendar-grid,.staff-motion-scene--agenda .staff-card,
+ .staff-motion-scene--dashboard .nxp-orbit-logo,.staff-motion-scene--dashboard .nxp-orbit-glow{
+  animation:none!important;filter:none!important;clip-path:none!important;opacity:1!important;transform:none!important
+ }
+ .staff-motion-scene--dashboard .nxp-graph-line-path{animation:none!important;stroke-dashoffset:0!important}
+ .staff-motion-scene--dashboard .nxp-donut-segment{animation:none!important}
+}
