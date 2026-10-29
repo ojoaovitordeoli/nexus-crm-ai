@@ -34,7 +34,7 @@ function Item({id,title,description,Icon,onSelect,accent=false}){
 }
 export default function NexusCommandMenu({
   open,onOpenChange,onNavigate,onRefresh,onTheme,dark,
-  isSuperAdmin=false,onReplay,leads=[],contacts=[],tasks=[]
+  isSuperAdmin=false,leads=[],contacts=[],tasks=[]
 }){
   const [term,setTerm]=useState('');
   useEffect(()=>{if(!open)setTerm('')},[open]);
@@ -65,8 +65,7 @@ export default function NexusCommandMenu({
     {id:'create-task',title:'Criar nova tarefa',description:'Abrir o formulário de tarefas',Icon:Plus,keywords:'criar tarefa adicionar nova atividade',run:()=>{onOpenChange(false);onNavigate('tasks','', 'new')}},
     {id:'create-contact',title:'Cadastrar contato',description:'Abrir cadastro na base de contatos',Icon:ContactRound,keywords:'novo contato adicionar cadastrar pessoa whatsapp',run:()=>{onOpenChange(false);onNavigate('contacts','','new')}},
     {id:'refresh',title:'Atualizar dados',description:'Recarregar os registros da empresa',Icon:RefreshCw,keywords:'atualizar sincronizar dados recarregar',run:()=>{onOpenChange(false);onRefresh()}},
-    {id:'theme',title:dark?'Ativar modo claro':'Ativar modo escuro',description:'Mudar aparência do CRM',Icon:dark?Sun:Moon,keywords:'tema aparência claro escuro',run:()=>{onOpenChange(false);onTheme()}},
-    {id:'motion',title:'Rever apresentação',description:'Reproduzir a entrada animada do Dashboard',Icon:Play,keywords:'animações replay efeitos apresentação',run:()=>{onOpenChange(false);onReplay()}}
+    {id:'theme',title:dark?'Ativar modo claro':'Ativar modo escuro',description:'Mudar aparência do CRM',Icon:dark?Sun:Moon,keywords:'tema aparência claro escuro',run:()=>{onOpenChange(false);onTheme()}}
   ].filter(item=>!query||simplify(item.title+' '+item.description+' '+item.keywords).includes(query));
   const hasResults=records.length+places.length+extras.length+(adminVisible?1:0)>0;
   const go=(path,search)=>{onOpenChange(false);onNavigate(path,search)};
