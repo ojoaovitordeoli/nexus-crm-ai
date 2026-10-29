@@ -50,7 +50,7 @@ export default function NexusOpsBoard({data,counts,loading,organizationName,firs
       <Link href="/tasks" className="nxo-desk-number"><span>AGENDA DE HOJE</span><strong>{loading?'—':fmt(todayTasks.length)}</strong><small>Tarefas programadas</small></Link>
     </div>
     <div className="nxo-desk-columns">
-      <main className="nxo-desk-primary">
+      <section className="nxo-desk-primary">
         <section className="nxo-desk-queue" aria-label="Fila de prioridades">
           <div className="nxo-desk-section-title"><span className="nxo-desk-overline">01 / O QUE FAZER</span><div className="nxo-desk-section-line"><h2>Sua fila de decisões</h2><Link href="/tasks">Ver rotina inteira <ArrowUpRight size={16}/></Link></div><p>Sem floreios. Cada linha é um trabalho real para acompanhar.</p></div>
           <div className="nxo-desk-queue-list">
@@ -75,7 +75,7 @@ export default function NexusOpsBoard({data,counts,loading,organizationName,firs
             {!activity.length&&<p className="nxo-desk-activity-empty">Ainda não há movimentações registradas nesta empresa.</p>}
           </div>
         </section>
-      </main>
+      </section>
       <aside className="nxo-desk-rail" aria-label="Contexto e ferramentas de trabalho">
         <div className="nxo-desk-rail-intro"><span className="nxo-desk-rail-overline">EM FOCO / OPERAÇÃO</span><h2>O trabalho não<br/>pode parar.</h2><p>Acompanhe a evolução das oportunidades enquanto mantém o atendimento ativo.</p></div>
         <section className="nxo-desk-rail-stages">
