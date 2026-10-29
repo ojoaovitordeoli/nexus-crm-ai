@@ -18,7 +18,7 @@ create table if not exists public.whatsapp_outbox (
   created_by uuid not null,
   recipient_wa_id text not null check (recipient_wa_id ~ '^[0-9]{8,24}$'),
   message_text text not null check (length(message_text) between 1 and 4096),
-  status text not null default 'pending' check (status in ('pending','accepted','failed')),
+  status text not null default 'pending' check (status in ('pending','accepted','failed','uncertain')),
   provider_message_id text,
   failure_code text,
   created_at timestamptz not null default now(),
