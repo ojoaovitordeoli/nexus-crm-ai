@@ -18,12 +18,16 @@ import NexusCommandMenu from './NexusCommandMenu';
 import NexusAutomations from './NexusAutomations';
 import NexusWhatsAppInbox from './NexusWhatsAppInbox';
 import NexusAIInsights from './NexusAIInsights';
+import NexusPersonalChat from './NexusPersonalChat';
+import NexusDirectWhatsApp from './NexusDirectWhatsApp';
+import NexusMetaAds from './NexusMetaAds';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
   {path:'leads',label:'Leads',icon:UsersRound},
   {path:'contacts',label:'Contatos',icon:ContactRound},
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
+  {path:'ads',label:'Meta Ads',icon:TrendingUp},
   {path:'automations',label:'Automações',icon:Workflow},
   {path:'insights',label:'Copiloto IA',icon:Sparkles},
   {path:'agenda',label:'Agenda',icon:CalendarDays},
@@ -32,7 +36,7 @@ const MENU=[
   {path:'settings',label:'Configurações',icon:ShieldCheck},
   {path:'minha-area',label:'Meu perfil',icon:UserRound}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp direto','whatsapp-oficial':'WhatsApp oficial',ads:'Meta Ads',automations:'Automações',insights:'Meu copiloto', 'insights-analise':'Análises IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -429,13 +433,16 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           readonly={readonly} stages={stages} onOperation={operation} onReload={load}
         />}
         {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
-        {section==='whatsapp'&&<NexusWhatsAppInbox
+        {section==='whatsapp'&&<NexusDirectWhatsApp organizationId={organizationId}/>}
+        {section==='whatsapp-oficial'&&<NexusWhatsAppInbox
           organizationId={organizationId} contacts={data.contacts} isSuperAdmin={isSuperAdmin}
         />}
+        {section==='ads'&&<NexusMetaAds organizationId={organizationId}/>}
         {section==='automations'&&<NexusAutomations
           organizationId={organizationId} stages={stages} readonly={readonly}
         />}
-        {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
+        {section==='insights'&&<NexusPersonalChat organizationId={organizationId}/>}
+        {section==='insights-analise'&&<NexusAIInsights organizationId={organizationId}/>}
 
         {section==='reports'&&<PremiumReports data={data} counts={counts} orgName={currentOrganization.name} readonly={readonly}/>}
         {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark}/>}
