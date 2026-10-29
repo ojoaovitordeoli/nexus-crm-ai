@@ -60,7 +60,7 @@ export default function CRM({section}){
    const allowedOrgs=availableOrgs;
    setOrg(old=>{
      const chosen=old||localStorage.getItem('nexus-org')||'';
-     return chosen&&allowedOrgs.some(x=>x.id===chosen)?chosen:result.data?.is_super_admin?'':allowedOrgs[0]?.id||'';
+     return chosen&&allowedOrgs.some(x=>x.id===chosen&&x.status==='active')?chosen:(section==='admin'&&result.data?.is_super_admin?'':allowedOrgs.find(x=>x.status==='active')?.id||'');
    });
   }catch(ex){setError(ex.message||'Erro ao consultar o Supabase.')}finally{setIsLoading(false)}
  },[section,router]);
@@ -118,7 +118,7 @@ export default function CRM({section}){
   </div></div>;
  }
  if(!session)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Sessão encerrada</h1><p className="muted">Entre com seu e-mail e senha para acessar o CRM.</p><a className="btn primary" href="/login">Ir para login</a></div></div>;
- if(!isAdmin)return <StaffWorkspace section={section} session={session} profile={profile} organizations={orgs} members={members} organizationId={org} onOrganizationChange={selectOrg} onSignOut={signOut} dark={dark} onToggleTheme={toggleTheme}/>;
+ if(!isAdmin||section!=='admin')return <StaffWorkspace section={section} session={session} profile={profile} organizations={orgs} members={members} organizationId={org} onOrganizationChange={selectOrg} onSignOut={signOut} dark={dark} onToggleTheme={toggleTheme} isSuperAdmin={isAdmin}/>;
  const nav=[['dashboard',LayoutDashboard,'Visão geral'],['minha-area',BriefcaseBusiness,'Minha operação'],['leads',ContactRound,'Leads'],['tasks',ListTodo,'Tarefas'],...(isAdmin?[['admin',ShieldCheck,'Super Admin']]:[])];
  const items=[{label:isAdmin&&!org?'Empresas':'Leads',v:metrics?.organizations??metrics?.leads??0},{label:isAdmin&&!org?'Usuários':'Agendamentos',v:metrics?.users??metrics?.appointments??0},{label:'Vendas',v:metrics?.sales??0},{label:'Faturamento',v:money(metrics?.revenue??0)}];
  return <div className="shell">
