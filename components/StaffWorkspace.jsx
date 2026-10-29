@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Activity,ArrowRight,ArrowUpRight,Bell,BriefcaseBusiness,CalendarDays,Compass,
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
-  LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,
+  LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,Sparkles,
   Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
   UserRound,UsersRound,X
 } from 'lucide-react';
@@ -17,6 +17,7 @@ import MotionCalendar from './MotionCalendar';
 import NexusCommandMenu from './NexusCommandMenu';
 import NexusAutomations from './NexusAutomations';
 import NexusWhatsAppInbox from './NexusWhatsAppInbox';
+import NexusAIInsights from './NexusAIInsights';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -24,13 +25,14 @@ const MENU=[
   {path:'contacts',label:'Contatos',icon:ContactRound},
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'automations',label:'Automações',icon:Workflow},
+  {path:'insights',label:'Copiloto IA',icon:Sparkles},
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
   {path:'reports',label:'Relatórios',icon:Activity},
   {path:'settings',label:'Configurações',icon:ShieldCheck},
   {path:'minha-area',label:'Meu perfil',icon:UserRound}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp',automations:'Automações',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -418,6 +420,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='automations'&&<NexusAutomations
           organizationId={organizationId} stages={stages} readonly={readonly}
         />}
+        {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
 
         {section==='reports'&&<PremiumReports data={data} counts={counts} orgName={currentOrganization.name} readonly={readonly}/>}
         {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark}/>}
