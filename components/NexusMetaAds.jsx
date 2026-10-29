@@ -43,9 +43,9 @@ export default function NexusMetaAds({organizationId}){
      <div className="nxad-stats">
       <div><small>INVESTIMENTO · 7 DIAS</small><strong>{money(account.spend_7d,account.currency)}</strong></div>
       <div><small>CAMPANHAS CONSULTADAS</small><strong>{count(account.campaigns.length)}</strong></div>
-      <div><small>{account.is_prepay_account?'CRÉDITO PRÉ-PAGO':'SALDO DE COBRANÇA'}</small><strong>{account.is_prepay_account?'Não verificado':account.billing_balance_minor===null?'Não informado':money(minor(account.billing_balance_minor),account.currency)}</strong></div>
+      <div><small>{account.is_prepay_account?'CRÉDITO PRÉ-PAGO':'SALDO DE COBRANÇA'}</small><strong>{account.is_prepay_account?(account.prepaid_balance_label||'Não verificado'):account.billing_balance_minor===null?'Não informado':money(minor(account.billing_balance_minor),account.currency)}</strong></div>
      </div>
-     <p className="nxad-billing-note"><Eye size={15}/> {account.is_prepay_account?'A Meta não confirmou o crédito pré-pago disponível nessa consulta. Consulte o Gerenciador para o valor exato.':'O saldo de cobrança não representa necessariamente dinheiro disponível para anunciar.'} Métricas: últimos 7 dias.</p>
+     <p className="nxad-billing-note"><Eye size={15}/> {account.is_prepay_account?'Crédito pré-pago mostrado apenas quando o meio de pagamento o informa. Confira o valor atualizado no Gerenciador.':'O saldo de cobrança não representa necessariamente dinheiro disponível para anunciar.'} Métricas: últimos 7 dias.</p>
      <div className="nxad-table-scroll"><table><thead><tr><th>Campanha</th><th>Situação</th><th>Gasto · 7 dias</th><th>Impressões</th><th>Cliques</th><th>CTR</th></tr></thead><tbody>
       {account.campaigns.map(c=><tr key={c.id}><td><strong>{c.name}</strong><small>{c.id}</small></td><td><span className="nxad-pill">{status(c.status)}</span></td><td>{money(c.spend_7d,account.currency)}</td><td>{count(c.impressions_7d)}</td><td>{count(c.clicks_7d)}</td><td>{Number(c.ctr_7d||0).toFixed(2).replace('.',',')}%</td></tr>)}
       {!account.campaigns.length&&<tr><td colSpan={6}>Nenhuma campanha disponível para esta conta.</td></tr>}
