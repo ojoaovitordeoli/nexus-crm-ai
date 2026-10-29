@@ -49,20 +49,23 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
     const map=new Map();
     const ordered=[...messages].sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
     for(const msg of ordered){
-      if(!map.has(msg.wa_id))map.set(msg.wa_id,msg);
+      const key=msg.connection_id+'|'+msg.wa_id;
+      if(!map.has(key))map.set(key,msg);
     }
-    return [...map.entries()].filter(([wa])=>{
+    return [...map.entries()].filter(([,msg])=>{
+      const wa=msg.wa_id;
       const name=contacts.find(c=>String(c.whatsapp||'').replace(/\D/g,'').endsWith(wa.replace(/^55/,'')))?.first_name||'';
       return (name+' '+wa).toLowerCase().includes(filter.toLowerCase());
     });
   },[messages,contacts,filter]);
-  const activeWa=selected||people[0]?.[0]||'';
-  const currentMessages=messages.filter(m=>m.wa_id===activeWa).sort((a,b)=>new Date(a.occurred_at)-new Date(b.occurred_at));
+  const activeConversation=selected||people[0]?.[0]||'';
+  const [activeChannel,activeWa='']=activeConversation.split('|');
+  const currentMessages=messages.filter(m=>m.wa_id===activeWa&&m.connection_id===activeChannel).sort((a,b)=>new Date(a.occurred_at)-new Date(b.occurred_at));
   const currentName=contacts.find(c=>String(c.whatsapp||'').replace(/\D/g,'').endsWith(activeWa.replace(/^55/,'')))?.first_name||activeWa;
   const link=activeWa?'https://wa.me/'+activeWa:null;
   const inbound=[...currentMessages].filter(m=>m.direction==='inbound');
   const lastInbound=inbound[inbound.length-1];
-  const activeConnectionId=lastInbound?.connection_id||currentMessages[currentMessages.length-1]?.connection_id||'';
+  const activeConnectionId=activeChannel||'';
   const windowOpen=Boolean(lastInbound&&Date.now()-new Date(lastInbound.occurred_at).getTime()<24*60*60*1000);
   const readyToSend=Boolean(canSend&&outboundReady&&configuredIds.includes(activeConnectionId)&&windowOpen);
   async function sendReply(e){
@@ -139,8 +142,8 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
       <aside className="nx-inbox-list">
         <div className="nx-inbox-title"><Inbox size={19}/><strong>Conversas recebidas</strong><span>{people.length}</span></div>
         <label className="nx-inbox-search"><Search size={17}/><input placeholder="Pesquisar telefone ou contato" aria-label="Pesquisar conversas" value={filter} onChange={e=>setFilter(e.target.value)}/></label>
-        <div className="nx-inbox-conversations">{people.map(([wa,msg])=><button key={wa} type="button" className={'nx-inbox-conversation '+(activeWa===wa?'selected':'')} onClick={()=>setSelected(wa)}>
-          <span className="nx-inbox-avatar">{initial(wa)}</span><span><strong>{contacts.find(c=>String(c.whatsapp||'').replace(/\D/g,'').endsWith(wa.replace(/^55/,'')))?.first_name||wa}</strong><small>{msg.message_type==='text'?(msg.text_body||'Mensagem sem texto'):'Mensagem de '+msg.message_type}</small></span><time>{localDate(msg.occurred_at)}</time>
+        <div className="nx-inbox-conversations">{people.map(([key,msg])=><button key={key} type="button" className={'nx-inbox-conversation '+(activeConversation===key?'selected':'')} onClick={()=>{setSelected(key);setMessageDraft('')}}>
+          <span className="nx-inbox-avatar">{initial(msg.wa_id)}</span><span><strong>{contacts.find(c=>String(c.whatsapp||'').replace(/\D/g,'').endsWith(msg.wa_id.replace(/^55/,'')))?.first_name||msg.wa_id}</strong><small>{msg.message_type==='text'?(msg.text_body||'Mensagem sem texto'):'Mensagem de '+msg.message_type}</small></span><time>{localDate(msg.occurred_at)}</time>
         </button>)}{!people.length&&<div className="nx-inbox-empty"><MessageCircle size={25}/><strong>Sem mensagens sincronizadas</strong><p>Quando um número autorizado receber mensagens pela API oficial, elas aparecerão aqui.</p></div>}</div>
       </aside>
       <section className="nx-inbox-thread">
