@@ -59,7 +59,7 @@ export async function POST(request){
   const [leadTotal,contactTotal,leads,tasks,appointments,sales]=await Promise.all([
     ctx.admin.from('leads').select('id',{head:true,count:'exact'}).eq('organization_id',org),
     ctx.admin.from('contacts').select('id',{head:true,count:'exact'}).eq('organization_id',org),
-    ctx.admin.from('leads').select('created_at,status,source').eq('organization_id',org)
+    ctx.admin.from('leads').select('created_at').eq('organization_id',org)
       .order('created_at',{ascending:false}).limit(250),
     ctx.admin.from('tasks').select('status,due_date').eq('organization_id',org)
       .order('created_at',{ascending:false}).limit(250),
@@ -74,15 +74,8 @@ export async function POST(request){
   const taskItems=tasks.data||[];
   const apptItems=appointments.data||[];
   const saleItems=sales.data||[];
-  const sources={};
-  for(const l of items){
-    if(l.created_at>=oldest){
-      const source=String(l.source||'Não informada').slice(0,45);
-      sources[source]=(sources[source]||0)+1;
-    }
-  }
   const openTasks=taskItems.filter(t=>!['done','completed','cancelled'].includes(String(t.status||'').toLowerCase()));
-  const overdue=openTasks.filter(t=>t.due_date&&new Date(t.due_date).getTime()<now.getTime()).length;
+  const overdue=openTasks.filter(t=>t.due_date&&String(t.due_date).slice(0,10)<now.toISOString().slice(0,10)).length;
   const pendingAppts=apptItems.filter(a=>a.start_at&&new Date(a.start_at).getTime()>=now.getTime()&&!['cancelled','completed'].includes(a.status)).length;
   const recentSales=saleItems.filter(s=>s.created_at>=oldest);
   const metrics={
@@ -90,7 +83,6 @@ export async function POST(request){
     total_leads_banco:leadTotal.count||0,
     total_contatos_banco:contactTotal.count||0,
     leads_novos_amostra:items.filter(l=>l.created_at>=oldest).length,
-    origem_leads_amostra:sources,
     tarefas_abertas_amostra:openTasks.length,
     tarefas_vencidas_amostra:overdue,
     compromissos_futuros_amostra:pendingAppts,
