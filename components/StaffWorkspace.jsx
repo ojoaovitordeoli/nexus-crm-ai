@@ -157,7 +157,18 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const roleLabel=ROLES[role]||'Colaborador';
   const page=PAGES[section]||'Visão geral';
 
-  useEffect(()=>{setSearch('');setStatusFilter('all');setMobileOpen(false);setSearchOpen(false);setNotificationsOpen(false)},[section,organizationId]);
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search);
+    const initial=['leads','contacts','tasks'].includes(section)?(params.get('q')||''):'';
+    setSearch(initial);setStatusFilter('all');setMobileOpen(false);
+    setSearchOpen(false);setNotificationsOpen(false);
+    if(section==='tasks'&&params.has('new')){
+      const timeout=setTimeout(()=>{
+        document.querySelector('input[aria-label="Título da tarefa"]')?.focus();
+      },200);
+      return ()=>clearTimeout(timeout);
+    }
+  },[section,organizationId]);
   useEffect(()=>{
     const onEscape=e=>{
       if(e.key==='Escape'){
@@ -301,10 +312,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       ...(upcoming.length?[{key:'agenda',text:upcoming.length+' compromisso(s) nas próximas 24 horas',href:'/agenda'}]:[])
     ];
   },[data.appointments,overdueTasks]);
-  useEffect(()=>{
-    const q=typeof window!=='undefined'?new URLSearchParams(window.location.search).get('q'):null;
-    if(section==='tasks'&&q)setSearch(q);
-  },[section]);
+  // Query-string filters are handled together with route changes above.
   const assigned=organizationId&&validOrg;
   const displayName=(profile?.full_name||session?.email||'Colaborador').trim();
   const firstName=displayName.split(/\s+/)[0];
@@ -328,9 +336,16 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       dark={dark} onTheme={onToggleTheme}
       isSuperAdmin={isSuperAdmin}
       leads={data.leads} contacts={data.contacts} tasks={data.tasks}
-      onNavigate={(path,query)=>{
-        const target='/'+path+(query?'?q='+encodeURIComponent(query):'');
-        if(path===section&&query){window.location.assign(target);return}
+      onNavigate={(path,query,mode)=>{
+        const target='/'+path+(query?'?q='+encodeURIComponent(query):mode==='new'?'?new=1':'');
+        if(path===section){
+          if(query){
+            setSearch(query);
+            if(path==='contacts')window.dispatchEvent(new CustomEvent('nexus:contact-filter',{detail:{query}}));
+          }
+          if(mode==='new'&&path==='contacts')window.dispatchEvent(new Event('nexus:new-contact'));
+          if(mode==='new'&&path==='tasks')document.querySelector('input[aria-label="Título da tarefa"]')?.focus();
+        }
         router.push(target);
       }}
       onRefresh={()=>{load()}}

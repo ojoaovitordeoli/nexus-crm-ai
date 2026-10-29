@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   Activity,ArrowDownRight,ArrowRight,ArrowUpRight,BarChart3,Briefcase,
   CalendarDays,Check,CheckCheck,ChevronDown,ChevronRight,CircleCheck,
-  Clock3,Columns3,ContactRound,Copy,ExternalLink,Filter,LayoutList,
+  Clock3,Columns3,ContactRound,Copy,Download,ExternalLink,Filter,LayoutList,
   Layers3,ListTodo,MessageCircle,MoreHorizontal,MoveRight,Plus,
   Search,ShieldCheck,Signal,SlidersHorizontal,Sparkles,TrendingUp,
   UserRound,UsersRound,Wallet,X,Zap
@@ -299,8 +299,17 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
 export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,onReload}){
   const [query,setQuery]=useState('');
   useEffect(()=>{
-    const q=new URLSearchParams(window.location.search).get('q');
-    if(q)setQuery(q);
+    const params=new URLSearchParams(window.location.search);
+    if(params.get('q'))setQuery(params.get('q'));
+    if(params.get('new')==='1')setShowCreate(true);
+    const onFilter=e=>setQuery(String(e.detail?.query||''));
+    const onCreate=()=>setShowCreate(true);
+    window.addEventListener('nexus:contact-filter',onFilter);
+    window.addEventListener('nexus:new-contact',onCreate);
+    return ()=>{
+      window.removeEventListener('nexus:contact-filter',onFilter);
+      window.removeEventListener('nexus:new-contact',onCreate);
+    };
   },[]);
   const [showCreate,setShowCreate]=useState(false);
   const [newName,setNewName]=useState('');
@@ -324,8 +333,22 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
   const [selected,setSelected]=useState(null);
   const list=contacts.filter(c=>keyword(display(c),c.whatsapp).includes(query.toLocaleLowerCase('pt-BR')));
   const withPhone=contacts.filter(c=>wa(c.whatsapp)).length;
+  function exportContacts(){
+    if(readonly||!list.length)return;
+    const csvCell=value=>{
+      let str=String(value??'').replace(/\r?\n/g,' ');
+      if(/^[\s]*[=+@-]/.test(str))str="'"+str;
+      return '"'+str.replace(/"/g,'""')+'"';
+    };
+    const rows=[['Nome','WhatsApp','Cadastrado'],...list.map(c=>[display(c),c.whatsapp||'',date(c.created_at)])];
+    const blob=new Blob(['\ufeff'+rows.map(row=>row.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='nexus-contatos-'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    setSuccess('CSV gerado com '+list.length+' contato(s) carregados e filtrados.');
+  }
   return <div className="nxp-premium">
-    <PanelHeader eyebrow="CRM / RELACIONAMENTO" title="Seus contatos" detail="Pessoas em um só lugar, prontas para uma conversa e um relacionamento melhor." right={<div className="nxp-contact-toolbar"><span className="nxp-total"><span/>{fmt(count)} na sua base</span>{!readonly&&<button className="nxp-button nxp-button--primary" type="button" onClick={()=>setShowCreate(v=>!v)}><Plus size={16}/>{showCreate?'Fechar':'Novo contato'}</button>}</div>}/>
+    <PanelHeader eyebrow="CRM / RELACIONAMENTO" title="Seus contatos" detail="Pessoas em um só lugar, prontas para uma conversa e um relacionamento melhor." right={<div className="nxp-contact-toolbar"><span className="nxp-total"><span/>{fmt(count)} na sua base</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={exportContacts} disabled={!list.length} title="Exportar os contatos carregados conforme o filtro atual"><Download size={15}/> Exportar CSV</button>}{!readonly&&<button className="nxp-button nxp-button--primary" type="button" onClick={()=>setShowCreate(v=>!v)}><Plus size={16}/>{showCreate?'Fechar':'Novo contato'}</button>}</div>}/>
 
     {error&&<div className="nxp-error" role="alert">{error}</div>}
     {success&&<div className="nxp-success" role="status"><CircleCheck size={16}/>{success}</div>}
