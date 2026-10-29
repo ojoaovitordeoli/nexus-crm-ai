@@ -4,7 +4,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import {
-  Activity,ArrowRight,ArrowUpRight,Bell,BriefcaseBusiness,CalendarDays,
+  Activity,ArrowRight,ArrowUpRight,Bell,BriefcaseBusiness,CalendarDays,Compass,
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
   LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,
   Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
@@ -77,6 +77,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [navigationOut,setNavigationOut]=useState(false);
   const [motionReplay,setMotionReplay]=useState(0);
   const [commandOpen,setCommandOpen]=useState(false);
+  const [tourLoading,setTourLoading]=useState(false);
   const spotlight=(event)=>{
     const surface=event.target?.closest?.('.nxp-metric,.nxp-surface,.nxp-contact-card,.nxp-lead-card');
     if(!surface)return;
@@ -101,6 +102,47 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     setNavigationOut(true);
     if(navTimer.current)clearTimeout(navTimer.current);
     navTimer.current=setTimeout(()=>router.push('/'+path),165);
+  };
+  const startTour=async()=>{
+    if(tourLoading)return;
+    setTourLoading(true);
+    try{
+      const {driver}=await import('driver.js');
+      const candidates=[
+        {selector:'.staff-logo',title:'Bem-vindo ao NEXUS',detail:'Seu espaço para organizar leads, contatos, tarefas e resultados.'},
+        {selector:'.staff-workspace-picker',title:'Sua empresa',detail:'Os dados são separados por empresa. Se você tiver mais de uma, selecione o espaço correto.'},
+        {selector:'.staff-nav',title:'Menu de trabalho',detail:'Acesse o funil, a agenda, seus contatos, relatórios e configurações.'},
+        {selector:'.staff-command-trigger',title:'Comandos rápidos',detail:'Use Ctrl + K (ou ⌘ + K no Mac) para navegar, pesquisar e executar ações.'},
+        {selector:'.staff-global-search',title:'Busca da operação',detail:'Localize leads, contatos e tarefas carregados para a empresa selecionada.'},
+        {selector:'.nxp-metrics',title:'Indicadores reais',detail:'Acompanhe os números do Supabase e escolha o período da análise.'},
+        {selector:'.nxp-graph-panel',title:'Gráficos animados',detail:'Visualize a evolução dos leads, com informações de cada ponto do gráfico.'},
+        {selector:'.staff-notification-control',title:'Notificações',detail:'Veja tarefas vencidas e compromissos próximos quando houver pendências.'}
+      ];
+      const steps=candidates.filter(item=>{
+        const el=document.querySelector(item.selector);
+        if(!el)return false;
+        const r=el.getBoundingClientRect();
+        return r.width>0&&r.height>0&&r.right>0&&r.left<window.innerWidth;
+      }).map(item=>({
+        element:item.selector,
+        popover:{title:item.title,description:item.detail,side:'bottom',align:'start'}
+      }));
+      if(!steps.length){setNotice('Nenhuma área disponível para o tour nesta tela.');return}
+      driver({
+        showProgress:true,
+        allowClose:true,
+        overlayOpacity:.67,
+        stagePadding:9,
+        stageRadius:16,
+        popoverClass:'nexus-tour-popover',
+        nextBtnText:'Próximo',
+        prevBtnText:'Voltar',
+        doneBtnText:'Concluir',
+        progressText:'{{current}} de {{total}}',
+        steps
+      }).drive();
+    }catch(e){setError('Não foi possível abrir o tour: '+e.message)}
+    finally{setTourLoading(false)}
   };
   const currentOrganization=organizations.find(o=>o.id===organizationId);
   const activeMember=members.find(m=>m.organization_id===organizationId&&m.status==='active');
@@ -308,6 +350,10 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           <div className="staff-breadcrumb"><span>NEXUS / Workspace</span><ChevronRight size={15}/><strong>{page}</strong></div>
         </div>
         <div className="staff-topbar-right">
+          <button type="button" className="staff-tour-button" onClick={startTour} disabled={tourLoading}
+            title="Conhecer a plataforma em um tour interativo" aria-label="Iniciar tour do CRM">
+            <Compass size={16}/><span>Tour</span>
+          </button>
           <button type="button" className="staff-command-trigger" onClick={()=>setCommandOpen(true)}
             aria-label="Abrir paleta de comandos Ctrl K" title="Comandos rápidos (Ctrl + K)">
             <Zap size={16}/><span>Comandos</span><kbd>Ctrl K</kbd>
