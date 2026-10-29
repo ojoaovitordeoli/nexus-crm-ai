@@ -76,7 +76,7 @@ try{
     }));
   },{user,token});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:/O trabalho acontece/i}).waitFor({timeout:12000});
+  await page.getByRole('heading',{name:/O que precisa acontecer hoje/i}).waitFor({timeout:12000});
   await page.getByText('Ana Teste',{exact:false}).first().waitFor({timeout:12000});
   if(await page.getByText('Application error: a client-side exception',{exact:false}).count())
     throw new Error('React client exception while rendering dashboard');
@@ -101,7 +101,7 @@ try{
   await page.locator('input[aria-label="Título da tarefa"]').waitFor({timeout:6000});
   mkdirSync('test-artifacts',{recursive:true});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:/O trabalho acontece/i}).waitFor();
+  await page.getByRole('heading',{name:/O que precisa acontecer hoje/i}).waitFor();
   await page.waitForTimeout(300); // dashboard no longer relies on staged decorative effects
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
