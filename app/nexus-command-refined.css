@@ -36,3 +36,7 @@
 .dark .nexus-command-footer{background:rgba(14,33,39,.76)}.dark .nexus-command-footer kbd{background:#27484b!important;color:#c4e5d9}.dark .nexus-command-footer strong{color:#86d4c6!important}
 @media(max-width:700px){.nexus-command-dialog{top:5vh!important;width:calc(100vw - 18px)!important;max-height:87vh;border-radius:16px!important}.nexus-command-heading{padding:12px 14px}.nexus-command-input-wrap{height:62px!important;padding:0 15px!important}.nexus-command-input-wrap>input{font-size:13px!important}.nexus-command-list{max-height:66vh!important}.nexus-command-footer{height:45px!important;padding:0 12px!important;gap:9px!important}}
 @media(prefers-reduced-motion:reduce){.nexus-command-overlay,.nexus-command-dialog{animation:none!important;filter:none!important}}
+
+/* cmdk renders a Command root INSIDE Radix Dialog Content. Keep the list scrollable. */
+.nexus-command-root{display:flex;flex-direction:column;min-height:0;width:100%;max-height:inherit;overflow:hidden}
+.nexus-command-root [cmdk-list]{overscroll-behavior:contain}
