@@ -10,7 +10,7 @@ export async function POST(request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qhizuqcdxivdvjtefofz.supabase.co';
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceKey) return NextResponse.json(
-    { error: 'Configuração do servidor pendente: SUPABASE_SERVICE_ROLE_KEY. Cadastre-a apenas no Netlify, nunca no GitHub.' },
+    { error: 'Configuração do servidor pendente: SUPABASE_SERVICE_ROLE_KEY. Cadastre-a em Environment no Render e aplique um novo deploy. Nunca coloque essa chave no GitHub.' },
     { status: 503 }
   );
 
