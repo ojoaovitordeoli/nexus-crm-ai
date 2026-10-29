@@ -1,5 +1,5 @@
 'use client';
-import { useState,useEffect,useCallback } from 'react';
+import { useState,useEffect,useCallback,useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { db, ready, configStatus } from '../lib/supabase';
 import AdminWorkspace from './AdminWorkspace';
@@ -15,6 +15,21 @@ export default function CRM({section}){
  const [session,setSession]=useState(null),[profile,setProfile]=useState(null),[isLoading,setIsLoading]=useState(true);
  const [dark,setDark]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const [email,setEmail]=useState(''),[pass,setPass]=useState(''),[submitting,setSubmitting]=useState(false),[forgot,setForgot]=useState(false);
+ const [authSwitching,setAuthSwitching]=useState(false);
+ const authTimer=useRef(null);
+ const emailInput=useRef(null);
+ useEffect(()=>()=>{if(authTimer.current)clearTimeout(authTimer.current)},[]);
+ const toggleRecovery=()=>{
+   if(authSwitching||submitting)return;
+   setError('');setNotice('');
+   const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+   if(reduced){setForgot(v=>!v);emailInput.current?.focus();return;}
+   setAuthSwitching(true);
+   authTimer.current=setTimeout(()=>{
+     setForgot(v=>!v);
+     emailInput.current?.focus();
+   },350);
+ };
  const [orgs,setOrgs]=useState([]),[members,setMembers]=useState([]),[org,setOrg]=useState('');
  const [users,setUsers]=useState([]),[metrics,setMetrics]=useState(null),[leads,setLeads]=useState([]),[tasks,setTasks]=useState([]),[period,setPeriod]=useState(30),[loadingData,setLoadingData]=useState(false);
  const [orgName,setOrgName]=useState(''),[taskName,setTaskName]=useState(''),[query,setQuery]=useState('');
@@ -86,14 +101,20 @@ export default function CRM({section}){
  if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Configuração pendente</h1><p className="muted">O site está publicado. Para habilitar o login, confira as variáveis no ambiente da hospedagem.</p>{!configStatus.urlReady&&<Alert><strong>URL faltando ou inválida:</strong> NEXT_PUBLIC_SUPABASE_URL. Use o endereço completo https://SEU-PROJETO.supabase.co</Alert>}{!configStatus.keyReady&&<Alert><strong>Chave pública faltando ou com valor de exemplo:</strong> NEXT_PUBLIC_SUPABASE_ANON_KEY. Use a chave anon ou publishable do mesmo projeto.</Alert>}<p className="small muted">No Render, configure as variáveis de ambiente do serviço. Depois salve e faça novo deploy com build. Nunca insira service_role nem senhas no código público.</p></div></div>;
  if(isLoading)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><p className="muted">Verificando sua sessão e conexão...</p></div></div>;
  if(isAuthScreen){
-  return <div className="authwrap"><div className="glass auth"><HeaderLogo/><div className="eyebrow" style={{marginTop:32}}>ACESSO À PLATAFORMA</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
+  return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(authSwitching?'auth--switching':'')}>
+   <div className="auth-v4-aura" aria-hidden="true"/>
+   <div className="auth-v4-top"><HeaderLogo/><span>ACESSO SEGURO</span></div>
+   <div className="auth-v4-blade" aria-hidden="true" onAnimationEnd={()=>setAuthSwitching(false)}/>
+   <div className="auth-v4-content">
+   <div className="eyebrow" style={{marginTop:32}}>NEXUS / WORKSPACE</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
    <form onSubmit={section==='reset-password'?changePassword:forgot?recover:signIn}>
-   {section!=='reset-password'&&<label className="field">E-mail<input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="seu@email.com" autoComplete="email" required/></label>}
+   {section!=='reset-password'&&<label className="field">E-mail<input ref={emailInput} value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="seu@email.com" autoComplete="email" required/></label>}
    {(!forgot||section==='reset-password')&&<label className="field">{section==='reset-password'?'Nova senha':'Senha'}<input value={pass} onChange={e=>setPass(e.target.value)} type="password" minLength={6} placeholder="Sua senha" autoComplete={section==='reset-password'?'new-password':'current-password'} required/></label>}
    {notice&&<div role="status" className="notice success">{notice}</div>}{error&&<Alert error>{error}</Alert>}
    <button disabled={submitting} type="submit" className="btn primary">{submitting?'Processando...':section==='reset-password'?'Salvar nova senha':forgot?'Enviar recuperação':'Entrar'}</button>
-   </form>{section==='login'&&<p style={{textAlign:'center',marginTop:20}}><button className="linkbtn" type="button" onClick={()=>{setForgot(!forgot);setError('');setNotice('')}}>{forgot?'Voltar ao login':'Esqueci minha senha'}</button></p>}
+   </form>{section==='login'&&<p style={{textAlign:'center',marginTop:20}}><button className="linkbtn" type="button" onClick={toggleRecovery}>{forgot?'Voltar ao login':'Esqueci minha senha'}</button></p>}
    <p className="small muted" style={{textAlign:'center',marginTop:28}}>NEXUS CRM AI · Acesso protegido pelo Supabase</p>
+   </div>
   </div></div>;
  }
  if(!session)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Sessão encerrada</h1><p className="muted">Entre com seu e-mail e senha para acessar o CRM.</p><a className="btn primary" href="/login">Ir para login</a></div></div>;
