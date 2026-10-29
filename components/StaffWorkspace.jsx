@@ -8,7 +8,7 @@ import {
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
   LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,Sparkles,
   Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
-  UserRound,UsersRound,X
+  UserRound,UsersRound,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
