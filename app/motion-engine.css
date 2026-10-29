@@ -1,0 +1,106 @@
+/* NEXUS Motion Engine — sequências de interface, inspiradas no vídeo 3.
+   Nenhuma animação bloqueia formulário ou ações. */
+:root{--motion-ease:cubic-bezier(.2,.8,.2,1);--motion-out:cubic-bezier(.55,0,.75,.2)}
+.staff-motion-scene{position:relative;isolation:isolate;animation:nexus-scene-enter .38s var(--motion-ease) both}
+@keyframes nexus-scene-enter{0%{opacity:.36;transform:translate3d(0,14px,0);filter:blur(3px)}58%{filter:blur(0)}100%{opacity:1;transform:translate3d(0,0,0);filter:blur(0)}}
+.staff-motion-scene--leaving{pointer-events:none;animation:nexus-scene-exit .16s var(--motion-out) both!important}
+@keyframes nexus-scene-exit{to{opacity:0;transform:translate3d(0,-9px,0);filter:blur(2px)}}
+.staff-motion-scene:before{content:'';position:absolute;top:0;left:-1%;width:102%;height:2px;z-index:4;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(82,135,255,.3),rgba(63,213,190,.58),transparent);transform-origin:left;animation:nexus-line-wipe .75s var(--motion-ease) both}
+@keyframes nexus-line-wipe{0%{transform:scaleX(.02);opacity:0}35%{opacity:1}100%{transform:scaleX(1);opacity:0}}
+.staff-motion-scene--dashboard .nxp-presentation{
+  animation:nexus-hero-arrive .64s var(--motion-ease) .03s both;
+}
+@keyframes nexus-hero-arrive{
+  0%{opacity:0;transform:translate3d(0,19px,0) scale(.982);clip-path:inset(0 0 60% 0 round 26px)}
+  60%{opacity:1}
+  100%{transform:translate3d(0,0,0) scale(1);clip-path:inset(0 0 0 0 round 26px)}
+}
+.staff-motion-scene--dashboard .nxp-presentation-copy .nxp-overline{animation:nexus-fade-up .38s var(--motion-ease) .16s both}
+.staff-motion-scene--dashboard .nxp-presentation h1{animation:nexus-fade-up .52s var(--motion-ease) .22s both}
+.staff-motion-scene--dashboard .nxp-presentation p{animation:nexus-fade-up .46s var(--motion-ease) .31s both}
+.staff-motion-scene--dashboard .nxp-presentation-actions{animation:nexus-fade-up .45s var(--motion-ease) .39s both}
+.staff-motion-scene--dashboard .nxp-presentation-foot{animation:nexus-fade-up .38s var(--motion-ease) .46s both}
+@keyframes nexus-fade-up{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+.staff-motion-scene--dashboard .nxp-section-title{animation:nexus-fade-up .4s var(--motion-ease) .22s both}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(1){animation:nexus-card-build .46s var(--motion-ease) .24s both}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(2){animation:nexus-card-build .46s var(--motion-ease) .32s both}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(3){animation:nexus-card-build .46s var(--motion-ease) .4s both}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(4){animation:nexus-card-build .46s var(--motion-ease) .48s both}
+@keyframes nexus-card-build{0%{opacity:0;transform:translate3d(0,16px,0) scale(.97);filter:blur(2px)}65%{filter:blur(0)}100%{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}}
+.nxp-metric{isolation:isolate;position:relative;overflow:hidden}
+.nxp-metric:before{content:'';position:absolute;top:-50%;left:-100%;width:75%;height:200%;background:linear-gradient(95deg,transparent,rgba(255,255,255,.36),transparent);transform:rotate(23deg);pointer-events:none;z-index:2}
+.staff-motion-scene--dashboard .nxp-metric:before{animation:nexus-card-glint .88s ease .62s both}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(2):before{animation-delay:.73s}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(3):before{animation-delay:.83s}
+.staff-motion-scene--dashboard .nxp-metric:nth-child(4):before{animation-delay:.93s}
+@keyframes nexus-card-glint{0%{left:-95%;opacity:0}25%{opacity:.75}100%{left:150%;opacity:0}}
+.dark .nxp-metric:before{background:linear-gradient(95deg,transparent,rgba(154,202,255,.15),transparent)}
+.staff-motion-scene--dashboard .nxp-analytics-grid:nth-of-type(2) .nxp-surface:nth-child(1){animation:nexus-panel-reveal .57s var(--motion-ease) .54s both}
+.staff-motion-scene--dashboard .nxp-analytics-grid:nth-of-type(2) .nxp-surface:nth-child(2){animation:nexus-panel-reveal .57s var(--motion-ease) .63s both}
+.staff-motion-scene--dashboard .nxp-analytics-grid--bottom .nxp-surface:nth-child(1){animation:nexus-panel-reveal .55s var(--motion-ease) .69s both}
+.staff-motion-scene--dashboard .nxp-analytics-grid--bottom .nxp-surface:nth-child(2){animation:nexus-panel-reveal .55s var(--motion-ease) .77s both}
+@keyframes nexus-panel-reveal{
+  from{opacity:0;transform:translate3d(0,15px,0) scale(.99);clip-path:inset(0 0 16% 0 round 20px)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1);clip-path:inset(0 0 0 0 round 20px)}
+}
+.staff-motion-scene--dashboard .nxp-graph-line-path{animation:nxp-draw 1.3s var(--motion-ease) .92s both}
+.staff-motion-scene--dashboard .nxp-graph-line-area{animation:nexus-area-reveal .95s var(--motion-ease) 1.06s both;transform-origin:bottom}
+@keyframes nexus-area-reveal{from{opacity:0;transform:scaleY(.05)}to{opacity:.78;transform:scaleY(1)}}
+.staff-motion-scene--dashboard .nxp-graph-line-dot{animation:nexus-dot-pop .33s var(--motion-ease) 1.22s both;transform-box:fill-box;transform-origin:center}
+@keyframes nexus-dot-pop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+.staff-motion-scene--agenda .staff-page-header{animation:nexus-fade-up .34s var(--motion-ease) .03s both}
+.staff-motion-scene--agenda .motion-calendar-grid{animation:nexus-calendar-open .6s var(--motion-ease) .09s both}
+.staff-motion-scene--agenda .staff-agenda-create{animation:nexus-panel-reveal .5s var(--motion-ease) .17s both}
+.staff-motion-scene--agenda .staff-data-card{animation:nexus-panel-reveal .5s var(--motion-ease) .25s both}
+@keyframes nexus-calendar-open{from{opacity:0;transform:translate3d(0,19px,0) scale(.984);filter:blur(3px);clip-path:inset(0 0 24% 0 round 20px)}to{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0);clip-path:inset(0 0 0 0 round 20px)}}
+.staff-motion-scene--leads .nxp-page-head,.staff-motion-scene--contacts .nxp-page-head{animation:nexus-fade-up .36s var(--motion-ease) .04s both}
+.staff-motion-scene--leads .nxp-leads-summary,.staff-motion-scene--contacts .nxp-contact-banner{animation:nexus-panel-reveal .52s var(--motion-ease) .12s both}
+.staff-motion-scene--leads .nxp-leads-workarea,.staff-motion-scene--contacts .nxp-leads-workarea{animation:nexus-panel-reveal .52s var(--motion-ease) .2s both}
+.nxp-board-column{animation:nexus-column-in .5s var(--motion-ease) both;transform-origin:top}
+.nxp-board-column:nth-child(1){animation-delay:.28s}
+.nxp-board-column:nth-child(2){animation-delay:.35s}
+.nxp-board-column:nth-child(3){animation-delay:.42s}
+.nxp-board-column:nth-child(4){animation-delay:.49s}
+.nxp-board-column:nth-child(5){animation-delay:.56s}
+.nxp-board-column:nth-child(n+6){animation-delay:.61s}
+@keyframes nexus-column-in{from{opacity:0;transform:translate3d(0,15px,0) scale(.98)}to{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+.nxp-lead-card{animation:nexus-task-reveal .31s var(--motion-ease) both}
+.nxp-column-cards .nxp-lead-card:nth-child(1){animation-delay:.35s}
+.nxp-column-cards .nxp-lead-card:nth-child(2){animation-delay:.41s}
+.nxp-column-cards .nxp-lead-card:nth-child(3){animation-delay:.47s}
+.nxp-column-cards .nxp-lead-card:nth-child(4){animation-delay:.53s}
+.nxp-column-cards .nxp-lead-card:nth-child(n+5){animation-delay:.58s}
+@keyframes nexus-task-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.nxp-lead-card:hover{box-shadow:0 17px 39px rgba(57,105,200,.14)!important;transform:translateY(-3px)!important}
+.nxp-board-column:has(.nxp-lead-card[draggable=true]:active){border-color:rgba(80,125,241,.35)}
+.nxp-contact-card{animation:nexus-card-build .38s var(--motion-ease) both}
+.nxp-contact-card:nth-child(3n+1){animation-delay:.2s}
+.nxp-contact-card:nth-child(3n+2){animation-delay:.27s}
+.nxp-contact-card:nth-child(3n+3){animation-delay:.34s}
+.staff-motion-scene--tasks .staff-page-header,.staff-motion-scene--reports .v4-report-header{animation:nexus-fade-up .34s var(--motion-ease) both}
+.staff-motion-scene--tasks .staff-task-page{animation:nexus-panel-reveal .46s var(--motion-ease) .11s both}
+.staff-task-row{animation:nexus-task-reveal .33s var(--motion-ease) both}
+.staff-task-row:nth-child(1){animation-delay:.13s}
+.staff-task-row:nth-child(2){animation-delay:.18s}
+.staff-task-row:nth-child(3){animation-delay:.23s}
+.staff-task-row:nth-child(4){animation-delay:.28s}
+.staff-task-row:nth-child(n+5){animation-delay:.32s}
+.staff-nav-item{overflow:hidden;isolation:isolate}
+.staff-nav-item:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 10%,rgba(69,122,244,.11) 45%,transparent 80%);transform:translateX(-112%);opacity:0}
+.staff-nav-item--active:before{animation:nexus-nav-shimmer .55s var(--motion-ease) .12s both}
+@keyframes nexus-nav-shimmer{0%{transform:translateX(-110%);opacity:0}25%{opacity:1}100%{transform:translateX(110%);opacity:0}}
+.staff-nav-item--active>svg{animation:nexus-nav-icon .31s var(--motion-ease) .11s both}
+@keyframes nexus-nav-icon{from{transform:scale(.78);opacity:.5}to{transform:scale(1);opacity:1}}
+.staff-motion-scene--reports .v4-report-tile,.staff-motion-scene--reports .v4-report-panel{will-change:transform,opacity}
+.staff-sidebar .staff-logo-icon{transition:transform .24s var(--motion-ease)}
+.staff-sidebar .staff-logo-icon:hover{transform:rotate(-8deg) scale(1.06)}
+.staff-icon-button:active,.nxp-button:active,.staff-btn:active{transform:scale(.96)}
+.nxp-contact-card:hover .nxp-avatar,.nxp-lead-card:hover .nxp-avatar{box-shadow:0 0 0 5px rgba(94,145,255,.09);transform:scale(1.05);transition:transform .22s,box-shadow .22s}
+.nxp-graph-line-path{stroke-dasharray:100;stroke-dashoffset:100}
+@media(prefers-reduced-motion:reduce){
+  .staff-motion-scene,.staff-motion-scene--leaving,.staff-motion-scene:before,
+  .staff-motion-scene *, .staff-nav-item:before,.staff-nav-item--active>svg,
+  .nxp-lead-card,.nxp-board-column,.motion-calendar-grid{animation:none!important;transition-duration:.01ms!important;filter:none!important;clip-path:none!important}
+  .staff-motion-scene--leaving{opacity:1!important}
+  .nxp-graph-line-path{stroke-dashoffset:0!important}
+}
