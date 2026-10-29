@@ -134,6 +134,16 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
     });
     return {currentLeads:cLeads,currentSales:cSales,currentAppointments:cAppts,trend,stages:[...groups.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5)};
   },[data,period,pipelineStages]);
+  const activity=useMemo(()=>{
+    const events=[
+      ...data.leads.map(x=>({id:'lead-'+x.id,kind:'lead',title:'Novo lead: '+display(x.contact),subtitle:x.source||'Entrada de oportunidade',at:x.created_at,href:'/leads'})),
+      ...data.contacts.map(x=>({id:'contact-'+x.id,kind:'contact',title:'Contato: '+display(x),subtitle:x.whatsapp||'Contato cadastrado',at:x.created_at,href:'/contacts'})),
+      ...data.tasks.map(x=>({id:'task-'+x.id,kind:'task',title:x.title,subtitle:'Tarefa registrada',at:x.created_at,href:'/tasks'})),
+      ...data.appointments.map(x=>({id:'appointment-'+x.id,kind:'appointment',title:x.title||'Agendamento',subtitle:'Compromisso adicionado',at:x.created_at,href:'/agenda'})),
+      ...data.sales.map(x=>({id:'sale-'+x.id,kind:'sale',title:'Venda registrada',subtitle:brl(Number(x.value)||0),at:x.created_at,href:'/reports'}))
+    ].filter(x=>x.at&&Number.isFinite(new Date(x.at).getTime()));
+    return events.sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,7);
+  },[data]);
   const recentIncome=currentSales.reduce((n,item)=>n+Number(item.value||0),0);
   const max=Math.max(1,...trend.map(d=>d.value));
   const chartPoints=trend.map((d,i)=>[16+i*(268/6),105-(d.value/max)*90]);
@@ -205,6 +215,21 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
       <section className="nxp-surface nxp-quick-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">CENTRAL DE TRABALHO</span><h3>Continue seu fluxo</h3><p>Acessos que simplificam a rotina</p></div><span className="nxp-circle-icon"><Zap size={20}/></span></div>
       {[['/leads',UsersRound,'Oportunidades','Consultar leads e etapas'],['/contacts',ContactRound,'Base de contatos','Pessoas e WhatsApp'],['/whatsapp',MessageCircle,'WhatsApp','Ver opções de conexão']].map(([href,Icon,title,desc])=><Link href={href} key={href} className="nxp-quick-link"><span><Icon size={20}/></span><div><strong>{title}</strong><small>{desc}</small></div><ArrowUpRight size={16}/></Link>)}</section>
     </div>
+    <section className="nxp-surface nxp-timeline-panel">
+      <div className="nxp-panel-head"><div><span className="nxp-kicker">ATIVIDADE / TEMPO REAL DOS REGISTROS</span><h3>Movimentações recentes</h3><p>Histórico das últimas ações registradas na empresa</p></div><div className="nxp-circle-icon"><Activity size={20}/></div></div>
+      <div className="nxp-timeline">
+        {activity.map((item,i)=>{
+          const Icon=item.kind==='lead'?UsersRound:item.kind==='contact'?ContactRound:item.kind==='task'?ListTodo:item.kind==='appointment'?CalendarDays:Wallet;
+          return <Link href={item.href} key={item.id} className={'nxp-timeline-row nxp-timeline-row--'+item.kind} style={{'--entry-delay':(i*65+150)+'ms'}}>
+            <span className="nxp-timeline-marker"><Icon size={16}/></span>
+            <span className="nxp-timeline-copy"><strong>{item.title}</strong><small>{item.subtitle}</small></span>
+            <time dateTime={item.at}>{new Date(item.at).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</time><ArrowUpRight size={16}/>
+          </Link>;
+        })}
+        {!activity.length&&<Empty icon={Activity} title="A atividade começa com seus dados" detail="Quando leads, tarefas ou agendamentos forem registrados, cada movimentação aparecerá aqui."/>}
+      </div>
+      <div className="nxp-panel-bottom"><span><i className="nxp-legend"/> Dados reais da empresa</span><Link href="/reports">Abrir relatórios <ArrowRight size={15}/></Link></div>
+    </section>
     <p className="nxp-data-disclaimer">Indicadores de período calculados sobre os últimos 250 registros carregados por módulo; o total de leads é consultado separadamente no banco.</p>
   </div>;
 }
