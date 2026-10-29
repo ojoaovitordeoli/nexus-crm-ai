@@ -91,3 +91,16 @@ export default function NexusCommandDeck({data={},counts={},loading=false,organi
     <Link href="/tasks?new=1" className="deck-task-new"><Plus size={16}/> Criar tarefa <ArrowRight size={15}/></Link>
    </aside>
   </section>
+
+  <section className="deck-lower">
+   <div className="deck-log">
+    <div className="deck-heading"><div><span>05 / LINHA DO TEMPO</span><h2>O que está <em>acontecendo.</em></h2></div><Link href="/reports">Relatórios <ArrowUpRight size={16}/></Link></div>
+    <div className="deck-log-items">{activity.map((a,i)=>{const Icon=a.icon;return <Link className="deck-log-item" key={a.id} href={a.url}><span className="deck-log-number">{String(i+1).padStart(2,'0')}</span><span className="deck-log-icon"><Icon size={16}/></span><div><strong>{a.title}</strong><small>{a.desc}</small></div><time>{date(a.at)}</time><ArrowUpRight size={16}/></Link>})}{!activity.length&&<div className="deck-empty"><Activity size={24}/><strong>Sem atividades recentes.</strong><p>Cadastros, vendas e tarefas registrados aparecerão aqui.</p></div>}</div>
+   </div>
+   <aside className="deck-shortcuts"><span className="deck-kicker">06 / ACESSOS</span><h3>Seu próximo <em>movimento.</em></h3>
+    {[[MessageCircle,'Conversas','Caixa de entrada','/whatsapp'],[ContactRound,'Pessoas','Ver contatos','/contacts'],[CalendarDays,'Calendário','Consultar agenda','/agenda']].map(([Icon,title,subtitle,url])=><Link href={url} key={url}><span><Icon size={17}/></span><div><strong>{title}</strong><small>{subtitle}</small></div><ArrowUpRight size={16}/></Link>)}
+    <p className="deck-disclaimer">Indicadores de período limitados aos últimos 250 registros carregados por módulo. A base total é consultada separadamente.</p>
+   </aside>
+  </section>
+ </div>;
+}
