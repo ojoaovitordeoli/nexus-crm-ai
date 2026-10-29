@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {
   Activity,ArrowDownRight,ArrowRight,ArrowUpRight,BarChart3,Briefcase,
@@ -45,11 +45,32 @@ function WhatsLink({phone,children,className='nxp-linkaction'}){
   return url?<a href={url} target="_blank" rel="noopener noreferrer" className={className}><MessageCircle size={16}/>{children||'WhatsApp'}<ArrowUpRight size={14}/></a>:<span className="nxp-quiet">Sem número</span>;
 }
 function Drawer({data,type='lead',onClose,readonly,stages=[],onStageChange,pending}){
+  const ref=useRef(null);
+  const closeRef=useRef(onClose);
+  closeRef.current=onClose;
+  const opened=Boolean(data);
+  useEffect(()=>{
+    if(!opened)return;
+    const previous=document.activeElement;
+    const root=ref.current;
+    root?.focus();
+    const keyDown=e=>{
+      if(e.key==='Escape'){e.preventDefault();closeRef.current();return}
+      if(e.key!=='Tab'||!root)return;
+      const elements=[...root.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])')];
+      if(!elements.length){e.preventDefault();return}
+      const first=elements[0],last=elements[elements.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+    };
+    document.addEventListener('keydown',keyDown);
+    return ()=>{document.removeEventListener('keydown',keyDown);previous?.focus?.()};
+  },[opened]);
   if(!data)return null;
   const person=type==='lead'?data.contact:data;
   const who=display(person);
   return <div className="nxp-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}>
-    <aside className="nxp-drawer" role="dialog" aria-modal="true" aria-label={'Detalhes de '+who}>
+    <aside ref={ref} tabIndex={-1} className="nxp-drawer" role="dialog" aria-modal="true" aria-label={'Detalhes de '+who}>
       <div className="nxp-drawer-top"><span>VISÃO DO {type==='lead'?'LEAD':'CONTATO'}</span><button type="button" aria-label="Fechar detalhes" onClick={onClose}><X size={21}/></button></div>
       <div className="nxp-drawer-identity"><Avatar value={who} large/><div><h2>{who}</h2><p>{person?.whatsapp||'Telefone não informado'}</p></div></div>
       <div className="nxp-drawer-sep"/>
