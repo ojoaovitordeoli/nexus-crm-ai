@@ -67,6 +67,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [period,setPeriod]=useState(30);
   const [mobileOpen,setMobileOpen]=useState(false);
   const [lastSync,setLastSync]=useState(null);
+  const [globalSearch,setGlobalSearch]=useState('');
+  const [searchOpen,setSearchOpen]=useState(false);
+  const [notificationsOpen,setNotificationsOpen]=useState(false);
   const currentOrganization=organizations.find(o=>o.id===organizationId);
   const activeMember=members.find(m=>m.organization_id===organizationId&&m.status==='active');
   const role=activeMember?.role||'';
@@ -75,7 +78,21 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const roleLabel=ROLES[role]||'Colaborador';
   const page=PAGES[section]||'Visão geral';
 
-  useEffect(()=>{setSearch('');setStatusFilter('all');setMobileOpen(false)},[section,organizationId]);
+  useEffect(()=>{setSearch('');setStatusFilter('all');setMobileOpen(false);setSearchOpen(false);setNotificationsOpen(false)},[section,organizationId]);
+  useEffect(()=>{
+    const onEscape=e=>{
+      if(e.key==='Escape'){
+        setMobileOpen(false);setSearchOpen(false);setNotificationsOpen(false);
+      }
+    };
+    window.addEventListener('keydown',onEscape);
+    return ()=>window.removeEventListener('keydown',onEscape);
+  },[]);
+  useEffect(()=>{
+    if(!notice)return;
+    const timeout=setTimeout(()=>setNotice(''),5400);
+    return ()=>clearTimeout(timeout);
+  },[notice]);
   const operation=useCallback(async(payload=null)=>{
     if(!db)throw new Error('Conexão com Supabase indisponível.');
     const {data:{session:authSession},error:sessionError}=await db.auth.getSession();
@@ -183,6 +200,32 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     }catch(e){setError('Falha ao atualizar agendamento: '+e.message)}
     finally{setSaving(false)}
   }
+  const globalResults=useMemo(()=>{
+    const q=globalSearch.trim().toLocaleLowerCase('pt-BR');
+    if(q.length<2)return [];
+    const leadMatches=data.leads.filter(l=>
+      [nameOf(l.contact),l.contact?.whatsapp,l.source,l.status].join(' ').toLocaleLowerCase('pt-BR').includes(q))
+      .slice(0,4).map(l=>({key:'lead-'+l.id,label:nameOf(l.contact),detail:'Lead · '+(l.source||'Sem origem'),href:'/leads?q='+encodeURIComponent(nameOf(l.contact))}));
+    const contactMatches=data.contacts.filter(c=>
+      [nameOf(c),c.whatsapp].join(' ').toLocaleLowerCase('pt-BR').includes(q))
+      .slice(0,4).map(c=>({key:'contact-'+c.id,label:nameOf(c),detail:'Contato · '+(c.whatsapp||'Sem telefone'),href:'/contacts?q='+encodeURIComponent(nameOf(c))}));
+    const taskMatches=data.tasks.filter(t=>t.title?.toLocaleLowerCase('pt-BR').includes(q))
+      .slice(0,4).map(t=>({key:'task-'+t.id,label:t.title,detail:'Tarefa',href:'/tasks?q='+encodeURIComponent(t.title)}));
+    return [...leadMatches,...contactMatches,...taskMatches].slice(0,9);
+  },[globalSearch,data.leads,data.contacts,data.tasks]);
+  const alerts=useMemo(()=>{
+    const upcoming=data.appointments.filter(a=>a.start_at&&
+      new Date(a.start_at).getTime()>Date.now()&&new Date(a.start_at).getTime()<Date.now()+86400000&&
+      !['completed','cancelled'].includes(a.status));
+    return [
+      ...(overdueTasks.length?[{key:'tasks',text:overdueTasks.length+' tarefa(s) com prazo vencido',href:'/tasks'}]:[]),
+      ...(upcoming.length?[{key:'agenda',text:upcoming.length+' compromisso(s) nas próximas 24 horas',href:'/agenda'}]:[])
+    ];
+  },[data.appointments,overdueTasks]);
+  useEffect(()=>{
+    const q=typeof window!=='undefined'?new URLSearchParams(window.location.search).get('q'):null;
+    if(section==='tasks'&&q)setSearch(q);
+  },[section]);
   const assigned=organizationId&&validOrg;
   const displayName=(profile?.full_name||session?.email||'Colaborador').trim();
   const firstName=displayName.split(/\s+/)[0];
@@ -215,13 +258,49 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     {mobileOpen&&<button className="staff-mobile-overlay" onClick={()=>setMobileOpen(false)} aria-label="Fechar navegação"/>}
     <main className="staff-main">
       <header className="staff-topbar">
-        <div className="staff-topbar-left"><IconButton icon={Menu} title="Abrir menu" onClick={()=>setMobileOpen(true)}/><div className="staff-breadcrumb"><span>Workspace</span><ChevronRight size={15}/><strong>{page}</strong></div></div>
-        <div className="staff-topbar-right"><span className="staff-connected"><span/> Ambiente de trabalho</span><IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={load}/><IconButton icon={dark?Sun:Moon} title="Alternar tema" onClick={onToggleTheme}/><div className="staff-top-avatar"><Initials name={displayName}/></div></div>
+        <div className="staff-topbar-left">
+          <IconButton icon={Menu} title="Abrir menu" onClick={()=>setMobileOpen(true)}/>
+          <div className="staff-breadcrumb"><span>NEXUS / Workspace</span><ChevronRight size={15}/><strong>{page}</strong></div>
+        </div>
+        <div className="staff-topbar-right">
+          <div className="staff-global-search">
+            <Search size={16}/>
+            <input type="search" aria-label="Busca geral de leads, contatos e tarefas" placeholder="Buscar em sua operação..."
+              value={globalSearch} onFocus={()=>setSearchOpen(true)}
+              onChange={e=>{setGlobalSearch(e.target.value);setSearchOpen(true)}}/>
+            <span className="staff-search-hint">Busca rápida</span>
+            {searchOpen&&globalSearch.trim().length>=2&&<div className="staff-search-results" role="region" aria-label="Resultados da busca">
+              <div className="staff-popover-title">RESULTADOS DA EMPRESA</div>
+              {globalResults.map(item=><Link href={item.href} key={item.key} onClick={()=>{setSearchOpen(false);setGlobalSearch('')}}>
+                <span><strong>{item.label}</strong><small>{item.detail}</small></span><ChevronRight size={15}/>
+              </Link>)}
+              {!globalResults.length&&<p>Nenhum resultado entre os registros carregados.</p>}
+              <button type="button" onClick={()=>setSearchOpen(false)}>Fechar busca</button>
+            </div>}
+          </div>
+          <span className="staff-connected"><span/> Operação ativa</span>
+          <div className="staff-notification-control">
+            <button type="button" className="staff-icon-button" onClick={()=>{setNotificationsOpen(v=>!v);setSearchOpen(false)}} aria-label="Abrir notificações" aria-expanded={notificationsOpen}>
+              <Bell size={18}/>
+              {alerts.length>0&&<span className="staff-notification-indicator">{alerts.length}</span>}
+            </button>
+            {notificationsOpen&&<div className="staff-notification-panel">
+              <div className="staff-popover-title">NOTIFICAÇÕES DA OPERAÇÃO</div>
+              {alerts.length?alerts.map(item=><Link key={item.key} href={item.href} onClick={()=>setNotificationsOpen(false)}>
+                <Bell size={16}/><span>{item.text}</span><ArrowRight size={15}/>
+              </Link>):<p>Sem pendências urgentes nos registros carregados.</p>}
+              <button type="button" onClick={()=>setNotificationsOpen(false)}>Fechar notificações</button>
+            </div>}
+          </div>
+          <IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={load}/>
+          <IconButton icon={dark?Sun:Moon} title="Alternar tema" onClick={onToggleTheme}/>
+          <div className="staff-top-avatar" title={displayName}><Initials name={displayName}/></div>
+        </div>
       </header>
       <div className="staff-body">
         {!assigned?<div className="staff-no-access"><span><BriefcaseBusiness size={30}/></span><h2>Seu espaço de trabalho ainda não foi liberado.</h2><p>Peça ao responsável para vincular seu usuário a uma empresa ativa em Super Admin → Acessos.</p><button className="staff-btn staff-btn--outline" onClick={onSignOut}>Sair da conta</button></div>:<>
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
-        {notice&&!error&&<div className="staff-alert staff-alert--success" role="status"><CheckCircle2 size={16}/>{notice}</div>}
+        {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
         {section==='dashboard'&&<PremiumDashboard
           data={data} counts={counts} loading={loading}
