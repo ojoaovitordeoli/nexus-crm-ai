@@ -3,7 +3,7 @@ import {useEffect,useMemo,useState} from 'react';
 import {Command} from 'cmdk';
 import {
  Activity,ArrowRight,BriefcaseBusiness,CalendarDays,ContactRound,
- LayoutDashboard,ListTodo,MessageCircle,Moon,RefreshCw,Search,
+ LayoutDashboard,ListTodo,MessageCircle,Moon,RefreshCw,Search,Workflow,
  Settings2,ShieldCheck,Sun,UsersRound,Play,Wallet,Zap
 } from 'lucide-react';
 
@@ -14,6 +14,7 @@ const routes=[
   ['tasks','Minhas tarefas',ListTodo,'Organizar prioridades','atividades'],
   ['agenda','Agenda',CalendarDays,'Compromissos e agendamentos','reuniões calendário'],
   ['whatsapp','WhatsApp',MessageCircle,'Central de atendimento e conexão','mensagens'],
+  ['automations','Automações',Workflow,'Regras de follow-up e histórico','fluxos gatilhos agentes'],
   ['reports','Relatórios',Activity,'Análises e exportação CSV','dados vendas'],
   ['settings','Configurações',Settings2,'Preferências e permissões','personalização'],
   ['minha-area','Meu perfil',BriefcaseBusiness,'Informações da minha conta','perfil usuário']
