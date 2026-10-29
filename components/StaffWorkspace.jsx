@@ -339,8 +339,12 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       onNavigate={(path,query,mode)=>{
         const target='/'+path+(query?'?q='+encodeURIComponent(query):mode==='new'?'?new=1':'');
         if(path===section){
-          if(query)setSearch(query);
-          if(mode==='new')document.querySelector('input[aria-label="Título da tarefa"]')?.focus();
+          if(query){
+            setSearch(query);
+            if(path==='contacts')window.dispatchEvent(new CustomEvent('nexus:contact-filter',{detail:{query}}));
+          }
+          if(mode==='new'&&path==='contacts')window.dispatchEvent(new Event('nexus:new-contact'));
+          if(mode==='new'&&path==='tasks')document.querySelector('input[aria-label="Título da tarefa"]')?.focus();
         }
         router.push(target);
       }}
