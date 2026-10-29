@@ -35,11 +35,13 @@ export default function CRM({section}){
    const m=await db.from('organization_members').select('organization_id,role,status,organization:organizations(id,name,status)').eq('user_id',user.id).eq('status','active');
    if(m.error)throw m.error;
    setMembers(m.data||[]);
+   let availableOrgs=[];
    if(result.data?.is_super_admin){
     const [o,p]=await Promise.all([db.from('organizations').select('id,name,status,plan').order('name').limit(300),db.from('profiles').select('id,full_name,status,is_super_admin').order('full_name').limit(300)]);
-    if(o.error)throw o.error;if(p.error)throw p.error;setOrgs((o.data||[]).filter(x=>x.status!=='archived'));setUsers(p.data||[]);
-   }else{setOrgs((m.data||[]).map(x=>x.organization).filter(x=>x&&x.status==='active'))}
-   const allowedOrgs=result.data?.is_super_admin?(o.data||[]).filter(x=>x.status!=='archived'):(m.data||[]).filter(x=>x.organization?.status==='active').map(x=>x.organization);
+    if(o.error)throw o.error;if(p.error)throw p.error;availableOrgs=(o.data||[]).filter(x=>x.status!=='archived');setUsers(p.data||[]);
+   }else{availableOrgs=(m.data||[]).map(x=>x.organization).filter(x=>x&&x.status==='active')}
+   setOrgs(availableOrgs);
+   const allowedOrgs=availableOrgs;
    setOrg(old=>{
      const chosen=old||localStorage.getItem('nexus-org')||'';
      return chosen&&allowedOrgs.some(x=>x.id===chosen)?chosen:result.data?.is_super_admin?'':allowedOrgs[0]?.id||'';
