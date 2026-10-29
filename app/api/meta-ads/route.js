@@ -42,6 +42,16 @@ export async function GET(request){
        graph(c.account_id+'/insights',token,{level:'campaign',date_preset:'last_7d',fields:'campaign_id,campaign_name,spend,impressions,reach,clicks,ctr,cpc',limit:100}),
        graph(c.account_id+'/campaigns',token,{fields:'id,name,status,effective_status,daily_budget,lifetime_budget',limit:100})
      ]);
+     // Prepaid available funds are not the same as the account's billing balance.
+     // Some accounts can expose a human-readable amount only with MANAGE access.
+     let prepaidLabel=null;
+     if(account.is_prepay_account){
+       try{
+         const funding=await graph(c.account_id,token,{fields:'funding_source_details'});
+         const display=String(funding?.funding_source_details?.display_string||'');
+         if(/saldo|balance|cr[eé]dito|credit/i.test(display))prepaidLabel=display.slice(0,150);
+       }catch{} // Not receiving the field is NOT a zero balance.
+     }
      const performance=new Map((insights.data||[]).map(x=>[String(x.campaign_id),x]));
      const campaignsOut=(campaigns.data||[]).map(x=>({
        id:x.id,name:x.name,status:x.effective_status||x.status,
@@ -52,7 +62,7 @@ export async function GET(request){
      }));
      const spent7=Number((insights.data||[]).reduce((n,x)=>n+Number(x.spend||0),0).toFixed(2));
      accounts.push({id:c.id,account_id:c.account_id,name:account.name||c.label,currency:account.currency||'BRL',
-        account_status:account.account_status,is_prepay_account:Boolean(account.is_prepay_account),
+        account_status:account.account_status,is_prepay_account:Boolean(account.is_prepay_account),prepaid_balance_label:prepaidLabel,
         billing_balance_minor:account.balance??null,amount_spent_minor:account.amount_spent??null,
         spend_cap_minor:account.spend_cap??null,spend_7d:spent7,
         campaigns:campaignsOut,limited_to_first_100:true});
