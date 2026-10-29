@@ -258,3 +258,13 @@
 @media(max-width:1150px){.nxo-desk-columns{grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);}.nxo-desk-heading h1{font-size:clamp(38px,5vw,64px);}}
 @media(max-width:850px){.nxo-desk-heading{align-items:flex-start;gap:18px;padding-top:18px;flex-direction:column;}.nxo-desk-heading-right{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}.nxo-desk-numbers{grid-template-columns:repeat(2,minmax(0,1fr));}.nxo-desk-number:nth-child(3){border-left:0;}.nxo-desk-number:nth-child(-n+2){border-bottom:1px solid #d5d5cb;}.nxo-desk-number:nth-child(3){padding-left:0;}.nxo-desk-columns{grid-template-columns:1fr;}.nxo-desk-primary{padding-right:0;}.nxo-desk-rail{margin-top:25px;}.nxo-desk-rail-intro h2{font-size:36px;}.nxo-desk-rail-mark{padding-top:36px;}}
 @media(max-width:480px){.nxo-desk-heading h1{font-size:42px;}.nxo-desk-number{padding:19px 12px 19px 0;}.nxo-desk-number:not(:first-child){padding-left:12px;}.nxo-desk-number:nth-child(3){padding-left:0;}.nxo-desk-number strong{font-size:38px;}.nxo-desk-number>span{font-size:9px;}.nxo-desk-queue-item{grid-template-columns:22px minmax(0,1fr) auto;gap:8px;}.nxo-desk-queue-item>svg{display:none;}.nxo-desk-item-main strong{font-size:12px;}.nxo-desk-item-status{font-size:9px;}.nxo-desk-section-title h2{font-size:27px;}.nxo-desk-section-line>a{font-size:10px;}.nxo-desk-queue-actions a{flex:1;white-space:nowrap;padding:11px 9px;font-size:10px;}.nxo-desk-footer{flex-direction:column;align-items:flex-start;}}
+
+
+/* Final visual audit: remove the viewport-sized legacy atmospheric wallpaper.
+   It ended mid-page in full-height screenshots and contradicted the new product direction. */
+.staff-shell,.staff-main,.staff-body{background:#f3f1ea;}
+.staff-shell::before,.dark .staff-shell::before{display:none!important;}
+.staff-topbar{background:#f8f6f0!important;backdrop-filter:none!important;}
+.nexus-module-strip{background:#f8f6f0!important;}
+.dark .staff-shell,.dark .staff-main,.dark .staff-body{background:#1c211e;}
+.dark .staff-topbar,.dark .nexus-module-strip{background:#252c26!important;}
