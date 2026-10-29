@@ -3,6 +3,7 @@ import { useState,useEffect,useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { db, ready, configStatus } from '../lib/supabase';
 import AdminWorkspace from './AdminWorkspace';
+import StaffWorkspace from './StaffWorkspace';
 import Link from 'next/link';
 import { Layers3, LayoutDashboard, BriefcaseBusiness, ContactRound, ListTodo, ShieldCheck, LogOut, Moon, Sun, ChevronRight } from 'lucide-react';
 const title={dashboard:'Visão geral',admin:'Super Admin','minha-area':'Minha operação',leads:'Leads e contatos',tasks:'Tarefas'};
@@ -82,7 +83,7 @@ export default function CRM({section}){
  async function createTask(e){e.preventDefault();if(!taskName.trim()||!org)return;setSubmitting(true);setError('');const {error:e2}=await db.from('tasks').insert({organization_id:org,title:taskName.trim(),created_by:session.id});if(e2)setError(e2.message);else{setTaskName('');await fetchData()}setSubmitting(false)}
  async function completeTask(item){const status=item.status==='completed'?'pending':'completed';const {error:e2}=await db.from('tasks').update({status,completed_at:status==='completed'?new Date().toISOString():null}).eq('id',item.id).eq('organization_id',org);if(e2)setError(e2.message);else await fetchData()}
  const selectOrg=v=>{setOrg(v);localStorage.setItem('nexus-org',v)};
- if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Configuração pendente</h1><p className="muted">O site está publicado. Para habilitar o login, confira as configurações abaixo no Netlify.</p>{!configStatus.urlReady&&<Alert><strong>URL faltando ou inválida:</strong> NEXT_PUBLIC_SUPABASE_URL. Use o endereço completo https://SEU-PROJETO.supabase.co</Alert>}{!configStatus.keyReady&&<Alert><strong>Chave pública faltando ou com valor de exemplo:</strong> NEXT_PUBLIC_SUPABASE_ANON_KEY. Use a chave anon ou publishable do mesmo projeto.</Alert>}<p className="small muted">No Netlify, selecione escopo Builds e contexto Production. Depois salve e faça novo deploy com build. Nunca insira service_role nem senhas no código público.</p></div></div>;
+ if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Configuração pendente</h1><p className="muted">O site está publicado. Para habilitar o login, confira as variáveis no ambiente da hospedagem.</p>{!configStatus.urlReady&&<Alert><strong>URL faltando ou inválida:</strong> NEXT_PUBLIC_SUPABASE_URL. Use o endereço completo https://SEU-PROJETO.supabase.co</Alert>}{!configStatus.keyReady&&<Alert><strong>Chave pública faltando ou com valor de exemplo:</strong> NEXT_PUBLIC_SUPABASE_ANON_KEY. Use a chave anon ou publishable do mesmo projeto.</Alert>}<p className="small muted">No Render, configure as variáveis de ambiente do serviço. Depois salve e faça novo deploy com build. Nunca insira service_role nem senhas no código público.</p></div></div>;
  if(isLoading)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><p className="muted">Verificando sua sessão e conexão...</p></div></div>;
  if(isAuthScreen){
   return <div className="authwrap"><div className="glass auth"><HeaderLogo/><div className="eyebrow" style={{marginTop:32}}>ACESSO À PLATAFORMA</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
@@ -96,6 +97,7 @@ export default function CRM({section}){
   </div></div>;
  }
  if(!session)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Sessão encerrada</h1><p className="muted">Entre com seu e-mail e senha para acessar o CRM.</p><a className="btn primary" href="/login">Ir para login</a></div></div>;
+ if(!isAdmin)return <StaffWorkspace section={section} session={session} profile={profile} organizations={orgs} members={members} organizationId={org} onOrganizationChange={selectOrg} onSignOut={signOut} dark={dark} onToggleTheme={toggleTheme}/>;
  const nav=[['dashboard',LayoutDashboard,'Visão geral'],['minha-area',BriefcaseBusiness,'Minha operação'],['leads',ContactRound,'Leads'],['tasks',ListTodo,'Tarefas'],...(isAdmin?[['admin',ShieldCheck,'Super Admin']]:[])];
  const items=[{label:isAdmin&&!org?'Empresas':'Leads',v:metrics?.organizations??metrics?.leads??0},{label:isAdmin&&!org?'Usuários':'Agendamentos',v:metrics?.users??metrics?.appointments??0},{label:'Vendas',v:metrics?.sales??0},{label:'Faturamento',v:money(metrics?.revenue??0)}];
  return <div className="shell">
