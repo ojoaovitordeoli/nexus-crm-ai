@@ -39,7 +39,7 @@ Código: `app/api/personal-ai/route.js`, `components/NexusPersonalChat.jsx`.
 
 - `/insights`: chat pessoal, conversas históricas e opção de apagar conversa.
 - Cada thread e mensagem têm organização + usuário. Consultas sempre verificam sessão e associação. Nem outro funcionário da mesma empresa pode ler o histórico.
-- Envia ao modelo somente pergunta/histórico daquele usuário mais contagens agregadas autorizadas (leads, contatos e tarefas criadas pelo usuário).
+- Envia ao modelo somente pergunta/histórico daquele usuário, até 20 tarefas atribuídas/criadas pelo usuário e contagens agregadas autorizadas (leads, contatos e tarefas).
 - Resposta é consultiva, sem ferramentas de execução nem envio de mensagens.
 - Consentimento explícito a cada sessão de chat, limites de 4 perguntas/minuto, 40/dia por usuário e 250/dia por empresa (limites simples que não eliminam concorrência de requisições).
 - Persistência com retenção e políticas LGPD a definir; API key sempre no backend.
