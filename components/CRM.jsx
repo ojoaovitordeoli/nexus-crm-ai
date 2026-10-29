@@ -3,10 +3,12 @@ import { useState,useEffect,useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { db, ready, configStatus } from '../lib/supabase';
 import AdminWorkspace from './AdminWorkspace';
+import Link from 'next/link';
+import { Layers3, LayoutDashboard, BriefcaseBusiness, ContactRound, ListTodo, ShieldCheck, LogOut, Moon, Sun, ChevronRight } from 'lucide-react';
 const title={dashboard:'Visão geral',admin:'Super Admin','minha-area':'Minha operação',leads:'Leads e contatos',tasks:'Tarefas'};
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
 function Alert({children,error=false}){return <div className={'notice '+(error?'error':'')} role="alert">{children}</div>}
-function HeaderLogo(){return <span className="brand"><span className="brandicon">✦</span>NEXUS <b>CRM</b></span>}
+function HeaderLogo(){return <span className="brand"><span className="brandicon"><Layers3 size={20} strokeWidth={2}/></span>NEXUS <b>CRM</b></span>}
 export default function CRM({section}){
  const router=useRouter();
  const [session,setSession]=useState(null),[profile,setProfile]=useState(null),[isLoading,setIsLoading]=useState(true);
@@ -35,9 +37,13 @@ export default function CRM({section}){
    setMembers(m.data||[]);
    if(result.data?.is_super_admin){
     const [o,p]=await Promise.all([db.from('organizations').select('id,name,status,plan').order('name').limit(300),db.from('profiles').select('id,full_name,status,is_super_admin').order('full_name').limit(300)]);
-    if(o.error)throw o.error;if(p.error)throw p.error;setOrgs(o.data||[]);setUsers(p.data||[]);
-   }else{setOrgs((m.data||[]).map(x=>x.organization).filter(Boolean))}
-   setOrg(old=>old||localStorage.getItem('nexus-org')||m.data?.[0]?.organization_id||'');
+    if(o.error)throw o.error;if(p.error)throw p.error;setOrgs((o.data||[]).filter(x=>x.status!=='archived'));setUsers(p.data||[]);
+   }else{setOrgs((m.data||[]).map(x=>x.organization).filter(x=>x&&x.status==='active'))}
+   const allowedOrgs=result.data?.is_super_admin?(o.data||[]).filter(x=>x.status!=='archived'):(m.data||[]).filter(x=>x.organization?.status==='active').map(x=>x.organization);
+   setOrg(old=>{
+     const chosen=old||localStorage.getItem('nexus-org')||'';
+     return chosen&&allowedOrgs.some(x=>x.id===chosen)?chosen:result.data?.is_super_admin?'':allowedOrgs[0]?.id||'';
+   });
   }catch(ex){setError(ex.message||'Erro ao consultar o Supabase.')}finally{setIsLoading(false)}
  },[section,router]);
  useEffect(()=>{initialize();if(!db)return;const {data:{subscription}}=db.auth.onAuthStateChange(()=>{setTimeout(()=>initialize(),0)});return()=>subscription.unsubscribe()},[initialize]);
@@ -88,12 +94,12 @@ export default function CRM({section}){
   </div></div>;
  }
  if(!session)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Sessão encerrada</h1><p className="muted">Entre com seu e-mail e senha para acessar o CRM.</p><a className="btn primary" href="/login">Ir para login</a></div></div>;
- const nav=[['dashboard','▣','Visão geral'],['minha-area','◈','Minha operação'],['leads','◎','Leads'],['tasks','☑','Tarefas'],...(isAdmin?[['admin','⚙','Super Admin']]:[])];
+ const nav=[['dashboard',LayoutDashboard,'Visão geral'],['minha-area',BriefcaseBusiness,'Minha operação'],['leads',ContactRound,'Leads'],['tasks',ListTodo,'Tarefas'],...(isAdmin?[['admin',ShieldCheck,'Super Admin']]:[])];
  const items=[{label:isAdmin&&!org?'Empresas':'Leads',v:metrics?.organizations??metrics?.leads??0},{label:isAdmin&&!org?'Usuários':'Agendamentos',v:metrics?.users??metrics?.appointments??0},{label:'Vendas',v:metrics?.sales??0},{label:'Faturamento',v:money(metrics?.revenue??0)}];
  return <div className="shell">
-  <aside className="sidebar"><div className="sidebrand"><HeaderLogo/></div><div className="eyebrow" style={{paddingLeft:13}}>ESPAÇO DE TRABALHO</div><nav className="nav" aria-label="Navegação principal">{nav.map(([path,ico,label])=><a href={'/'+path} key={path} className={section===path?'active':''}><span aria-hidden="true">{ico}</span>{label}</a>)}</nav><div className="sidefoot"><strong>{profile?.full_name||session.email}</strong><p className="muted">{isAdmin?'Super administrador':'Usuário da operação'}</p><button className="btn btnsmall subtle" type="button" onClick={signOut}>Sair da conta</button></div></aside>
-  <main className="main"><header className="top"><div className="mobilebar"><HeaderLogo/></div><div className="eyebrow">NEXUS / {isAdmin?'CONTROLE GLOBAL':'OPERAÇÃO'}</div><div className="topactions"><button type="button" onClick={toggleTheme} className="btn btnsmall subtle" aria-label="Alternar tema">{dark?'☀ Claro':'☾ Escuro'}</button><button className="btn btnsmall subtle" type="button" onClick={signOut}>Sair</button></div></header>
-  <div className="heading"><div><div className="eyebrow">{isAdmin?'PLATAFORMA NEXUS':'PAINEL DE TRABALHO'}</div><h1>{title[section]||'NEXUS CRM'}</h1><p className="muted">Olá, {(profile?.full_name||session.email||'').split(' ')[0]}. Dados reais da sua operação.</p></div><div className="filter"><label className="field">Empresa<select className="textbox" aria-label="Selecionar empresa" value={org} onChange={e=>selectOrg(e.target.value)}><option value="">{isAdmin?'Visão global':'Selecione'}</option>{orgs.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label></div></div>
+  <aside className="sidebar"><div className="sidebrand"><HeaderLogo/></div><div className="eyebrow" style={{paddingLeft:13}}>NAVEGAÇÃO</div><nav className="nav" aria-label="Navegação principal">{nav.map(([path,Icon,label])=><Link href={'/'+path} key={path} className={section===path?'active':''}><Icon size={19} strokeWidth={1.9}/>{label}</Link>)}</nav><div className="sidefoot"><strong>{profile?.full_name||session.email}</strong><p className="muted">{isAdmin?'Proprietário da plataforma':'Membro da operação'}</p><button className="btn btnsmall subtle" type="button" onClick={signOut}><LogOut size={15}/> Sair da conta</button></div></aside>
+  <main className="main"><header className="top"><div className="top-leading"><span>Workspace</span><ChevronRight size={14}/><strong>{title[section]||'NEXUS CRM'}</strong></div><div className="topactions"><button type="button" onClick={toggleTheme} className="btn btnsmall subtle" aria-label="Alternar tema">{dark?<><Sun size={16}/> Claro</>:<><Moon size={16}/> Escuro</>}</button><span className="top-user-avatar" title={profile?.full_name||session.email}>{(profile?.full_name||session.email||'N').split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase()}</span></div></header>
+  <div className={'heading '+(section==='admin'?'heading--admin':'')}><div><div className="eyebrow">{isAdmin?'PLATAFORMA NEXUS':'PAINEL DE TRABALHO'}</div><h1>{title[section]||'NEXUS CRM'}</h1><p className="muted">Olá, {(profile?.full_name||session.email||'').split(' ')[0]}. Dados reais da sua operação.</p></div><div className="filter"><label className="field">Empresa<select className="textbox" aria-label="Selecionar empresa" value={org} onChange={e=>selectOrg(e.target.value)}><option value="">{isAdmin?'Visão global':'Selecione'}</option>{orgs.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label></div></div>
   {error&&<div style={{marginBottom:17}}><Alert error>{error}</Alert></div>}{notice&&<div role="status" className="notice success" style={{marginBottom:17}}>{notice}</div>}
   {!isAdmin&&!org&&<Alert>Sua conta ainda não está vinculada a uma empresa. Solicite acesso ao administrador.</Alert>}
   {section==='admin'&&<AdminWorkspace isAdmin={isAdmin} onRefresh={initialize}/>}
