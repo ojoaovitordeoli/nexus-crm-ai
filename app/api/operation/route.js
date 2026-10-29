@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {runLeadStageAutomations} from '../../../lib/automation-runner';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -153,7 +154,11 @@ export async function POST(request){
     const {error:updateError}=await admin.from('leads').update({pipeline_stage_id:stage.id,pipeline_id:pipeline.id})
       .eq('id',lead.id).eq('organization_id',orgId);
     if(updateError)return fails('Falha ao mover lead: '+updateError.message,500);
-    return reply({ok:true,message:'Lead movido no funil.'});
+    // Execute only after the stage update was saved. Missing migration never blocks the lead.
+    const automation=await runLeadStageAutomations(admin,{
+      organizationId:orgId,leadId:lead.id,stageId:stage.id,actorId:auth.user.id
+    });
+    return reply({ok:true,message:'Lead movido no funil.',automation});
   }
   if(action==='contact_create'){
     const first_name=val(payload?.first_name,130);
