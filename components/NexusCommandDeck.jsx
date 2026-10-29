@@ -52,3 +52,42 @@ export default function NexusCommandDeck({data={},counts={},loading=false,organi
    <aside className="deck-scene-insight"><span>CONTRASTE / DADOS REAIS</span><strong>{fmt(counts.leads)}<small>leads</small></strong><div><span>Empresa</span><b>{organizationName||'Minha operação'}</b></div><div><span>Na sua lista</span><b>{fmt(openTasks.length)} tarefa(s)</b></div></aside>
    <div className="deck-scene-bottom"><span>WORKSPACE / {firstName||'OPERAÇÃO'}</span><span><Radio size={13}/> CONTROLE EM TEMPO REAL DOS REGISTROS</span></div>
   </section>
+
+  <section className="deck-performance">
+   <div className="deck-heading"><div><span>02 / INDICADORES</span><h2>O pulso da operação<span>.</span></h2></div><div className="deck-period" role="group" aria-label="Selecionar período">{[7,30,90].map(n=><button type="button" key={n} className={period===n?'active':''} onClick={()=>setPeriod(n)} aria-pressed={period===n}>{n} dias</button>)}</div></div>
+   <div className="deck-kpis">
+    {[
+      {name:'Oportunidades',value:leads.length,detail:'Novos leads do período',icon:UsersRound,url:'/leads',n:'01'},
+      {name:'Vendas',value:sales.length,detail:cash(revenue)+' registrados',icon:Wallet,url:'/reports',n:'02'},
+      {name:'Tarefas abertas',value:openTasks.length,detail:overdueTasks.length+' com prazo vencido',icon:ListTodo,url:'/tasks',n:'03'},
+      {name:'Agenda',value:appointments.length,detail:'Novos agendamentos do período',icon:CalendarDays,url:'/agenda',n:'04'}
+    ].map(({name,value,detail,icon:Icon,url,n},i)=><Link key={n} href={url} className={'deck-kpi deck-kpi--'+i}>
+      <span className="deck-kpi-title">{n} / {name}<ArrowUpRight size={18}/></span>
+      <strong>{loading?'—':fmt(value)}</strong><small>{detail}</small>
+      <span className="deck-kpi-foot"><Icon size={15}/> Abrir módulo <ArrowRight size={14}/></span>
+    </Link>)}
+   </div>
+  </section>
+  <section className="deck-analysis">
+   <div className="deck-module deck-module--chart">
+    <header className="deck-module-head"><div><span className="deck-kicker">03 / OBSERVATÓRIO</span><h2>Movimento <em>& direção.</em></h2><p>Entradas dos leads da empresa na amostra disponível.</p></div><Link href="/reports" aria-label="Abrir relatórios"><ArrowUpRight size={19}/></Link></header>
+    <div className="deck-tabs" role="group" aria-label="Visualização do gráfico"><button type="button" className={view==='chart'?'active':''} onClick={()=>setView('chart')}>Volume</button><button type="button" className={view==='stages'?'active':''} onClick={()=>setView('stages')}>Etapas</button></div>
+    {view==='chart'?<div className="deck-chart" key={period}>
+      <span className="deck-chart-label"><Activity size={15}/> {fmt(leads.length)} entradas em {period} dias</span>
+      <svg viewBox="0 0 620 230" role="img" aria-label={'Distribuição de leads: '+trend.map(x=>x.label+' '+x.value).join(', ')}>
+       <defs><linearGradient id="deck-chart-fade" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#e3af71" stopOpacity=".3"/><stop offset="100%" stopColor="#e3af71" stopOpacity="0"/></linearGradient></defs>
+       {[52,100,148,195].map(y=><line className="deck-gridline" key={y} x1="18" y1={y} x2="571" y2={y}/>)}
+       <path className="deck-chart-area" d={line+' L 571 210 L 18 210 Z'} fill="url(#deck-chart-fade)"/>
+       <path className="deck-chart-line" d={line} pathLength="100"/>
+       {points.map((p,i)=><circle className="deck-chart-dot" key={i} cx={p.x} cy={p.y} r="4.3"><title>{p.label}: {p.value} lead(s)</title></circle>)}
+      </svg>
+      <div className="deck-chart-axis">{trend.map((d,i)=><span key={i}>{d.label}</span>)}</div>
+    </div>:<div className="deck-stage-bars">{stages.length?stages.map(([label,value])=><div key={label}><span>{label}</span><i><b style={{width:(value/stagePeak*100)+'%'}}/></i><strong>{value}</strong></div>):<p>Sem movimentações por etapa neste período.</p>}</div>}
+    <footer className="deck-module-foot"><span><Signal size={14}/> Dados carregados do Supabase</span><Link href="/leads">Abrir funil <ArrowRight size={15}/></Link></footer>
+   </div>
+   <aside className="deck-module deck-module--tasks">
+    <header className="deck-module-head"><div><span className="deck-kicker">04 / EXECUÇÃO</span><h2>Próximos <em>passos.</em></h2><p>Atenção ao que precisa avançar.</p></div><Link href="/tasks"><ArrowUpRight size={19}/></Link></header>
+    <div className="deck-tasklist">{openTasks.slice(0,5).map((t,i)=><Link href="/tasks" className="deck-task" key={t.id}><span>{String(i+1).padStart(2,'0')}</span><div><strong>{t.title||'Nova tarefa'}</strong><small>{t.due_date?'Até '+date(t.due_date):'Sem prazo definido'}</small></div><ArrowUpRight size={15}/></Link>)}{!openTasks.length&&<div className="deck-empty"><CheckCircle2 size={23}/><strong>Sem tarefas abertas.</strong><p>Novas tarefas aparecerão aqui.</p></div>}</div>
+    <Link href="/tasks?new=1" className="deck-task-new"><Plus size={16}/> Criar tarefa <ArrowRight size={15}/></Link>
+   </aside>
+  </section>
