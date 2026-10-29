@@ -76,7 +76,7 @@ try{
     }));
   },{user,token});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByText('Operador de Teste',{exact:false}).first().waitFor({timeout:12000});
+  await page.getByRole('heading',{name:/O trabalho acontece/i}).waitFor({timeout:12000});
   await page.getByText('Ana Teste',{exact:false}).first().waitFor({timeout:12000});
   if(await page.getByText('Application error: a client-side exception',{exact:false}).count())
     throw new Error('React client exception while rendering dashboard');
@@ -101,10 +101,12 @@ try{
   await page.locator('input[aria-label="Título da tarefa"]').waitFor({timeout:6000});
   mkdirSync('test-artifacts',{recursive:true});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
-  await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
+  await page.getByRole('heading',{name:/O trabalho acontece/i}).waitFor();
+  await page.waitForTimeout(300); // dashboard no longer relies on staged decorative effects
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
+  const size=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:innerWidth}));
+  if(size.width>size.viewport+2)throw new Error('Operational dashboard overflows mobile viewport');
   await page.keyboard.press('Control+k');
   await dialog.waitFor({state:'visible'});
   await page.waitForTimeout(650); // capture fully opaque command dialog, not entry animation
