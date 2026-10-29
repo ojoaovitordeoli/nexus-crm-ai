@@ -7,7 +7,7 @@ import {
   Activity,ArrowRight,ArrowUpRight,Bell,BriefcaseBusiness,CalendarDays,
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
   LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,
-  Moon,Plus,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
+  Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
   UserRound,UsersRound,X
 } from 'lucide-react';
 import {db} from '../lib/supabase';
@@ -50,7 +50,7 @@ function Empty({icon:Icon=Layers3,title,description}){return <div className="sta
 function IconButton({children,icon:Icon,onClick,disabled=false,title}){return <button type="button" className="staff-icon-button" onClick={onClick} disabled={disabled} aria-label={title||'Ação'} title={title}>{Icon?<Icon size={18}/>:children}</button>}
 function MiniStat({label,value,description,icon:Icon,tone,index}){return <div className={'staff-stat staff-stat--'+tone} style={{animationDelay:(index*45)+'ms'}}><div className="staff-stat-head"><span>{label}</span><span className="staff-stat-icon"><Icon size={19}/></span></div><strong>{value}</strong><small>{description}</small></div>}
 
-export default function StaffWorkspace({section,session,profile,organizations,members,organizationId,onOrganizationChange,onSignOut,dark,onToggleTheme}) {
+export default function StaffWorkspace({section,session,profile,organizations,members,organizationId,onOrganizationChange,onSignOut,dark,onToggleTheme,isSuperAdmin=false}) {
   const [data,setData]=useState({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
   const [counts,setCounts]=useState({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
   const [loading,setLoading]=useState(true);
@@ -74,6 +74,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const router=useRouter();
   const navTimer=useRef(null);
   const [navigationOut,setNavigationOut]=useState(false);
+  const [motionReplay,setMotionReplay]=useState(0);
   const [lastSync,setLastSync]=useState(null);
   const [globalSearch,setGlobalSearch]=useState('');
   const [searchOpen,setSearchOpen]=useState(false);
@@ -93,9 +94,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   };
   const currentOrganization=organizations.find(o=>o.id===organizationId);
   const activeMember=members.find(m=>m.organization_id===organizationId&&m.status==='active');
-  const role=activeMember?.role||'';
+  const role=isSuperAdmin?'AGENCY_ADMIN':(activeMember?.role||'');
   const readonly=role==='VIEWER';
-  const validOrg=Boolean(currentOrganization&&currentOrganization.status==='active'&&activeMember&&session?.id&&profile?.status==='active');
+  const validOrg=Boolean(currentOrganization&&currentOrganization.status==='active'&&(isSuperAdmin||activeMember)&&session?.id&&profile?.status==='active');
   const roleLabel=ROLES[role]||'Colaborador';
   const page=PAGES[section]||'Visão geral';
 
@@ -273,6 +274,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <div className="staff-nav-title">MENU PRINCIPAL</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
         {MENU.map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={19} strokeWidth={1.9}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}
+        {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
     </aside>
@@ -313,14 +315,15 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setNotificationsOpen(false)}>Fechar notificações</button>
             </div>}
           </div>
+          {section==='dashboard'&&<button type="button" className="staff-replay-button" onClick={()=>setMotionReplay(v=>v+1)} title="Reproduzir as animações do dashboard"><Play size={15} fill="currentColor"/> <span>Rever efeitos</span></button>}
           <IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={load}/>
           <IconButton icon={dark?Sun:Moon} title="Alternar tema" onClick={onToggleTheme}/>
           <div className="staff-top-avatar" title={displayName}><Initials name={displayName}/></div>
         </div>
       </header>
       <div className="staff-body">
-        <div key={section+'-'+organizationId} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
-        {!assigned?<div className="staff-no-access"><span><BriefcaseBusiness size={30}/></span><h2>Seu espaço de trabalho ainda não foi liberado.</h2><p>Peça ao responsável para vincular seu usuário a uma empresa ativa em Super Admin → Acessos.</p><button className="staff-btn staff-btn--outline" onClick={onSignOut}>Sair da conta</button></div>:<>
+        <div key={section+'-'+organizationId+'-'+motionReplay} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
+        {!assigned?<div className="staff-no-access"><span><BriefcaseBusiness size={30}/></span><h2>Seu espaço de trabalho ainda não foi liberado.</h2><p>{isSuperAdmin?'Selecione uma empresa ativa no painel Super Admin para acompanhar a operação.':'Peça ao responsável para vincular seu usuário a uma empresa ativa em Super Admin → Acessos.'}</p>{isSuperAdmin&&<Link className="staff-btn staff-btn--primary" href="/admin">Selecionar empresa <ArrowRight size={16}/></Link>}<button className="staff-btn staff-btn--outline" onClick={onSignOut}>Sair da conta</button></div>:<>
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
