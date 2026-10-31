@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import NexusLeadDetail from './NexusLeadDetail';
+import {exportFilteredLeads} from '../lib/exportFilteredLeads';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -273,7 +274,7 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
   </div>;
 }
 
-export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,stages=[],pipeline,onOperation,onReload}){
+export function PremiumLeads({leads=[],count=0,organizationId,organizationName,readonly=false,stages=[],pipeline,onOperation,onReload}){
   const [mode,setMode]=useState('board');
   const [query,setQuery]=useState('');
   useEffect(()=>{
@@ -313,7 +314,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
   return <div className="nxp-premium">
-    <PanelHeader eyebrow="Funil de vendas" title="Oportunidades" detail="Acompanhe os leads e avance cada atendimento." right={<div className="nxp-leads-head-actions"><span className="nxp-total"><span/>{fmt(count)} leads cadastrados</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
+    <PanelHeader eyebrow="Funil de vendas" title="Oportunidades" detail="Acompanhe os leads e avance cada atendimento." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
     <div className="n9-module-summary"><div><strong>{fmt(count)}</strong><span>{count===1?'Lead cadastrado':'Leads cadastrados'}</span></div><div><strong>{cols.length}</strong><span>{cols.length===1?'Etapa do funil':'Etapas do funil'}</span></div><div><strong>{filtered.filter(x=>wa(x.contact?.whatsapp)).length}</strong><span>Com WhatsApp nos registros exibidos</span></div></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
