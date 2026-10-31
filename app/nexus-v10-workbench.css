@@ -305,3 +305,10 @@ body .auth--v4 .field{font-family:var(--w10-body)!important}
 .w10-activity-row time{font-size:11px}
 .w10-footnote{font-size:12px}
 @media(max-width:720px){.w10-heading h1{font-size:clamp(31px,7vw,39px)!important}}
+
+/* No fake flat line or blank graph when there are no observations. */
+.w10-chart-empty{margin:19px 0 0;min-height:184px;display:flex;align-items:flex-start;justify-content:center;flex-direction:column;gap:10px;border:1px dashed var(--w10-hairline);border-radius:11px;background:rgba(116,170,181,.035);padding:22px 26px}
+.w10-chart-empty strong{font:600 15px/1.35 var(--w10-heading);color:var(--w10-text)}
+.w10-chart-empty>span{font-size:13px;line-height:1.5;color:var(--w10-subtle)}
+.w10-chart-empty a{font-size:12px;color:var(--w10-mint);display:inline-flex;align-items:center;gap:7px;font-weight:720;margin-top:4px}
+@media(max-width:720px){.w10-chart-empty{min-height:153px;padding:20px}}
