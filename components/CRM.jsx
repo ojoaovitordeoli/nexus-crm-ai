@@ -111,7 +111,7 @@ export default function CRM({section}){
  if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Configuração pendente</h1><p className="muted">O site está publicado. Para habilitar o login, confira as variáveis no ambiente da hospedagem.</p>{!configStatus.urlReady&&<Alert><strong>URL faltando ou inválida:</strong> NEXT_PUBLIC_SUPABASE_URL. Use o endereço completo https://SEU-PROJETO.supabase.co</Alert>}{!configStatus.keyReady&&<Alert><strong>Chave pública faltando ou com valor de exemplo:</strong> NEXT_PUBLIC_SUPABASE_ANON_KEY. Use a chave anon ou publishable do mesmo projeto.</Alert>}<p className="small muted">No Render, configure as variáveis de ambiente do serviço. Depois salve e faça novo deploy com build. Nunca insira service_role nem senhas no código público.</p></div></div>;
  if(isLoading)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><p className="muted">Verificando sua sessão e conexão...</p></div></div>;
  if(isAuthScreen){
-  return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(authSwitching?'auth--switching ':'')+(forgot?'auth--recover':'')}>
+  return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(forgot?'auth--recover':'')}>
    <div className="auth-v4-aura" aria-hidden="true"/>
    <div className="auth-v4-top"><HeaderLogo/><span>ACESSO SEGURO</span></div>
    <div className="auth-v4-blade" aria-hidden="true" onAnimationEnd={()=>setAuthSwitching(false)}/>
