@@ -319,6 +319,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
       <div className="nxp-mode-switch"><button type="button" className={mode==='board'?'active':''} onClick={()=>setMode('board')} title="Quadro Kanban" aria-label="Quadro Kanban"><Columns3 size={18}/></button><button type="button" className={mode==='list'?'active':''} onClick={()=>setMode('list')} title="Lista" aria-label="Lista"><LayoutList size={18}/></button></div></div></div>
       {error&&<div className="nxp-error" role="alert">{error}</div>}
+      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
       {mode==='board'?<div className="nxp-board" aria-label="Funil Kanban">
       {groups.map(({key,title,rows},idx)=><section key={key} className="nxp-board-column"
         onDragOver={e=>{if(!readonly&&hasStages&&stages.length>1)e.preventDefault()}}
@@ -328,7 +329,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
           {!rows.length&&<div className="nxp-column-empty">{dragging?'Solte aqui para mover':'Sem leads nesta etapa'}</div>}</div>
       </section>)}
       {!cols.length&&<Empty icon={UsersRound} title="Seu funil começa aqui" detail="Quando sua empresa receber leads, as etapas aparecerão automaticamente."/>}
-       {!hasStages&&<aside className="w10-kanban-setup"><span className="w10-kanban-setup-number">CONFIGURAÇÃO / 01</span><h3>Defina as etapas do atendimento.</h3><p>O funil ainda usa os status dos leads. Ao configurar as etapas, sua equipe poderá movimentar os contatos no quadro.</p>{!readonly&&<button type="button" className="w10-kanban-setup-action" onClick={()=>setEditorOpen(true)}>Configurar etapas <ArrowRight size={16}/></button>}</aside>}
+       
       </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn"><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{l.contact?.whatsapp||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
       <div className="nxp-footnote">{filtered.length} leads exibidos · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
