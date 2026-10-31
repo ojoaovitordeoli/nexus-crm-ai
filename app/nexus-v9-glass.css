@@ -242,7 +242,7 @@ body.dark .n9-module-summary span{color:#9eb7c2}
 
 /* Microinteractions are opt-out for motion-reduction and do not gate navigation. */
 .staff-shell .staff-nav-item,.staff-shell .n9-kpi,.staff-shell .n9-primary-button,
-.staff-shell .nxp-button,.staff-shell .staff-command-trigger,.staff-shell .staff-icon-button,
+.staff-shell .n9-period button,.staff-shell .nxp-button,.staff-shell .staff-command-trigger,.staff-shell .staff-icon-button,
 .staff-shell .nxp-lead-card-main{position:relative;isolation:isolate;overflow:hidden}
 .staff-shell .n9-pointer-ripple{
   pointer-events:none;position:absolute;z-index:3;
