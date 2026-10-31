@@ -21,5 +21,6 @@ import './nexus-command-refined.css';
 import './nexus-v9.css';
 import './nexus-v9-glass.css';
 import './nexus-v10-workbench.css';
+import './nexus-v10-operations.css';
 export const metadata = { title: 'NEXUS CRM AI', description: 'Central de controle e operação' };
 export default function RootLayout({children}) {return <html lang="pt-BR"><body className="dark" suppressHydrationWarning>{children}</body></html>}
