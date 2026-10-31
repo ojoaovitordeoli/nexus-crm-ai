@@ -112,10 +112,24 @@ try{
   }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
-  await page.getByRole('button',{name:'Alternar tema'}).click();
-  await page.waitForTimeout(420);
+  await page.waitForTimeout(400);
+  const themeAndFonts=await page.evaluate(()=>{
+    const heading=document.querySelector('.n9-heading h1');
+    const body=document.body;
+    return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
+  });
+  if(!themeAndFonts.dark)throw new Error('Dark glass theme must be the default for a new workspace');
+  if(!themeAndFonts.font.includes('Sora'))throw new Error('Dashboard titles are not using Sora: '+themeAndFonts.font);
+  if(!themeAndFonts.glass)throw new Error('Missing glass design tokens');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  await page.getByRole('button',{name:'7 dias'}).click();
+  if(!await page.locator('.n9-pointer-ripple').count())throw new Error('Expected ripple microinteraction after clicking period');
   await page.getByRole('button',{name:'Alternar tema'}).click();
+  await page.waitForTimeout(350);
+  if(await page.evaluate(()=>document.body.classList.contains('dark')))throw new Error('Light theme toggle did not work');
+  await page.screenshot({path:'test-artifacts/dashboard-light.png',fullPage:true});
+  await page.getByRole('button',{name:'Alternar tema'}).click();
+  await page.waitForTimeout(250);
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(450);
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
