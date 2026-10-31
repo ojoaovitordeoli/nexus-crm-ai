@@ -120,6 +120,14 @@ try{
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
     }
   }
+  for(const route of ['tasks','agenda','reports','settings','whatsapp','automations']){
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(550);
+    if(await page.getByText('Application error: a client-side exception',{exact:false}).count()){
+      throw new Error('Client exception on extended route: '+route);
+    }
+    await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
+  }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   await page.waitForTimeout(400);
