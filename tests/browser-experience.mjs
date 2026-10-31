@@ -158,7 +158,7 @@ try{
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.getByRole('heading',{name:/Central de vendas/}).waitFor();
   await page.waitForTimeout(400);
   const themeAndFonts=await page.evaluate(()=>{
     const heading=document.querySelector('.v11-pageheading h1');
@@ -195,7 +195,7 @@ try{
   await page.waitForTimeout(250);
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(450);
-  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.getByRole('heading',{name:/Central de vendas/}).waitFor();
   const pageWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
   if(pageWidth>395)throw new Error('Dashboard overflows 390px mobile viewport: '+pageWidth);
   await page.screenshot({path:'test-artifacts/dashboard-mobile.png',fullPage:true});
