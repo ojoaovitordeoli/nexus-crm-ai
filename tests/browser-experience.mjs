@@ -122,8 +122,21 @@ try{
   if(!themeAndFonts.font.includes('Sora'))throw new Error('Dashboard titles are not using Sora: '+themeAndFonts.font);
   if(!themeAndFonts.glass)throw new Error('Missing glass design tokens');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  await page.evaluate(()=>{
+    window.__n9RippleSeen=false;
+    window.__n9RippleObserver=new MutationObserver(mutations=>{
+      if(mutations.some(record=>Array.from(record.addedNodes).some(node=>node.nodeType===1&&node.classList?.contains('n9-pointer-ripple')))){
+        window.__n9RippleSeen=true;
+      }
+    });
+    window.__n9RippleObserver.observe(document.body,{subtree:true,childList:true});
+  });
   await page.getByRole('button',{name:'7 dias'}).click();
-  if(!await page.locator('.n9-pointer-ripple').count())throw new Error('Expected ripple microinteraction after clicking period');
+  const rippleWasCreated=await page.evaluate(()=>{
+    window.__n9RippleObserver?.disconnect();
+    return window.__n9RippleSeen;
+  });
+  if(!rippleWasCreated)throw new Error('Expected ripple microinteraction during period click');
   await page.getByRole('button',{name:'Alternar tema'}).click();
   await page.waitForTimeout(350);
   if(await page.evaluate(()=>document.body.classList.contains('dark')))throw new Error('Light theme toggle did not work');
