@@ -24,10 +24,12 @@ function SummaryRow({title,value}){
 export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=false,onStageChange,onOperation,onReload,onClose}){
   const root=useRef(null);
   const opener=useRef(null);
+  const closeRef=useRef(onClose);
+  closeRef.current=onClose;
   const [tab,setTab]=useState('resumo');
   const [due,setDue]=useState('');
   const [priority,setPriority]=useState('medium');
-  const [taskTitle,setTaskTitle]=useState('');
+  const [taskTitle,setTaskTitle]=useState('Retornar para '+fullName(lead?.contact));
   const [submitting,setSubmitting]=useState(false);
   const [message,setMessage]=useState('');
   const [error,setError]=useState('');
@@ -42,7 +44,7 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
     document.body.style.overflow='hidden';
     root.current?.focus();
     const key=e=>{
-      if(e.key==='Escape'){e.preventDefault();onClose();return}
+      if(e.key==='Escape'){e.preventDefault();closeRef.current?.();return}
       if(e.key!=='Tab'||!root.current)return;
       const selectors='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])';
       const items=[...root.current.querySelectorAll(selectors)].filter(x=>x.getClientRects().length>0);
@@ -53,8 +55,8 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
     };
     document.addEventListener('keydown',key);
     return ()=>{document.removeEventListener('keydown',key);document.body.style.overflow=previousOverflow;opener.current?.focus?.()};
-  },[active,onClose]);
-  useEffect(()=>{setTab('resumo');setDue('');setPriority('medium');setTaskTitle('');setMessage('');setError('')},[lead?.id]);
+  },[active]);
+  useEffect(()=>{setTab('resumo');setDue('');setPriority('medium');setTaskTitle('Retornar para '+fullName(lead?.contact));setMessage('');setError('')},[lead?.id]);
   if(!lead)return null;
   const firstPhone=lead.contact?.whatsapp||'Telefone não informado';
   const createTask=async e=>{
