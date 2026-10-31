@@ -10,6 +10,8 @@ import {
   UserRound,UsersRound,Wallet,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
+import NexusLeadDetail from './NexusLeadDetail';
+import {exportFilteredLeads} from '../lib/exportFilteredLeads';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -272,7 +274,7 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
   </div>;
 }
 
-export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,stages=[],pipeline,onOperation,onReload}){
+export function PremiumLeads({leads=[],count=0,organizationId,organizationName,readonly=false,stages=[],pipeline,onOperation,onReload}){
   const [mode,setMode]=useState('board');
   const [query,setQuery]=useState('');
   useEffect(()=>{
@@ -312,13 +314,14 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
   return <div className="nxp-premium">
-    <PanelHeader eyebrow="Funil de vendas" title="Oportunidades" detail="Acompanhe os leads e avance cada atendimento." right={<div className="nxp-leads-head-actions"><span className="nxp-total"><span/>{fmt(count)} leads cadastrados</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
-    <div className="n9-module-summary"><div><strong>{fmt(count)}</strong><span>{count===1?'Lead cadastrado':'Leads cadastrados'}</span></div><div><strong>{cols.length}</strong><span>{cols.length===1?'Etapa do funil':'Etapas do funil'}</span></div><div><strong>{filtered.filter(x=>wa(x.contact?.whatsapp)).length}</strong><span>Com WhatsApp nos registros exibidos</span></div></div>
+    <PanelHeader eyebrow="Funil de vendas" title="Oportunidades" detail="Acompanhe os leads e avance cada atendimento." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
+    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> leads na empresa</span><i/><span><strong>{cols.length}</strong> etapas</span><i/><span><strong>{filtered.length}</strong> exibidos no filtro</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
       <div className="nxp-mode-switch"><button type="button" className={mode==='board'?'active':''} onClick={()=>setMode('board')} title="Quadro Kanban" aria-label="Quadro Kanban"><Columns3 size={18}/></button><button type="button" className={mode==='list'?'active':''} onClick={()=>setMode('list')} title="Lista" aria-label="Lista"><LayoutList size={18}/></button></div></div></div>
       {error&&<div className="nxp-error" role="alert">{error}</div>}
+      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
       {mode==='board'?<div className="nxp-board" aria-label="Funil Kanban">
       {groups.map(({key,title,rows},idx)=><section key={key} className="nxp-board-column"
         onDragOver={e=>{if(!readonly&&hasStages&&stages.length>1)e.preventDefault()}}
@@ -328,10 +331,11 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
           {!rows.length&&<div className="nxp-column-empty">{dragging?'Solte aqui para mover':'Sem leads nesta etapa'}</div>}</div>
       </section>)}
       {!cols.length&&<Empty icon={UsersRound} title="Seu funil começa aqui" detail="Quando sua empresa receber leads, as etapas aparecerão automaticamente."/>}
+       
       </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn"><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{l.contact?.whatsapp||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
       <div className="nxp-footnote">{filtered.length} leads exibidos · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
-    <Drawer data={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} pending={Boolean(busy)}/>
+    <NexusLeadDetail lead={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} pending={Boolean(busy)}/>
     {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
   </div>;
 }
@@ -397,7 +401,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
       <label>WhatsApp com DDD<input type="tel" placeholder="(48) 99999-9999" value={newPhone} onChange={e=>setNewPhone(e.target.value)}/></label>
       <button type="submit" className="nxp-button nxp-button--primary" disabled={saving||newName.trim().length<2}>{saving?'Salvando...':'Salvar contato'}</button>
     </form>}
-    <div className="n9-module-summary n9-module-summary--contacts"><div><strong>{fmt(count)}</strong><span>Contatos cadastrados</span></div><div><strong>{fmt(withPhone)}</strong><span>Com WhatsApp nos registros carregados</span></div></div>
+    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> contatos cadastrados</span><i/><span><strong>{fmt(withPhone)}</strong> com WhatsApp entre os registros carregados</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Buscar nome ou número de WhatsApp..." aria-label="Pesquisar contatos" value={query} onChange={e=>setQuery(e.target.value)}/></label><div className="nxp-mode-switch"><button type="button" className={layout==='grid'?'active':''} title="Cards" aria-label="Cards" onClick={()=>setLayout('grid')}><Columns3 size={18}/></button><button type="button" className={layout==='list'?'active':''} title="Lista" aria-label="Lista" onClick={()=>setLayout('list')}><LayoutList size={18}/></button></div></div>
       {layout==='grid'?<div className="nxp-contact-grid">{list.map(c=><article className="nxp-contact-card" key={c.id}>

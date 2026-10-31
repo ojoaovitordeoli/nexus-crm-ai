@@ -62,10 +62,25 @@ try{
       table==='organizations'?[organization]:[];
     return route.fulfill({status:200,headers,body:JSON.stringify(rows)});
   });
+  let createdTasks=0;
   await page.route('**/api/operation**',async route=>{
+    if(route.request().method()==='POST'){
+      const payload=route.request().postDataJSON();
+      if(payload.action==='task_create')createdTasks+=1;
+      return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
+    }
     const response={data,counts:{leads:1,contacts:1,tasks:1,appointments:0,sales:0},
       stages:[],warnings:[],read_only:false};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
+  });
+  // Optional integrations are not provisioned in CI. Exercise their explicit
+  // disconnected states instead of allowing server-side 503 responses to pollute
+  // visual regression results.
+  await page.route('**/api/whatsapp/inbox**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connections:[],messages:[],verified_server:false})});
+  });
+  await page.route('**/api/automations**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rules:[],executions:[],can_manage:true})});
   });
   const jwt=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
   const token=[jwt({alg:'HS256',typ:'JWT'}),jwt({sub:userId,role:'authenticated',aud:'authenticated',exp:2000000000}),'mock'].join('.');
@@ -104,17 +119,49 @@ try{
   await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
   await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
+  await page.screenshot({path:'test-artifacts/dashboard-v11-desktop.png',fullPage:true});
   for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
     await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(500);
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
     await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
+    if(route==='leads'){
+      const downloadPromise=page.waitForEvent('download');
+      await page.getByRole('button',{name:'Exportar leads filtrados em CSV'}).click();
+      const download=await downloadPromise;
+      if(!download.suggestedFilename().endsWith('.csv'))throw new Error('Export did not create CSV');
+      await page.getByRole('button',{name:'Abrir lead Ana Teste'}).click();
+      const detail=page.getByRole('dialog',{name:'Atendimento de Ana Teste'});
+      await detail.waitFor({timeout:5000});
+      await detail.getByRole('button',{name:'Próxima ação'}).click();
+      await detail.getByRole('button',{name:'Criar tarefa'}).click();
+      await detail.getByText('Tarefa criada com sucesso.').waitFor({timeout:5000});
+      if(createdTasks!==1)throw new Error('Lead detail did not call task API exactly once');
+      await page.screenshot({path:'test-artifacts/lead-detail-v11.png',fullPage:true});
+      await detail.getByRole('button',{name:'Fechar atendimento'}).click();
+      const hint=page.locator('.w10-kanban-notice');
+      await hint.waitFor({timeout:7000});
+      const bounds=await hint.boundingBox();
+      if(!bounds||bounds.height>145)throw new Error('Kanban empty state is not compact: '+bounds?.height);
+      if(await page.locator('.w10-kanban-setup').count())throw new Error('Old oversized Kanban configuration panel still visible');
+      await hint.getByRole('button',{name:/Configurar funil/}).click();
+      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
+      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
+    }
+  }
+  for(const route of ['tasks','agenda','reports','settings','whatsapp','automations']){
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(550);
+    if(await page.getByText('Application error: a client-side exception',{exact:false}).count()){
+      throw new Error('Client exception on extended route: '+route);
+    }
+    await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.getByRole('heading',{name:/Central de vendas/}).waitFor();
   await page.waitForTimeout(400);
   const themeAndFonts=await page.evaluate(()=>{
-    const heading=document.querySelector('.n9-heading h1');
+    const heading=document.querySelector('.v11-pageheading h1');
     const body=document.body;
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
@@ -122,6 +169,9 @@ try{
   if(!themeAndFonts.font.includes('Sora'))throw new Error('Dashboard titles are not using Sora: '+themeAndFonts.font);
   if(!themeAndFonts.glass)throw new Error('Missing glass design tokens');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  if(!await page.locator('.v11-summary').count())throw new Error('V11 commercial summary missing');
+  if(!await page.locator('.v11-focus-grid').count())throw new Error('Commercial work queue missing');
+  if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
   await page.evaluate(()=>{
     window.__n9RippleSeen=false;
     window.__n9RippleObserver=new MutationObserver(mutations=>{
@@ -131,7 +181,7 @@ try{
     });
     window.__n9RippleObserver.observe(document.body,{subtree:true,childList:true});
   });
-  await page.getByRole('button',{name:'7 dias'}).click();
+  await page.getByRole('button',{name:'7d'}).click();
   const rippleWasCreated=await page.evaluate(()=>{
     window.__n9RippleObserver?.disconnect();
     return window.__n9RippleSeen;
@@ -145,7 +195,7 @@ try{
   await page.waitForTimeout(250);
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(450);
-  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.getByRole('heading',{name:/Central de vendas/}).waitFor();
   const pageWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
   if(pageWidth>395)throw new Error('Dashboard overflows 390px mobile viewport: '+pageWidth);
   await page.screenshot({path:'test-artifacts/dashboard-mobile.png',fullPage:true});
