@@ -22,7 +22,11 @@ const date=v=>{
   return !isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR'):'—';
 };
 const display=(c)=>[c?.first_name,c?.last_name].filter(Boolean).join(' ')||'Contato sem nome';
-const label=v=>String(v||'Sem etapa').replace(/[_-]/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());
+const label=v=>{
+  const source=String(v||'Sem etapa').replace(/[_-]/g,' ').trim();
+  const translations={new:'Novo',open:'Aberto',pending:'Pendente',won:'Ganho',lost:'Perdido',completed:'Concluído',cancelled:'Cancelado',qualified:'Qualificado',negotiation:'Negociação',contacted:'Contatado',followup:'Retorno',in_progress:'Em andamento'};
+  return translations[source.toLowerCase()]||source.replace(/\b\w/g,ch=>ch.toUpperCase());
+};
 const letters=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join('');
 const wa=v=>{
   const phone=String(v||'').replace(/\D/g,'');
@@ -309,7 +313,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
   </div>;
   return <div className="nxp-premium">
     <PanelHeader eyebrow="Funil de vendas" title="Oportunidades" detail="Acompanhe os leads e avance cada atendimento." right={<div className="nxp-leads-head-actions"><span className="nxp-total"><span/>{fmt(count)} leads cadastrados</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
-    <div className="n9-module-summary"><div><strong>{fmt(count)}</strong><span>Leads cadastrados</span></div><div><strong>{cols.length}</strong><span>Etapas do funil</span></div><div><strong>{filtered.filter(x=>wa(x.contact?.whatsapp)).length}</strong><span>Com WhatsApp nos registros exibidos</span></div></div>
+    <div className="n9-module-summary"><div><strong>{fmt(count)}</strong><span>{count===1?'Lead cadastrado':'Leads cadastrados'}</span></div><div><strong>{cols.length}</strong><span>{cols.length===1?'Etapa do funil':'Etapas do funil'}</span></div><div><strong>{filtered.filter(x=>wa(x.contact?.whatsapp)).length}</strong><span>Com WhatsApp nos registros exibidos</span></div></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
