@@ -74,7 +74,7 @@ export async function GET(request){
   if(pipelines.error)warnings.push('funil: '+pipelines.error.message);
   if(pipelines.data?.[0]){
     pipeline=pipelines.data[0];
-    const st=await admin.from('pipeline_stages').select('id,name,position,color')
+    const st=await admin.from('pipeline_stages').select('id,name,position,color,is_won,is_lost')
       .eq('pipeline_id',pipelines.data[0].id).order('position',{ascending:true});
     if(st.error)warnings.push('etapas: '+st.error.message);
     else stages=st.data||[];
@@ -176,6 +176,7 @@ export async function POST(request){
       is_lost:Boolean(stage?.is_lost)
     }));
     if(cleanStages.some(x=>x.name.length<2))return fails('Todas as etapas precisam ter nome.');
+    if(cleanStages.some(x=>x.is_won&&x.is_lost))return fails('Uma etapa não pode ser ganha e perdida ao mesmo tempo.');
     let pipelineId=validId(payload?.pipeline_id)?payload.pipeline_id:null;
     if(pipelineId){
       const {data:owned,error:ownedError}=await admin.from('pipelines').select('id').eq('id',pipelineId).eq('organization_id',orgId).maybeSingle();
