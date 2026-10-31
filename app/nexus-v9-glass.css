@@ -269,3 +269,14 @@ body:not(.dark) .staff-shell .n9-pointer-ripple{background:rgba(47,126,169,.19)}
   .staff-shell .staff-motion-scene{animation:none!important;transform:none!important}
   body .n9-dashboard{animation:none!important}
 }
+
+
+/* Native Kanban remains functional; give pickup/drop a restrained spring response.
+   Full collision-aware dnd-kit refactor remains separate from this visual PR. */
+.nxp-board .nxp-lead-card[draggable="true"]{cursor:grab;transition:transform .34s cubic-bezier(.18,1.55,.36,1),border-color .2s,box-shadow .2s}
+.nxp-board .nxp-lead-card[draggable="true"]:active{cursor:grabbing;transform:scale(.98) rotate(-.35deg)}
+.nxp-board-column{transition:background-color .22s var(--nexus-motion),border-color .22s var(--nexus-motion)}
+.nxp-board-column:has(.nxp-lead-card[draggable="true"]:active){border-color:rgba(126,208,205,.37)!important;background:rgba(67,132,145,.075)!important}
+@media(prefers-reduced-motion:reduce){
+  .nxp-board .nxp-lead-card[draggable="true"],.nxp-board-column{transition:none!important;transform:none!important}
+}
