@@ -53,7 +53,7 @@ export function PremiumReports({data,counts,orgName,readonly}){
   }
   const most=Math.max(...view.sources.map(x=>x[1]),1);
   return <div className="v4-report-screen">
-    <header className="v4-report-header"><div><span className="v4-report-overline">NEXUS / INTELLIGENCE</span><h1>Relatórios</h1><p>Analise os resultados reais da operação e exporte registros para acompanhamento.</p></div>
+    <header className="v4-report-header"><div><span className="v4-report-overline">Resultados comerciais</span><h1>Relatórios</h1><p>Analise os resultados reais da operação e exporte registros para acompanhamento.</p></div>
       <div className="v4-report-actions"><div className="nxp-switch">{[7,30,90].map(n=><button type="button" key={n} className={n===period?'active':''} onClick={()=>{setPeriod(n);setCsvMessage('')}}>{n} dias</button>)}</div>
       {!readonly&&<button type="button" onClick={exportReport} className="v4-export"><Download size={16}/> Exportar CSV</button>}</div>
     </header>
