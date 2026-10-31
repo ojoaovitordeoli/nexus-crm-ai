@@ -315,7 +315,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
   </div>;
   return <div className="nxp-premium">
     <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
-    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> leads na empresa</span><i/><span><strong>{cols.length}</strong> etapas</span><i/><span><strong>{filtered.length}</strong> exibidos no filtro</span></div>
+    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'lead na empresa':'leads na empresa'}</span><i/><span><strong>{cols.length}</strong> {cols.length===1?'etapa':'etapas'}</span><i/><span><strong>{filtered.length}</strong> {filtered.length===1?'exibido no filtro':'exibidos no filtro'}</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
@@ -333,7 +333,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
       {!cols.length&&<Empty icon={UsersRound} title="Seu funil começa aqui" detail="Quando sua empresa receber leads, as etapas aparecerão automaticamente."/>}
        
       </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn" aria-label={'Abrir lead '+display(l.contact)}><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{l.contact?.whatsapp||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
-      <div className="nxp-footnote">{filtered.length} leads exibidos · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
+      <div className="nxp-footnote">{filtered.length} {filtered.length===1?'lead exibido':'leads exibidos'} · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
     <NexusLeadDetail lead={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} pending={Boolean(busy)}/>
     {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
@@ -373,7 +373,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
     }catch(e){setError('Não foi possível cadastrar o contato: '+e.message)}
     finally{setSaving(false)}
   }
-  const [layout,setLayout]=useState('grid');
+  const [layout,setLayout]=useState('list');
   const [selected,setSelected]=useState(null);
   const list=contacts.filter(c=>keyword(display(c),c.whatsapp).includes(query.toLocaleLowerCase('pt-BR')));
   const withPhone=contacts.filter(c=>wa(c.whatsapp)).length;
@@ -401,7 +401,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
       <label>WhatsApp com DDD<input type="tel" placeholder="(48) 99999-9999" value={newPhone} onChange={e=>setNewPhone(e.target.value)}/></label>
       <button type="submit" className="nxp-button nxp-button--primary" disabled={saving||newName.trim().length<2}>{saving?'Salvando...':'Salvar contato'}</button>
     </form>}
-    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> contatos cadastrados</span><i/><span><strong>{fmt(withPhone)}</strong> com WhatsApp entre os registros carregados</span></div>
+    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'contato cadastrado':'contatos cadastrados'}</span><i/><span><strong>{fmt(withPhone)}</strong> com WhatsApp entre os registros carregados</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Buscar nome ou número de WhatsApp..." aria-label="Pesquisar contatos" value={query} onChange={e=>setQuery(e.target.value)}/></label><div className="nxp-mode-switch"><button type="button" className={layout==='grid'?'active':''} title="Cards" aria-label="Cards" onClick={()=>setLayout('grid')}><Columns3 size={18}/></button><button type="button" className={layout==='list'?'active':''} title="Lista" aria-label="Lista" onClick={()=>setLayout('list')}><LayoutList size={18}/></button></div></div>
       {layout==='grid'?<div className="nxp-contact-grid">{list.map(c=><article className="nxp-contact-card" key={c.id}>
@@ -409,7 +409,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
         <div className="nxp-contact-card-line"><Clock3 size={14}/> Desde {date(c.created_at)}</div>
         <div className="nxp-contact-card-actions"><button type="button" onClick={()=>setSelected(c)}><UserRound size={15}/> Detalhes</button><WhatsLink phone={c.whatsapp}>Conversar</WhatsLink></div>
       </article>)}</div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>WhatsApp</th><th>Cadastrado</th><th>Ações</th></tr></thead><tbody>{list.map(c=><tr key={c.id}><td><button type="button" className="nxp-person-btn" onClick={()=>setSelected(c)}><Avatar value={display(c)}/><strong>{display(c)}</strong></button></td><td>{c.whatsapp||'—'}</td><td>{date(c.created_at)}</td><td><WhatsLink phone={c.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table></div>}
-      {!list.length&&<Empty icon={ContactRound} title="Nenhum contato encontrado" detail="Os contatos cadastrados na empresa aparecerão aqui."/>}<div className="nxp-footnote">{list.length} contatos exibidos · Até 250 registros recentes por empresa</div>
+      {!list.length&&<Empty icon={ContactRound} title="Nenhum contato encontrado" detail="Os contatos cadastrados na empresa aparecerão aqui."/>}<div className="nxp-footnote">{list.length} {list.length===1?'contato exibido':'contatos exibidos'} · Até 250 registros recentes por empresa</div>
     </section>
     <Drawer type="contact" data={selected} onClose={()=>setSelected(null)}/>
   </div>;
