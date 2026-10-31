@@ -105,6 +105,11 @@ try{
   await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
+  await page.waitForTimeout(450);
+  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  const pageWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
+  if(pageWidth>395)throw new Error('Dashboard overflows 390px mobile viewport: '+pageWidth);
+  await page.screenshot({path:'test-artifacts/dashboard-mobile.png',fullPage:true});
   await page.keyboard.press('Control+k');
   await dialog.waitFor({state:'visible'});
   await page.waitForTimeout(650); // capture fully opaque command dialog, not entry animation
