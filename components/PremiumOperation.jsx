@@ -146,7 +146,11 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
   },[data]);
   const recentIncome=currentSales.reduce((n,item)=>n+Number(item.value||0),0);
   const averageSale=currentSales.length?recentIncome/currentSales.length:0;
-  const openLeads=currentLeads.filter(item=>!['won','closed','sold','converted','fechado','lost','perdido'].includes(String(item.status||'').toLowerCase())).length;
+  const openLeads=currentLeads.filter(item=>{
+    const stage=pipelineStages.find(s=>s.id===item.pipeline_stage_id);
+    if(stage)return !stage.is_won&&!stage.is_lost;
+    return !['won','closed','sold','converted','fechado','lost','perdido','desqualificado'].includes(String(item.status||'').toLowerCase());
+  }).length;
   const max=Math.max(1,...trend.map(d=>d.value));
   const chartPoints=trend.map((d,i)=>[16+i*(268/6),105-(d.value/max)*90]);
   const chartLine=chartPoints.map(([x,y],i)=>(i===0?'M':'L')+x+' '+y).join(' ');
