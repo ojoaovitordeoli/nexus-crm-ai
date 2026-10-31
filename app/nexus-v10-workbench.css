@@ -74,6 +74,7 @@ body.dark .staff-shell .staff-breadcrumb strong{color:#d4e6e5!important}
 .w10-workbench *{box-sizing:border-box}
 .w10-workbench h1,.w10-workbench h2,.w10-workbench h3{font-family:var(--w10-heading)!important;font-weight:610;letter-spacing:-.047em}
 .w10-workbench button,.w10-workbench a{font-family:var(--w10-body);-webkit-tap-highlight-color:transparent}
+.w10-pills button{position:relative;isolation:isolate;overflow:hidden}
 .w10-workbench a{text-decoration:none}
 .w10-heading{margin-bottom:29px;padding:0 1px}
 .w10-strapline{display:flex;align-items:center;gap:14px;color:var(--w10-subtle);font:580 12px var(--w10-body)}
