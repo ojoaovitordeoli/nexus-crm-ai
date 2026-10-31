@@ -78,6 +78,8 @@ Instruções: [Copiloto e React Flow](docs/copiloto-ia-e-reactflow.md).
 - O workspace operacional atualiza leads, vendas, agenda, tarefas e contatos por Supabase Realtime, com recarga ao retornar à aba e polling de segurança.
 - O plano de evolução do funil configurável, Command Center, agente de IA, skills, base de conhecimento e integrações está documentado no [dossiê de referências de IA](docs/dossie-referencias-ia-instagram.md).
 - A versão PDF do dossiê está disponível em [`docs/dossie-referencias-ia-instagram.pdf`](docs/dossie-referencias-ia-instagram.pdf).
+- A análise comparativa aprofundada do sistema óptico, com o diagnóstico do Nexus e a ordem correta de reconstrução, está em [`docs/analise-comparativa-optica-v2.md`](docs/analise-comparativa-optica-v2.md) e [`docs/analise-comparativa-optica-v2.pdf`](docs/analise-comparativa-optica-v2.pdf).
+- O plano de produto está em [`plan.md`](plan.md) e os critérios funcionais estão em [`TODO.md`](TODO.md).
 
 ## Arquitetura
 
