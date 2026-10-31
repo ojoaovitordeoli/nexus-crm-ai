@@ -62,7 +62,13 @@ try{
       table==='organizations'?[organization]:[];
     return route.fulfill({status:200,headers,body:JSON.stringify(rows)});
   });
+  let createdTasks=0;
   await page.route('**/api/operation**',async route=>{
+    if(route.request().method()==='POST'){
+      const payload=route.request().postDataJSON();
+      if(payload.action==='task_create')createdTasks+=1;
+      return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
+    }
     const response={data,counts:{leads:1,contacts:1,tasks:1,appointments:0,sales:0},
       stages:[],warnings:[],read_only:false};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
@@ -113,12 +119,26 @@ try{
   await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
   await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
+  await page.screenshot({path:'test-artifacts/dashboard-v11-desktop.png',fullPage:true});
   for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
     await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(500);
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
     await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
     if(route==='leads'){
+      const downloadPromise=page.waitForEvent('download');
+      await page.getByRole('button',{name:'Exportar leads filtrados em CSV'}).click();
+      const download=await downloadPromise;
+      if(!download.suggestedFilename().endsWith('.csv'))throw new Error('Export did not create CSV');
+      await page.getByRole('button',{name:'Abrir lead Ana Teste'}).click();
+      const detail=page.getByRole('dialog',{name:'Atendimento de Ana Teste'});
+      await detail.waitFor({timeout:5000});
+      await detail.getByRole('button',{name:'Próxima ação'}).click();
+      await detail.getByRole('button',{name:'Criar tarefa'}).click();
+      await detail.getByText('Tarefa criada com sucesso.').waitFor({timeout:5000});
+      if(createdTasks!==1)throw new Error('Lead detail did not call task API exactly once');
+      await page.screenshot({path:'test-artifacts/lead-detail-v11.png',fullPage:true});
+      await detail.getByRole('button',{name:'Fechar atendimento'}).click();
       const hint=page.locator('.w10-kanban-notice');
       await hint.waitFor({timeout:7000});
       const bounds=await hint.boundingBox();
