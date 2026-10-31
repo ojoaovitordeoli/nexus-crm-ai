@@ -215,6 +215,33 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     finally{setLoading(false)}
   },[validOrg,operation]);
   useEffect(()=>{load()},[load]);
+  useEffect(()=>{
+    if(!validOrg||!db||!organizationId)return;
+    let refreshTimer=null;
+    const refresh=()=>{
+      if(refreshTimer)clearTimeout(refreshTimer);
+      refreshTimer=setTimeout(()=>load(),250);
+    };
+    const channel=db.channel('nexus-live-'+organizationId)
+      .on('postgres_changes',{event:'*',schema:'public',table:'leads',filter:'organization_id=eq.'+organizationId},refresh)
+      .on('postgres_changes',{event:'*',schema:'public',table:'sales',filter:'organization_id=eq.'+organizationId},refresh)
+      .on('postgres_changes',{event:'*',schema:'public',table:'appointments',filter:'organization_id=eq.'+organizationId},refresh)
+      .on('postgres_changes',{event:'*',schema:'public',table:'tasks',filter:'organization_id=eq.'+organizationId},refresh)
+      .on('postgres_changes',{event:'*',schema:'public',table:'contacts',filter:'organization_id=eq.'+organizationId},refresh)
+      .subscribe();
+    const onFocus=()=>refresh();
+    const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};
+    const interval=window.setInterval(refresh,30000);
+    window.addEventListener('focus',onFocus);
+    document.addEventListener('visibilitychange',onVisibility);
+    return()=>{
+      if(refreshTimer)clearTimeout(refreshTimer);
+      window.clearInterval(interval);
+      window.removeEventListener('focus',onFocus);
+      document.removeEventListener('visibilitychange',onVisibility);
+      db.removeChannel(channel);
+    };
+  },[validOrg,organizationId,load]);
 
   const since=useMemo(()=>Date.now()-period*86400000,[period]);
   const recentLeads=useMemo(()=>data.leads.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.leads,since]);

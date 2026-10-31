@@ -73,6 +73,12 @@ Instruções: [Copiloto e React Flow](docs/copiloto-ia-e-reactflow.md).
 - As mensagens recebidas são armazenadas como dados pessoais. Definir base legal, retenção, política de acesso e procedimento de exclusão antes de uso amplo.
 - Priorizar testes E2E autenticados, observabilidade, limitação de requisições por IP e prevenção de spam antes de escalar.
 
+## Evolução funcional baseada nas referências
+
+- O workspace operacional atualiza leads, vendas, agenda, tarefas e contatos por Supabase Realtime, com recarga ao retornar à aba e polling de segurança.
+- O plano de evolução do funil configurável, Command Center, agente de IA, skills, base de conhecimento e integrações está documentado no [dossiê de referências de IA](docs/dossie-referencias-ia-instagram.md).
+- A versão PDF do dossiê está disponível em [`docs/dossie-referencias-ia-instagram.pdf`](docs/dossie-referencias-ia-instagram.pdf).
+
 ## Arquitetura
 
 - `components/` — painéis, Kanban, automações, inbox, copiloto e onboarding.
