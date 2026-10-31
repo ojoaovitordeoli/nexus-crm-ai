@@ -21,9 +21,9 @@ const whatsapp=v=>{
   if(digits.length<10||digits.length>13)return null;
   return 'https://wa.me/'+(digits.length<=11?'55'+digits:digits);
 };
-function SectionHead({index,title,description,href,label='Ver todos'}) {
+function SectionHead({title,description,href,label='Ver todos'}) {
   return <div className="w10-section-head">
-    <div className="w10-section-name"><span className="w10-section-index">{index}</span><div><h2>{title}</h2>{description&&<p>{description}</p>}</div></div>
+    <div className="w10-section-name"><div><h2>{title}</h2>{description&&<p>{description}</p>}</div></div>
     {href&&<Link className="w10-textlink" href={href}>{label}<ArrowUpRight size={16}/></Link>}
   </div>;
 }
@@ -98,7 +98,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
 
   return <div className="w10-workbench" aria-busy={loading}>
     <header className="w10-heading">
-      <div className="w10-strapline"><span className="w10-strap-number">NEXUS / 01</span><span className="w10-strap-rule"/><span>{organizationName||'Empresa'}</span></div>
+      <div className="w10-strapline"><span className="w10-strap-number">NEXUS CRM</span><span className="w10-strap-rule"/><span>{organizationName||'Empresa'}</span></div>
       <div className="w10-heading-main"><div><h1>Visão geral</h1><p>O desempenho da operação, sem sair do fluxo de trabalho.</p></div>
         <div className="w10-heading-tools"><span className="w10-synced"><span/>{historyLabel}</span><Link href="/leads" className="w10-action">Abrir funil <ArrowUpRight size={17}/></Link></div>
       </div>
@@ -106,7 +106,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
 
     <section className="w10-overview" aria-label="Resumo comercial">
       <div className="w10-overview-main">
-        <div className="w10-overview-label">LEADS NO PERÍODO <span> / {period} DIAS</span></div>
+        <div className="w10-overview-label">LEADS RECEBIDOS <span> / {period} DIAS</span></div>
         <div className="w10-overview-value">{loading?'—':number(rangeLeads.length)}<span className="w10-overview-unit">recebidos</span></div>
         <Link href="/leads" className="w10-overview-link">Explorar oportunidades <ArrowUpRight size={15}/></Link>
       </div>
@@ -120,7 +120,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
     <div className="w10-workrow">
       <section className="w10-figure">
         <div className="w10-figure-top">
-          <div><span className="w10-eyebrow">AQUISIÇÃO</span><h2>Fluxo de leads</h2><p>Entradas registradas nos últimos {period} dias</p></div>
+          <div><span className="w10-eyebrow">ENTRADAS</span><h2>Fluxo de leads</h2><p>Entradas registradas nos últimos {period} dias</p></div>
           <div className="w10-pills" role="group" aria-label="Período de análise">{[7,30,90].map(x=><button type="button" key={x} aria-pressed={period===x} className={period===x?'is-active':''} onClick={()=>setPeriod(x)}>{x} dias</button>)}</div>
         </div>
         <div className="w10-figure-meta"><strong>{number(rangeLeads.length)}</strong><span>novos registros</span><span className="w10-figure-legend"><i/> Leads</span></div>
@@ -128,7 +128,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
         <div className="w10-chartfoot"><span>Origem: leads cadastrados</span><Link href="/reports">Relatórios <ArrowRight size={15}/></Link></div>
       </section>
       <section className="w10-priority">
-        <SectionHead index="02" title="Pendências" description="Próximas ações da equipe" href="/tasks" label="Ver tarefas"/>
+        <SectionHead title="Pendências" description="Próximas ações da equipe" href="/tasks" label="Ver tarefas"/>
         <div className="w10-priority-count"><strong>{number(activeTasks.length)}</strong><span>{activeTasks.length===1?'tarefa em aberto':'tarefas em aberto'}</span>{overdue.length>0&&<span className="w10-urgent"><CircleAlert size={13}/>{overdue.length} atrasadas</span>}</div>
         <div className="w10-task-list">
           {priority.length?priority.map((t,i)=><Link key={t.id||i} className="w10-task" href="/tasks">
@@ -141,7 +141,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
     </div>
 
     <section className="w10-pipeline">
-      <SectionHead index="03" title="Distribuição no funil" description="Posição dos leads nos registros carregados" href="/leads" label="Abrir quadro"/>
+      <SectionHead title="Distribuição no funil" description="Posição dos leads nos registros carregados" href="/leads" label="Abrir quadro"/>
       <div className="w10-pipeline-tracks">
         {stages.length?stages.map((s,i)=><div className="w10-stage" key={s.id}>
           <div className="w10-stage-name"><span className="w10-stage-index">{String(i+1).padStart(2,'0')}</span><strong>{s.name}</strong><span>{number(s.count)}</span></div>
@@ -153,7 +153,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
 
     <div className="w10-bottom">
       <section className="w10-recent">
-        <SectionHead index="04" title="Leads recentes" description="Últimos contatos recebidos" href="/leads" label="Todos os leads"/>
+        <SectionHead title="Leads recentes" description="Últimos contatos recebidos" href="/leads" label="Todos os leads"/>
         <div className="w10-table-scroll">
           <table className="w10-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th><span className="w10-visually-hidden">Ação</span></th></tr></thead>
           <tbody>{latest.map((l,i)=>{
@@ -165,7 +165,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
         {!latest.length&&<div className="w10-empty">Ainda não há leads cadastrados.</div>}
       </section>
       <section className="w10-activity">
-        <SectionHead index="05" title="Atividade" description="Últimos registros" href="/reports" label="Relatórios"/>
+        <SectionHead title="Atividade" description="Últimos registros" href="/reports" label="Relatórios"/>
         <div className="w10-activity-list">{activity.length?activity.map((a,i)=><Link href={a.href} key={a.id||i} className="w10-activity-row">
           <span className="w10-timeline-dot"/><span className="w10-activity-copy"><small>{a.kind}</small><strong>{a.subject}</strong></span><time dateTime={a.created}>{shortDate(a.created)}</time>
         </Link>):<div className="w10-empty">Nenhuma movimentação recente.</div>}</div>
