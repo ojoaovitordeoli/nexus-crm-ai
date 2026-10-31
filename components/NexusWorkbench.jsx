@@ -35,7 +35,7 @@ function SparkChart({series,period}) {
   return <div className="w10-chart-wrap">
     <svg viewBox="0 0 790 255" role="img" aria-label={'Quantidade de leads recebidos nos últimos '+period+' dias, agrupados em sete intervalos'} preserveAspectRatio="xMidYMid meet">
       <defs><linearGradient id="w10-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#93e3db" stopOpacity=".28"/><stop offset="100%" stopColor="#93e3db" stopOpacity="0"/></linearGradient></defs>
-      {[42,100,158,216].map((y,i)=><g key={y}><line x1="44" x2="746" y1={y} y2={y} className="w10-gridline"/><text x="6" y={y+4} className="w10-gridlabel">{Math.round(max*(3-i)/3)}</text></g>)}
+      {[42,100,158,216].map((y,i)=><g key={y}><line x1="44" x2="746" y1={y} y2={y} className="w10-gridline"/>{(max>=4||i===0||i===3)&&<text x="6" y={y+4} className="w10-gridlabel">{Math.round(max*(3-i)/3)}</text>}</g>)}
       <path d={area} className="w10-chart-area"/>
       <path d={line} className="w10-chart-line"/>
       {coords.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r="5" className="w10-chart-point" tabIndex="0"><title>{p.label+': '+p.count+' leads'}</title></circle></g>)}
