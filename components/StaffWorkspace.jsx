@@ -102,7 +102,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   };
   const rippleOnPointerDown=useCallback((event)=>{
     if(event.button!==0||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)return;
-    const control=event.target?.closest?.('.staff-nav-item,.n9-kpi,.n9-primary-button,.n9-period button,.w10-pills button,.nxp-button,.staff-command-trigger,.staff-icon-button,.nxp-lead-card-main');
+    const control=event.target?.closest?.('.staff-nav-item,.n9-kpi,.n9-primary-button,.n9-period button,.w10-pills button,.v11-date-pills button,.nxp-button,.staff-command-trigger,.staff-icon-button,.nxp-lead-card-main');
     if(!control||!event.currentTarget.contains(control)||control.disabled)return;
     const bounds=control.getBoundingClientRect();
     if(!bounds.width||!bounds.height)return;
