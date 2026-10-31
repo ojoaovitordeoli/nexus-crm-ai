@@ -302,3 +302,14 @@ body:not(.dark){background:#f4f6fb!important}
 .dark .staff-workspace-picker small,.dark .staff-session small{color:#a7b5ce!important}
 .dark .staff-logout{background:#1b2a42!important;border-color:#30415b!important;color:#d1dced!important}
 .dark .staff-topbar{background:rgba(18,30,50,.95)!important;border-bottom-color:#2c3b54!important}
+
+
+.n9-period button{white-space:nowrap}
+@media(max-width:470px){
+  .n9-filterline{flex-direction:column;align-items:stretch;gap:11px}
+  .n9-filterline>div:first-child{display:flex;align-items:baseline;gap:9px}
+  .n9-period{width:100%;justify-content:stretch}
+  .n9-period button{flex:1;min-width:0;white-space:nowrap}
+  .n9-heading p{font-size:13px}
+  .n9-kpi-top>span:first-child{font-size:12.5px}
+}
