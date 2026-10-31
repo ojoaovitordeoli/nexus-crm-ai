@@ -278,3 +278,30 @@ body .auth--v4 .field{font-family:var(--w10-body)!important}
   .w10-workbench{animation:none!important}
   .w10-task,.w10-action,.w10-table tr{transition:none!important;transform:none!important}
 }
+
+/* Final typography pass after screenshot audit: larger data labels, calmer headings. */
+.w10-heading h1{font-size:clamp(32px,3.1vw,46px)!important;font-weight:570!important;letter-spacing:-.055em!important}
+.w10-heading p{font-size:14px}
+.w10-strap-number{letter-spacing:.065em;font-size:11px}
+.w10-section-name h2{font-size:19px!important;font-weight:590}
+.w10-section-name p{font-size:12px}
+.w10-textlink{font-size:12px}
+.w10-overview-label{letter-spacing:.045em;font-size:11px}
+.w10-overview-value{font-weight:580}
+.w10-overview-metric>span{font-size:13px}
+.w10-overview-metric>small{font-size:12px}
+.w10-overview-metric>strong{font-weight:560}
+.w10-figure-top p{font-size:13px}
+.w10-figure-meta>span{font-size:13px}
+.w10-chartfoot span{font-size:12px}
+.w10-task-copy strong{font-size:13px}
+.w10-task-copy small{font-size:12px}
+.w10-stage-name strong{font-size:13px}
+.w10-table th{font-size:12px}
+.w10-table td{font-size:12px}
+.w10-contact strong{font-size:13px}
+.w10-activity-copy small{font-size:11px}
+.w10-activity-copy strong{font-size:13px}
+.w10-activity-row time{font-size:11px}
+.w10-footnote{font-size:12px}
+@media(max-width:720px){.w10-heading h1{font-size:clamp(31px,7vw,39px)!important}}
