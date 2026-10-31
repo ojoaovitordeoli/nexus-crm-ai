@@ -220,3 +220,6 @@ body:not(.dark) .v11-detail-save{color:#fff}
   .v11-detail-form-grid{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.v11-dashboard{animation:none!important}.v11-add-button{transition:none!important}}
+
+/* Keep ripple inside the real interactive filter. */
+.v11-date-pills button{position:relative;isolation:isolate;overflow:hidden}
