@@ -11,7 +11,8 @@ import {
   ReceiptText,UserRound,UsersRound,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
-import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
+import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
+import NexusDashboard from './NexusDashboard';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
 import MotionCalendar from './MotionCalendar';
 import NexusCommandMenu from './NexusCommandMenu';
@@ -398,7 +399,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <header className="staff-topbar">
         <div className="staff-topbar-left">
           <IconButton icon={Menu} title="Abrir menu" onClick={()=>setMobileOpen(true)}/>
-          <div className="staff-breadcrumb"><span>NEXUS / Workspace</span><ChevronRight size={15}/><strong>{page}</strong></div>
+          <div className="staff-breadcrumb"><span>Área de trabalho</span><ChevronRight size={15}/><strong>{page}</strong></div>
         </div>
         <div className="staff-topbar-right">
           <button type="button" className="staff-tour-button" onClick={startTour} disabled={tourLoading}
@@ -424,7 +425,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setSearchOpen(false)}>Fechar busca</button>
             </div>}
           </div>
-          <span className="staff-connected"><span/> Operação ativa</span>
+          <span className="staff-connected"><span/> Dados da empresa</span>
           <div className="staff-notification-control">
             <button type="button" className="staff-icon-button" onClick={()=>{setNotificationsOpen(v=>!v);setSearchOpen(false)}} aria-label="Abrir notificações" aria-expanded={notificationsOpen}>
               <Bell size={18}/>
@@ -438,7 +439,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setNotificationsOpen(false)}>Fechar notificações</button>
             </div>}
           </div>
-          {section==='dashboard'&&<button type="button" className="staff-replay-button" onClick={()=>setMotionReplay(v=>v+1)} title="Reproduzir as animações do dashboard"><Play size={15} fill="currentColor"/> <span>Rever efeitos</span></button>}
+          
           <IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={load}/>
           <IconButton icon={dark?Sun:Moon} title="Alternar tema" onClick={onToggleTheme}/>
           <div className="staff-top-avatar" title={displayName}><Initials name={displayName}/></div>
@@ -450,7 +451,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
-        {section==='dashboard'&&<PremiumDashboard
+        {section==='dashboard'&&<NexusDashboard
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}
