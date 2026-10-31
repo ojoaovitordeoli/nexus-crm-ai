@@ -104,7 +104,51 @@ try{
   await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
   await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
+  for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(500);
+    if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
+    await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
+  }
+  await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.waitForTimeout(400);
+  const themeAndFonts=await page.evaluate(()=>{
+    const heading=document.querySelector('.n9-heading h1');
+    const body=document.body;
+    return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
+  });
+  if(!themeAndFonts.dark)throw new Error('Dark glass theme must be the default for a new workspace');
+  if(!themeAndFonts.font.includes('Sora'))throw new Error('Dashboard titles are not using Sora: '+themeAndFonts.font);
+  if(!themeAndFonts.glass)throw new Error('Missing glass design tokens');
+  await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  await page.evaluate(()=>{
+    window.__n9RippleSeen=false;
+    window.__n9RippleObserver=new MutationObserver(mutations=>{
+      if(mutations.some(record=>Array.from(record.addedNodes).some(node=>node.nodeType===1&&node.classList?.contains('n9-pointer-ripple')))){
+        window.__n9RippleSeen=true;
+      }
+    });
+    window.__n9RippleObserver.observe(document.body,{subtree:true,childList:true});
+  });
+  await page.getByRole('button',{name:'7 dias'}).click();
+  const rippleWasCreated=await page.evaluate(()=>{
+    window.__n9RippleObserver?.disconnect();
+    return window.__n9RippleSeen;
+  });
+  if(!rippleWasCreated)throw new Error('Expected ripple microinteraction during period click');
+  await page.getByRole('button',{name:'Alternar tema'}).click();
+  await page.waitForTimeout(350);
+  if(await page.evaluate(()=>document.body.classList.contains('dark')))throw new Error('Light theme toggle did not work');
+  await page.screenshot({path:'test-artifacts/dashboard-light.png',fullPage:true});
+  await page.getByRole('button',{name:'Alternar tema'}).click();
+  await page.waitForTimeout(250);
   await page.setViewportSize({width:390,height:844});
+  await page.waitForTimeout(450);
+  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  const pageWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
+  if(pageWidth>395)throw new Error('Dashboard overflows 390px mobile viewport: '+pageWidth);
+  await page.screenshot({path:'test-artifacts/dashboard-mobile.png',fullPage:true});
   await page.keyboard.press('Control+k');
   await dialog.waitFor({state:'visible'});
   await page.waitForTimeout(650); // capture fully opaque command dialog, not entry animation

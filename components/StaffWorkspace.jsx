@@ -11,7 +11,8 @@ import {
   ReceiptText,UserRound,UsersRound,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
-import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
+import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
+import NexusDashboard from './NexusDashboard';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
 import MotionCalendar from './MotionCalendar';
 import NexusCommandMenu from './NexusCommandMenu';
@@ -27,7 +28,7 @@ const MENU=[
   {path:'contacts',label:'Contatos',icon:ContactRound},
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'automations',label:'Automações',icon:Workflow},
-  {path:'insights',label:'Copiloto IA',icon:Sparkles},
+
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
   {path:'reports',label:'Relatórios',icon:Activity},
@@ -94,6 +95,21 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     surface.style.setProperty('--pointer-x',((event.clientX-bounds.left)/bounds.width*100)+'%');
     surface.style.setProperty('--pointer-y',((event.clientY-bounds.top)/bounds.height*100)+'%');
   };
+  const rippleOnPointerDown=useCallback((event)=>{
+    if(event.button!==0||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)return;
+    const control=event.target?.closest?.('.staff-nav-item,.n9-kpi,.n9-primary-button,.n9-period button,.nxp-button,.staff-command-trigger,.staff-icon-button,.nxp-lead-card-main');
+    if(!control||!event.currentTarget.contains(control)||control.disabled)return;
+    const bounds=control.getBoundingClientRect();
+    if(!bounds.width||!bounds.height)return;
+    const ripple=document.createElement('span');
+    ripple.className='n9-pointer-ripple';
+    ripple.setAttribute('aria-hidden','true');
+    ripple.style.left=(event.clientX-bounds.left)+'px';
+    ripple.style.top=(event.clientY-bounds.top)+'px';
+    ripple.style.setProperty('--n9-ripple-scale',String(Math.ceil(Math.max(bounds.width,bounds.height)/10)*3));
+    ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
+    control.appendChild(ripple);
+  },[]);
   const [lastSync,setLastSync]=useState(null);
   const [globalSearch,setGlobalSearch]=useState('');
   const [searchOpen,setSearchOpen]=useState(false);
@@ -362,7 +378,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
 
   if(section==='admin')return <main className="staff-denied"><ShieldCheck size={34}/><h1>Acesso restrito</h1><p>Este painel é exclusivo do Super Admin.</p><Link href="/dashboard">Voltar ao painel</Link></main>;
 
-  return <div className="staff-shell">
+  return <div className="staff-shell" onPointerDown={rippleOnPointerDown}>
     <NexusCommandMenu open={commandOpen} onOpenChange={setCommandOpen}
       dark={dark} onTheme={onToggleTheme}
       isSuperAdmin={isSuperAdmin}
@@ -383,10 +399,10 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       onReplay={()=>{if(section==='dashboard')setMotionReplay(v=>v+1);else router.push('/dashboard')}}
     />
     <aside className={'staff-sidebar '+(mobileOpen?'staff-sidebar--open':'')}>
-      <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={23}/></div><div><strong>NEXUS <span>CRM</span></strong><small>WORKSPACE</small></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
-      <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>SEU ESPAÇO</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}</div>
+      <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={23}/></div><div><strong>NEXUS <span>CRM</span></strong><small>Gestão comercial</small></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
+      <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}</div>
       {organizations.length>1&&<label className="staff-company-choice"><span>Alternar empresa</span><select value={organizationId} onChange={e=>onOrganizationChange(e.target.value)}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
-      <div className="staff-nav-title">MENU PRINCIPAL</div>
+      <div className="staff-nav-title">Navegação</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
         {MENU.map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={19} strokeWidth={1.9}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
@@ -398,7 +414,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <header className="staff-topbar">
         <div className="staff-topbar-left">
           <IconButton icon={Menu} title="Abrir menu" onClick={()=>setMobileOpen(true)}/>
-          <div className="staff-breadcrumb"><span>NEXUS / Workspace</span><ChevronRight size={15}/><strong>{page}</strong></div>
+          <div className="staff-breadcrumb"><span>Área de trabalho</span><ChevronRight size={15}/><strong>{page}</strong></div>
         </div>
         <div className="staff-topbar-right">
           <button type="button" className="staff-tour-button" onClick={startTour} disabled={tourLoading}
@@ -424,7 +440,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setSearchOpen(false)}>Fechar busca</button>
             </div>}
           </div>
-          <span className="staff-connected"><span/> Operação ativa</span>
+          <span className="staff-connected"><span/> Empresa selecionada</span>
           <div className="staff-notification-control">
             <button type="button" className="staff-icon-button" onClick={()=>{setNotificationsOpen(v=>!v);setSearchOpen(false)}} aria-label="Abrir notificações" aria-expanded={notificationsOpen}>
               <Bell size={18}/>
@@ -438,7 +454,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setNotificationsOpen(false)}>Fechar notificações</button>
             </div>}
           </div>
-          {section==='dashboard'&&<button type="button" className="staff-replay-button" onClick={()=>setMotionReplay(v=>v+1)} title="Reproduzir as animações do dashboard"><Play size={15} fill="currentColor"/> <span>Rever efeitos</span></button>}
+          
           <IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={load}/>
           <IconButton icon={dark?Sun:Moon} title="Alternar tema" onClick={onToggleTheme}/>
           <div className="staff-top-avatar" title={displayName}><Initials name={displayName}/></div>
@@ -450,7 +466,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
-        {section==='dashboard'&&<PremiumDashboard
+        {section==='dashboard'&&<NexusDashboard
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}

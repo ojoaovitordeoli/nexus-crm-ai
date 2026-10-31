@@ -35,7 +35,7 @@ export default function CRM({section}){
  const [orgName,setOrgName]=useState(''),[taskName,setTaskName]=useState(''),[query,setQuery]=useState('');
  const isAdmin=Boolean(profile?.is_super_admin);
  const isAuthScreen=section==='login'||section==='reset-password';
- useEffect(()=>{const t=localStorage.getItem('nexus-theme')==='dark';setDark(t);document.body.classList.toggle('dark',t)},[]);
+ useEffect(()=>{const saved=localStorage.getItem('nexus-theme');const darkByDefault=saved!=='light';setDark(darkByDefault);document.body.classList.toggle('dark',darkByDefault)},[]);
  function toggleTheme(){setDark(v=>{document.body.classList.toggle('dark',!v);localStorage.setItem('nexus-theme',!v?'dark':'light');return !v})}
  const initialize=useCallback(async()=>{
   if(!db){setIsLoading(false);return}
