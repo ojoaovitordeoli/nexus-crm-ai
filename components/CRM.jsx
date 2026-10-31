@@ -116,21 +116,21 @@ export default function CRM({section}){
    <div className="auth-v4-top"><HeaderLogo/><span>ACESSO SEGURO</span></div>
    <div className="auth-v4-blade" aria-hidden="true" onAnimationEnd={()=>setAuthSwitching(false)}/>
    <div className="auth-v4-content">
-   <div className="eyebrow" style={{marginTop:32}}>NEXUS / WORKSPACE</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
+   <div className="eyebrow" style={{marginTop:32}}>ÁREA DE TRABALHO</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
    <form onSubmit={section==='reset-password'?changePassword:forgot?recover:signIn}>
    {section!=='reset-password'&&<label className="field">E-mail<input ref={emailInput} value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="seu@email.com" autoComplete="email" required/></label>}
    {(!forgot||section==='reset-password')&&<label className="field">{section==='reset-password'?'Nova senha':'Senha'}<input value={pass} onChange={e=>setPass(e.target.value)} type="password" minLength={6} placeholder="Sua senha" autoComplete={section==='reset-password'?'new-password':'current-password'} required/></label>}
    {notice&&<div role="status" className="notice success">{notice}</div>}{error&&<Alert error>{error}</Alert>}
    <button disabled={submitting} type="submit" className="btn primary">{submitting?'Processando...':section==='reset-password'?'Salvar nova senha':forgot?'Enviar recuperação':'Entrar'}</button>
    </form>{section==='login'&&<p style={{textAlign:'center',marginTop:20}}><button className="linkbtn" type="button" onClick={toggleRecovery}>{forgot?'Voltar ao login':'Esqueci minha senha'}</button></p>}
-   <p className="small muted" style={{textAlign:'center',marginTop:28}}>NEXUS CRM AI · Acesso protegido pelo Supabase</p>
+   <p className="small muted" style={{textAlign:'center',marginTop:28}}>NEXUS CRM · Acesso seguro</p>
    </div>
    <aside className="auth-v4-cover" aria-label="Apresentação do NEXUS">
      <div className="auth-v4-cover-orbit" aria-hidden="true"><span/><span/><span/></div>
      <div className="auth-v4-cover-inner">
-       <span className="auth-v4-cover-kicker">NEXUS / OPERATIONS INTELLIGENCE</span>
-       <h2>{forgot?'Seu próximo passo começa aqui.':section==='reset-password'?'Segurança para continuar.':'Sua operação, em outra dimensão.'}</h2>
-       <p>Visibilidade para decidir. Clareza para atender. Um espaço de trabalho feito para evoluir com sua empresa.</p>
+       <span className="auth-v4-cover-kicker">NEXUS / GESTÃO COMERCIAL</span>
+       <h2>{forgot?'Seu próximo passo começa aqui.':section==='reset-password'?'Segurança para continuar.':'O trabalho, em ordem.'}</h2>
+       <p>Leads, tarefas e resultados no mesmo lugar. Simples de acompanhar.</p>
        <span className="auth-v4-cover-foot"><span/> Plataforma multiempresa · Acesso protegido</span>
      </div>
    </aside>
