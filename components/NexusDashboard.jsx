@@ -1,6 +1,6 @@
 'use client';
 
-import {useMemo,useState} from 'react';
+import {useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,ArrowUpRight,CalendarDays,CheckCircle2,Clock3,
@@ -33,10 +33,29 @@ function Panel({title,description,action,children,className=''}) {
     {children}
   </section>;
 }
-function Kpi({icon:Icon,label,value,detail,tone='blue',href}) {
+function AnimatedNumber({amount,kind='count'}) {
+  const [visible,setVisible]=useState(amount);
+  useEffect(()=>{
+    if(amount===0||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
+      setVisible(amount);return;
+    }
+    let frame=0,start=null;
+    const step=now=>{
+      if(start===null)start=now;
+      const progress=Math.min(1,(now-start)/560);
+      setVisible(amount*(1-Math.pow(1-progress,3)));
+      if(progress<1)frame=requestAnimationFrame(step);
+    };
+    frame=requestAnimationFrame(step);
+    return ()=>cancelAnimationFrame(frame);
+  },[amount]);
+  return <span aria-hidden="true">{kind==='money'?formatMoney(visible):formatNumber(Math.round(visible))}</span>;
+}
+function Kpi({icon:Icon,label,value,detail,tone='blue',href,kind='count'}) {
+  const finalValue=value===null?'—':kind==='money'?formatMoney(value):formatNumber(value);
   return <Link href={href} className={'n9-kpi n9-kpi--'+tone}>
     <div className="n9-kpi-top"><span>{label}</span><span className="n9-kpi-icon"><Icon size={20} strokeWidth={1.9}/></span></div>
-    <strong>{value}</strong>
+    <strong aria-label={finalValue}>{value===null?'—':<AnimatedNumber amount={value} kind={kind}/>}</strong>
     <span className="n9-kpi-bottom">{detail}<ArrowUpRight size={16}/></span>
   </Link>;
 }
@@ -129,10 +148,10 @@ export default function NexusDashboard({data,counts,loading,organizationName,fir
     </div>
 
     <div className="n9-metrics" aria-busy={loading}>
-      <Kpi href="/leads" icon={UsersRound} tone="blue" label="Leads recebidos" value={loading?'—':formatNumber(recentLeads.length)} detail={'Nos últimos '+period+' dias'}/>
-      <Kpi href="/sales" icon={ReceiptText} tone="green" label="Vendas registradas" value={loading?'—':formatNumber(recentSales.length)} detail={'Ticket médio '+formatMoney(recentSales.length?revenue/recentSales.length:0)}/>
-      <Kpi href="/sales" icon={Wallet} tone="indigo" label="Receita registrada" value={loading?'—':formatMoney(revenue)} detail="Conforme as vendas carregadas"/>
-      <Kpi href="/tasks" icon={ListTodo} tone={overdue.length?'orange':'blue'} label="Tarefas em aberto" value={loading?'—':formatNumber(pending.length)} detail={overdue.length?overdue.length+' com prazo vencido':'Nenhum prazo vencido'}/>
+      <Kpi href="/leads" icon={UsersRound} tone="blue" label="Leads recebidos" value={loading?null:recentLeads.length} detail={'Nos últimos '+period+' dias'}/>
+      <Kpi href="/sales" icon={ReceiptText} tone="green" label="Vendas registradas" value={loading?null:recentSales.length} detail={'Ticket médio '+formatMoney(recentSales.length?revenue/recentSales.length:0)}/>
+      <Kpi href="/sales" icon={Wallet} tone="indigo" label="Receita registrada" value={loading?null:revenue} kind="money" detail="Conforme as vendas carregadas"/>
+      <Kpi href="/tasks" icon={ListTodo} tone={overdue.length?'orange':'blue'} label="Tarefas em aberto" value={loading?null:pending.length} detail={overdue.length?overdue.length+' com prazo vencido':'Nenhum prazo vencido'}/>
     </div>
 
     <div className="n9-main-grid">
