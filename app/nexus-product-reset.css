@@ -229,3 +229,65 @@ body .auth-v4-top{border-bottom:1px solid var(--p-border)!important}
 body .staff-shell .staff-logo-icon svg{color:var(--p-button-text)!important}
 body .staff-shell input,body .staff-shell select,body .staff-shell textarea{accent-color:var(--p-accent)}
 body .desk button:focus-visible,body .desk a:focus-visible,body .desk input:focus-visible{outline:2px solid var(--p-accent)!important;outline-offset:2px}
+
+/* Screenshot review — remove empty canvases and legacy cobalt surfaces. */
+.desk-task-list,.desk-lead-list{min-height:0!important}
+.desk-stage-list,.desk-appointment-list{min-height:0!important}
+.desk-stage-list{padding:12px 0 8px}
+.desk-appointment-list{padding:2px 0 7px}
+.desk-queue,.desk-inbox{align-self:start}
+.desk-section{padding-bottom:17px}
+.desk-task{min-height:67px}
+.desk-lead{min-height:64px}
+.desk-section-header h2{font-size:16px!important}
+.desk-section-header p,.desk-lead small,.desk-task>div span{font-size:12px!important}
+.desk-metric>span{font-size:13px!important}
+.desk-metric strong{font-size:clamp(24px,2.1vw,29px)}
+.desk-empty{min-height:92px;padding:17px 0}
+body.dark .nxp-premium{
+ --nxp-ink:var(--p-text)!important;--nxp-muted:var(--p-muted)!important;
+ --nxp-border:var(--p-border)!important;--nxp-surface:var(--p-panel)!important;
+ --nxp-accent:var(--p-accent)!important
+}
+body:not(.dark) .nxp-premium{
+ --nxp-ink:var(--p-text)!important;--nxp-muted:var(--p-muted)!important;
+ --nxp-border:var(--p-border)!important;--nxp-surface:var(--p-panel)!important;
+ --nxp-accent:var(--p-accent)!important
+}
+body.dark .nxp-premium .nxp-surface,
+body.dark .nxp-premium .nxp-leads-workarea,
+body.dark .nxp-premium .nxp-board-column,
+body.dark .nxp-premium .nxp-contact-card,
+body:not(.dark) .nxp-premium .nxp-surface,
+body:not(.dark) .nxp-premium .nxp-leads-workarea,
+body:not(.dark) .nxp-premium .nxp-board-column,
+body:not(.dark) .nxp-premium .nxp-contact-card{
+ background:var(--p-panel)!important;border:1px solid var(--p-border)!important;box-shadow:none!important;border-radius:8px!important;backdrop-filter:none!important;
+}
+body.dark .nxp-premium .nxp-filterbar,
+body:not(.dark) .nxp-premium .nxp-filterbar{background:var(--p-panel)!important;border-color:var(--p-border)!important}
+body.dark .nxp-premium .nxp-table th,
+body:not(.dark) .nxp-premium .nxp-table th{background:var(--p-hover)!important;color:var(--p-muted)!important}
+body.dark .nxp-premium .nxp-table td,
+body:not(.dark) .nxp-premium .nxp-table td{color:var(--p-text)!important;border-color:var(--p-border)!important}
+body.dark .nxp-premium .nxp-list-scroll,
+body:not(.dark) .nxp-premium .nxp-list-scroll{background:var(--p-panel)!important}
+body.dark .nxp-premium .nxp-lead-card,
+body:not(.dark) .nxp-premium .nxp-lead-card{background:var(--p-panel)!important;border:1px solid var(--p-border)!important}
+body.dark .nxp-premium .nxp-mode-switch button.active,
+body:not(.dark) .nxp-premium .nxp-mode-switch button.active{background:var(--p-accent-bg)!important;color:var(--p-accent)!important;box-shadow:none!important}
+body .nxp-premium .nxp-pill{background:var(--p-accent-bg)!important;color:var(--p-accent)!important;border:1px solid transparent!important}
+body .nxp-premium .nxp-leads-workarea{min-height:0!important;padding-bottom:0!important}
+body.dark .nxp-premium .w10-kanban-notice,body:not(.dark) .nxp-premium .w10-kanban-notice{background:var(--p-hover)!important;border-color:var(--p-border)!important}
+body.dark .nxp-premium .w10-kanban-notice button,body:not(.dark) .nxp-premium .w10-kanban-notice button{background:var(--p-panel)!important;color:var(--p-accent)!important;border-color:var(--p-border)!important}
+body .nxp-premium .nxp-footnote{padding:11px 14px!important}
+body .staff-workspace-icon{background:var(--p-hover)!important;color:var(--p-muted)!important;border-color:var(--p-border)!important;border-radius:7px!important;box-shadow:none!important}
+body .staff-top-avatar .staff-initials,body .staff-session .staff-initials{background:var(--p-hover)!important;color:var(--p-muted)!important;border:1px solid var(--p-border)!important}
+@media(max-width:760px){
+ body .staff-shell .staff-breadcrumb strong{white-space:nowrap!important;font-size:12px!important}
+ body .staff-shell .staff-breadcrumb{white-space:nowrap!important}
+ .desk-bottom-grid{gap:12px}
+ .desk-section{padding:17px 15px}
+ .desk-stage-list{padding:6px 0}
+ .desk-empty{min-height:70px}
+}
