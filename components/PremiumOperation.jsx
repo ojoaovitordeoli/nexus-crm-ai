@@ -92,7 +92,7 @@ function Drawer({data,type='lead',onClose,readonly,stages=[],onStageChange,pendi
   </div>;
 }
 function PanelHeader({eyebrow,title,detail,right}){return <div className="nxp-page-head"><div><span className="nxp-kicker">{eyebrow}</span><h1>{title}</h1><p>{detail}</p></div>{right}</div>}
-function Metric({label,value,icon:Icon,tone,footer}){
+function Metric({label,value,displayValue,icon:Icon,tone,footer}){
   const [shown,setShown]=useState(0);
   useEffect(()=>{
     if(typeof value!=='number')return;
@@ -107,7 +107,7 @@ function Metric({label,value,icon:Icon,tone,footer}){
     frame=requestAnimationFrame(tick);
     return ()=>cancelAnimationFrame(frame);
   },[value]);
-  return <article className={'nxp-metric nxp-metric--'+tone}><div className="nxp-metric-top"><span>{label}</span><span className="nxp-metric-icon"><Icon size={20}/></span></div><strong>{typeof value==='number'?fmt(shown):value}</strong><div className="nxp-metric-bottom"><span className="nxp-metric-pip"/>{footer}</div></article>;
+  return <article className={'nxp-metric nxp-metric--'+tone}><div className="nxp-metric-top"><span>{label}</span><span className="nxp-metric-icon"><Icon size={20}/></span></div><strong>{displayValue|| (typeof value==='number'?fmt(shown):value)}</strong><div className="nxp-metric-bottom"><span className="nxp-metric-pip"/>{footer}</div></article>;
 }
 
 export function PremiumDashboard({data,counts,loading,organizationName,firstName,openTasks=[],overdueTasks=[],lastSync,pipelineStages=[]}){
@@ -145,6 +145,8 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
     return events.sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,7);
   },[data]);
   const recentIncome=currentSales.reduce((n,item)=>n+Number(item.value||0),0);
+  const averageSale=currentSales.length?recentIncome/currentSales.length:0;
+  const openLeads=currentLeads.filter(item=>!['won','closed','sold','converted','fechado','lost','perdido'].includes(String(item.status||'').toLowerCase())).length;
   const max=Math.max(1,...trend.map(d=>d.value));
   const chartPoints=trend.map((d,i)=>[16+i*(268/6),105-(d.value/max)*90]);
   const chartLine=chartPoints.map(([x,y],i)=>(i===0?'M':'L')+x+' '+y).join(' ');
@@ -160,18 +162,18 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
   const greeting=hour<12?'Bom dia':hour<18?'Boa tarde':'Boa noite';
   return <div className="nxp-premium">
     <section className="nxp-presentation">
-      <div className="nxp-presentation-copy"><div className="nxp-overline"><span/> NEXUS / INTELLIGENCE WORKSPACE</div>
-      <h1>{greeting}, <em>{firstName}.</em></h1><p>Uma visão clara do que está acontecendo na sua operação. Transforme dados em decisões e oportunidades em resultados.</p>
-      <div className="nxp-presentation-actions"><Link href="/leads" className="nxp-white-button">Explorar meu funil <ArrowUpRight size={17}/></Link><span className="nxp-live-text"><Signal size={14}/> Dados do Supabase</span></div></div>
+      <div className="nxp-presentation-copy"><div className="nxp-overline"><span/> NEXUS / COMMAND CENTER</div>
+      <h1>{greeting}, <em>{firstName}.</em></h1><p>O centro de comando da sua operação: atendimento, pipeline, agenda e receita conectados em uma única visão acionável.</p>
+      <div className="nxp-presentation-actions"><Link href="/leads" className="nxp-white-button">Abrir meu pipeline <ArrowUpRight size={17}/></Link><span className="nxp-live-text"><Signal size={14}/> Dados sincronizados</span></div></div>
       <div className="nxp-orbits" aria-hidden="true"><span className="nxp-orbit nxp-orbit--one"/><span className="nxp-orbit nxp-orbit--two"/><span className="nxp-orbit nxp-orbit--three"/><span className="nxp-orbit-logo"><Layers3 size={51} strokeWidth={1.45}/></span><span className="nxp-orbit-glow"/></div>
       <div className="nxp-presentation-foot"><span><Briefcase size={14}/>{organizationName}</span><span><Clock3 size={14}/>{lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Preparando indicadores'}</span></div>
     </section>
     <div className="nxp-section-title"><div><span className="nxp-kicker">PERFORMANCE</span><h2>Visão da operação</h2><p>Indicadores dos registros disponíveis para a empresa.</p></div><div className="nxp-switch">{[7,30,90].map(d=><button type="button" className={d===period?'active':''} onClick={()=>setPeriod(d)} key={d}>{d} dias</button>)}</div></div>
     <div className="nxp-metrics">
-      <Metric tone="blue" icon={UsersRound} label="Leads no período" value={loading?'—':currentLeads.length} footer="Até 250 registros recentes"/>
-      <Metric tone="green" icon={Wallet} label="Vendas registradas" value={loading?'—':currentSales.length} footer={brl(recentIncome)+' em vendas do período'}/>
-      <Metric tone="violet" icon={CalendarDays} label="Agendamentos" value={loading?'—':currentAppointments.length} footer="Criados no período"/>
-      <Metric tone="orange" icon={ListTodo} label="Tarefas abertas" value={loading?'—':openTasks.length} footer={overdueTasks.length+' com prazo vencido'}/>
+      <Metric tone="blue" icon={UsersRound} label="Oportunidades abertas" value={loading?'—':openLeads} footer={currentLeads.length+' leads cadastrados no período'}/>
+      <Metric tone="green" icon={Wallet} label="Receita realizada" value={loading?'—':recentIncome} displayValue={loading?'—':brl(recentIncome)} footer={currentSales.length+' vendas · ticket '+brl(averageSale)}/>
+      <Metric tone="violet" icon={CalendarDays} label="Compromissos" value={loading?'—':currentAppointments.length} footer="Agenda criada no período"/>
+      <Metric tone="orange" icon={ListTodo} label="Ações pendentes" value={loading?'—':openTasks.length} footer={overdueTasks.length+' com prazo vencido'}/>
     </div>
     <div className="nxp-analytics-grid">
       <section className="nxp-surface nxp-graph-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">AQUISIÇÃO</span><h3>Movimento de leads</h3><p>Distribuição nos últimos {period} dias</p></div><div className="nxp-circle-icon"><Activity size={21}/></div></div>
