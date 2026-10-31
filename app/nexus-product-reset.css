@@ -291,3 +291,43 @@ body .staff-top-avatar .staff-initials,body .staff-session .staff-initials{backg
  .desk-stage-list{padding:6px 0}
  .desk-empty{min-height:70px}
 }
+
+/* Sales route: one quiet metrics rail; no three promotional KPI cards. */
+body .nxp-premium .nxp-sales-metrics{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:0!important;border:1px solid var(--p-border)!important;
+ background:var(--p-panel)!important;border-radius:9px!important;overflow:hidden!important;
+ box-shadow:none!important;margin-bottom:16px!important
+}
+body.dark .nxp-premium .nxp-sales-metrics article,
+body:not(.dark) .nxp-premium .nxp-sales-metrics article{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:9px!important;
+ min-height:122px!important;padding:20px 23px!important;background:var(--p-panel)!important;
+ border:0!important;border-right:1px solid var(--p-border)!important;
+ border-radius:0!important;box-shadow:none!important;transform:none!important;
+}
+body .nxp-premium .nxp-sales-metrics article:last-child{border-right:0!important}
+body .nxp-premium .nxp-sales-metrics article>span{display:none!important}
+body .nxp-premium .nxp-sales-metrics article small{font:560 12px var(--product-font)!important;color:var(--p-muted)!important}
+body .nxp-premium .nxp-sales-metrics article strong{font:680 clamp(22px,2.1vw,29px)/1.2 var(--product-font)!important;letter-spacing:-.045em!important;color:var(--p-text)!important}
+body .nxp-premium .nxp-sales-metrics article em{font:480 11px var(--product-font)!important;color:var(--p-soft)!important;font-style:normal!important}
+body.dark .nxp-premium .nxp-sale-create,
+body:not(.dark) .nxp-premium .nxp-sale-create,
+body.dark .nxp-premium .nxp-sales-list,
+body:not(.dark) .nxp-premium .nxp-sales-list{
+ background:var(--p-panel)!important;border:1px solid var(--p-border)!important;
+ border-radius:9px!important;box-shadow:none!important;backdrop-filter:none!important;
+}
+body .nxp-premium .nxp-sale-create{padding:22px!important}
+body .nxp-premium .nxp-sale-create h2{font:700 17px var(--product-font)!important;letter-spacing:-.027em!important;color:var(--p-text)!important}
+body .nxp-premium .nxp-sale-create p{font-size:12px!important;color:var(--p-muted)!important}
+body .nxp-premium .nxp-sale-create input{font:500 13px var(--product-font)!important;color:var(--p-text)!important;background:var(--p-panel)!important;border:1px solid var(--p-border)!important;border-radius:7px!important}
+body .nxp-premium .nxp-sales-list{padding:22px!important}
+body .nxp-premium .nxp-sales-list .nxp-panel-head h3{font:690 16px var(--product-font)!important;color:var(--p-text)!important}
+body .nxp-premium .nxp-sales-list .nxp-panel-head p{font:480 12px/1.55 var(--product-font)!important;color:var(--p-muted)!important}
+body .nxp-premium .nxp-sales-list .nxp-panel-head>svg{display:none!important}
+body .nxp-premium .nxp-sales-empty{min-height:145px!important;background:transparent!important;border:0!important;color:var(--p-muted)!important}
+body .nxp-premium .nxp-sales-empty>svg{display:none!important}
+body .nxp-premium .nxp-sales-empty strong{font:670 13px var(--product-font)!important;color:var(--p-text)!important}
+body .nxp-premium .nxp-sales-empty p{font:480 12px var(--product-font)!important;color:var(--p-muted)!important}
+@media(max-width:660px){body .nxp-premium .nxp-sales-metrics{grid-template-columns:1fr!important}body .nxp-premium .nxp-sales-metrics article{min-height:96px!important;border-right:0!important;border-bottom:1px solid var(--p-border)!important}body .nxp-premium .nxp-sales-metrics article:last-child{border-bottom:0!important}}
