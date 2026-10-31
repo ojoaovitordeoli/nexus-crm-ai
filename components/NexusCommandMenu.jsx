@@ -4,7 +4,7 @@ import {useEffect,useMemo,useState} from 'react';
 import {Command} from 'cmdk';
 import {
   Activity,ArrowRight,BriefcaseBusiness,CalendarDays,CheckCircle2,
-  ContactRound,CornerDownLeft,LayoutDashboard,ListTodo,MessageCircle,
+  ContactRound,CornerDownLeft,LayoutDashboard,ListTodo,MessageCircle,ReceiptText,
   Moon,Play,Plus,RefreshCw,Search,Settings2,ShieldCheck,
   Sparkles,Sun,UsersRound,Workflow,X,Zap
 } from 'lucide-react';
@@ -12,6 +12,7 @@ import {
 const destinations=[
   {path:'dashboard',title:'Visão geral',description:'Indicadores e desempenho da operação',keywords:'dashboard resumo resultados',Icon:LayoutDashboard},
   {path:'leads',title:'Leads e funil',description:'Negociações, etapas e oportunidades',keywords:'leads kanban pipeline clientes',Icon:UsersRound},
+  {path:'sales',title:'Vendas',description:'Receita e resultados registrados',keywords:'vendas receita faturamento ticket médio',Icon:ReceiptText},
   {path:'contacts',title:'Contatos',description:'Pessoas e números de telefone',keywords:'contatos pessoas telefone',Icon:ContactRound},
   {path:'whatsapp',title:'WhatsApp Business',description:'Conversas e canais da empresa',keywords:'mensagens atendimento',Icon:MessageCircle},
   {path:'automations',title:'Automações',description:'Regras de follow-up',keywords:'rotina fluxo gatilho tarefa',Icon:Workflow},
