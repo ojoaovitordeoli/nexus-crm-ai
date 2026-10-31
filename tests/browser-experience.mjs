@@ -117,7 +117,7 @@ try{
       if(await page.locator('.w10-kanban-setup').count())throw new Error('Old oversized Kanban configuration panel still visible');
       await hint.getByRole('button',{name:/Configurar funil/}).click();
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
-      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar'}).click();
+      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
     }
   }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
