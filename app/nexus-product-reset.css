@@ -224,3 +224,8 @@ body .auth-v4-top{border-bottom:1px solid var(--p-border)!important}
 @media(max-width:760px){body .staff-shell .staff-body{padding:20px 14px 50px!important}body .staff-shell .staff-topbar{height:58px!important;padding:0 13px!important}.desk-pagehead{flex-direction:column;align-items:flex-start;gap:17px}.desk-page-actions{width:100%;justify-content:flex-end}.desk-stamp{margin-right:auto}.desk-section{padding:17px 15px 12px}.desk-metric{padding:17px}.desk-stage strong{min-width:85px;max-width:105px}}
 @media(max-width:450px){.desk-metric strong{font-size:21px}.desk-pagehead h1{font-size:27px!important}.desk-stamp{font-size:10px}.desk-tabs button{padding:9px 8px;font-size:11px}.desk-task .desk-overdue{display:none}.desk-compose{display:grid;grid-template-columns:1fr 1fr}.desk-compose label,.desk-compose label:first-child{grid-column:1/-1}.desk-compose button{min-width:0}}
 @media(prefers-reduced-motion:reduce){body .staff-shell *,body .staff-shell *:before,body .staff-shell *:after{animation-duration:0s!important;transition-duration:0s!important}}
+
+/* Logo icon and readable inputs across both themes. */
+body .staff-shell .staff-logo-icon svg{color:var(--p-button-text)!important}
+body .staff-shell input,body .staff-shell select,body .staff-shell textarea{accent-color:var(--p-accent)}
+body .desk button:focus-visible,body .desk a:focus-visible,body .desk input:focus-visible{outline:2px solid var(--p-accent)!important;outline-offset:2px}
