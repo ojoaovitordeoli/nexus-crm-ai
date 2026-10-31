@@ -234,7 +234,35 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
   </div>;
 }
 
-export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,stages=[],onOperation,onReload}){
+function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClose}){
+  const palette=['#3b82f6','#06b6d4','#8b5cf6','#f59e0b','#f97316','#ec4899','#10b981','#ef4444','#64748b'];
+  const standard=[['Novo lead','#3b82f6',false,false],['Contato inicial','#06b6d4',false,false],['Qualificado','#8b5cf6',false,false],['Proposta enviada','#f59e0b',false,false],['Negociação','#f97316',false,false],['Agendamento','#ec4899',false,false],['Fechado','#10b981',true,false],['Perdido','#ef4444',false,true]];
+  const [name,setName]=useState(pipeline?.name||'Modelo comercial');
+  const [rows,setRows]=useState(()=>stages.length?stages.map(x=>({...x})):standard.map(([n,c,w,l],position)=>({name:n,color:c,is_won:w,is_lost:l,position})));
+  const [busy,setBusy]=useState(false);const [error,setError]=useState('');
+  useEffect(()=>{
+    setName(pipeline?.name||'Modelo comercial');
+    setRows(stages.length?stages.map(x=>({...x})):standard.map(([n,c,w,l],position)=>({name:n,color:c,is_won:w,is_lost:l,position})));
+  },[pipeline,stages]);
+  const reset=source=>setRows(source.map(([n,c,w,l],position)=>({name:n,color:c,is_won:w,is_lost:l,position})));
+  function update(index,key,value){setRows(old=>old.map((row,i)=>i===index?{...row,[key]:value}:row))}
+  function move(index,delta){setRows(old=>{const next=[...old],to=index+delta;if(to<0||to>=next.length)return old;[next[index],next[to]]=[next[to],next[index]];return next})}
+  async function save(activate){
+    if(readonly||busy)return;setBusy(true);setError('');
+    try{await onOperation({action:'pipeline_model_save',pipeline_id:pipeline?.id||null,name:name.trim(),activate,stages:rows.map((row,position)=>({...row,position}))});await onReload?.();onClose?.()}
+    catch(e){setError(e.message||'Não foi possível salvar o modelo.')}finally{setBusy(false)}
+  }
+  return <div className="nxp-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose?.()}}>
+    <section className="nxp-pipeline-modal" role="dialog" aria-modal="true" aria-label="Configurar funil de vendas">
+      <div className="nxp-pipeline-head"><div><span className="nxp-kicker">CONFIGURAÇÃO COMERCIAL</span><h2>Configurar funil de vendas</h2><p>Crie modelos gerais e ative o fluxo que sua operação vai usar.</p></div><button type="button" onClick={onClose} aria-label="Fechar"><X size={20}/></button></div>
+      <div className="nxp-pipeline-layout"><aside className="nxp-pipeline-presets"><span className="nxp-kicker">MODELOS</span><button type="button" className="nxp-preset active" onClick={()=>reset(standard)}><strong>Padrão</strong><small>Fluxo comercial completo</small></button><button type="button" className="nxp-preset" onClick={()=>reset([['Novo lead','#3b82f6',false,false],['Em atendimento','#06b6d4',false,false],['Ganho','#10b981',true,false],['Perdido','#ef4444',false,true]])}><strong>Em branco</strong><small>Começar com o essencial</small></button></aside>
+        <div className="nxp-pipeline-main"><label className="nxp-pipeline-name">Nome do modelo<input value={name} onChange={e=>setName(e.target.value)} placeholder="Ex.: Funil B2B, Funil Serviços..." maxLength={120}/></label><div className="nxp-pipeline-title"><div><span className="nxp-kicker">ETAPAS DO FUNIL</span><strong>{rows.length} etapas configuradas</strong></div><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setRows(old=>[...old,{name:'Nova etapa',color:palette[old.length%palette.length],is_won:false,is_lost:false}])}><Plus size={16}/> Adicionar etapa</button></div>
+        <div className="nxp-pipeline-rows">{rows.map((row,index)=><div className="nxp-pipeline-row" key={row.id||'new-'+index}><span className="nxp-pipeline-color" style={{background:row.color}}/><input aria-label={'Nome da etapa '+(index+1)} value={row.name} onChange={e=>update(index,'name',e.target.value)} maxLength={90}/><select aria-label={'Cor da etapa '+(index+1)} value={row.color} onChange={e=>update(index,'color',e.target.value)}>{palette.map(color=><option key={color} value={color}>{color}</option>)}</select><select aria-label={'Tipo da etapa '+(index+1)} value={row.is_won?'won':row.is_lost?'lost':'open'} onChange={e=>update(index,'is_won',e.target.value==='won')||update(index,'is_lost',e.target.value==='lost')}><option value="open">Aberta</option><option value="won">Ganha</option><option value="lost">Perdida</option></select><button type="button" onClick={()=>move(index,-1)} disabled={index===0} aria-label="Mover etapa para cima"><ChevronRight size={16} style={{transform:'rotate(-90deg)'}}/></button><button type="button" onClick={()=>move(index,1)} disabled={index===rows.length-1} aria-label="Mover etapa para baixo"><ChevronRight size={16} style={{transform:'rotate(90deg)'}}/></button><button type="button" onClick={()=>setRows(old=>old.filter((_,i)=>i!==index))} disabled={rows.length<=2} aria-label="Remover etapa"><X size={16}/></button></div>)}</div>{error&&<div className="nxp-error" role="alert">{error}</div>}<p className="nxp-pipeline-note">Etapas com leads não são apagadas automaticamente; elas permanecem preservadas para não quebrar o histórico.</p><div className="nxp-pipeline-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={onClose}>Fechar</button><button type="button" className="nxp-button nxp-button--ghost" disabled={busy||!name.trim()} onClick={()=>save(false)}>Salvar rascunho</button><button type="button" className="nxp-button nxp-button--primary" disabled={busy||!name.trim()} onClick={()=>save(true)}>{busy?'Salvando...':'Salvar e ativar'}</button></div></div></div>
+    </section>
+  </div>;
+}
+
+export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,stages=[],pipeline,onOperation,onReload}){
   const [mode,setMode]=useState('board');
   const [query,setQuery]=useState('');
   useEffect(()=>{
@@ -246,6 +274,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
   const [busy,setBusy]=useState('');
   const [error,setError]=useState('');
   const [dragging,setDragging]=useState('');
+  const [editorOpen,setEditorOpen]=useState(false);
   const hasStages=stages.length>0;
   const fallback=useMemo(()=>[...new Set(leads.map(l=>l.status).filter(Boolean))],[leads]);
   const cols=hasStages?stages.map(x=>({id:x.id,name:x.name})):fallback.map(x=>({id:x,name:label(x)}));
@@ -273,7 +302,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
   return <div className="nxp-premium">
-    <PanelHeader eyebrow="CRM / PIPELINE" title="Oportunidades" detail="Organize suas conversas, acompanhe cada etapa e encontre o próximo negócio." right={<span className="nxp-total"><span/>{fmt(count)} leads cadastrados</span>}/>
+    <PanelHeader eyebrow="CRM / PIPELINE" title="Oportunidades" detail="Organize suas conversas, acompanhe cada etapa e encontre o próximo negócio." right={<div className="nxp-leads-head-actions"><span className="nxp-total"><span/>{fmt(count)} leads cadastrados</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
     <div className="nxp-leads-summary"><div><span className="nxp-kicker">VISÃO DO FUNIL</span><strong>{fmt(count)}</strong><small>leads na empresa</small></div><div><span className="nxp-kicker">ETAPAS EM USO</span><strong>{cols.length}</strong><small>etapas encontradas</small></div><div><span className="nxp-kicker">COM WHATSAPP</span><strong>{filtered.filter(x=>wa(x.contact?.whatsapp)).length}</strong><small>entre os registros exibidos</small></div><div className="nxp-leads-summary-decoration"><Layers3 size={82} strokeWidth={1}/></div></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
@@ -293,6 +322,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
       <div className="nxp-footnote">{filtered.length} leads exibidos · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
     <Drawer data={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} pending={Boolean(busy)}/>
+    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
   </div>;
 }
 

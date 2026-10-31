@@ -70,14 +70,16 @@ export async function GET(request){
     if(counts[i].error)warnings.push('contagem '+name+': '+counts[i].error.message);
   });
   let stages=[];
+  let pipeline=null;
   if(pipelines.error)warnings.push('funil: '+pipelines.error.message);
   if(pipelines.data?.[0]){
+    pipeline=pipelines.data[0];
     const st=await admin.from('pipeline_stages').select('id,name,position,color')
       .eq('pipeline_id',pipelines.data[0].id).order('position',{ascending:true});
     if(st.error)warnings.push('etapas: '+st.error.message);
     else stages=st.data||[];
   }
-  return reply({data,counts:total,stages,warnings,read_only:auth.role==='VIEWER'});
+  return reply({data,counts:total,pipeline,stages,warnings,read_only:auth.role==='VIEWER'});
 }
 
 export async function POST(request){
@@ -159,6 +161,58 @@ export async function POST(request){
       organizationId:orgId,leadId:lead.id,stageId:stage.id,actorId:auth.user.id
     });
     return reply({ok:true,message:'Lead movido no funil.',automation});
+  }
+  if(action==='pipeline_model_save'){
+    const name=val(payload?.name,120);
+    const incoming=Array.isArray(payload?.stages)?payload.stages:[];
+    if(name.length<2)return fails('Informe um nome para o modelo de funil.');
+    if(incoming.length<2||incoming.length>30)return fails('O funil precisa ter entre 2 e 30 etapas.');
+    const cleanStages=incoming.map((stage,index)=>({
+      id:validId(stage?.id)?stage.id:null,
+      name:val(stage?.name,90),
+      color:/^#[0-9a-f]{6}$/i.test(String(stage?.color||''))?String(stage.color):'#3b82f6',
+      position:index,
+      is_won:Boolean(stage?.is_won),
+      is_lost:Boolean(stage?.is_lost)
+    }));
+    if(cleanStages.some(x=>x.name.length<2))return fails('Todas as etapas precisam ter nome.');
+    let pipelineId=validId(payload?.pipeline_id)?payload.pipeline_id:null;
+    if(pipelineId){
+      const {data:owned,error:ownedError}=await admin.from('pipelines').select('id').eq('id',pipelineId).eq('organization_id',orgId).maybeSingle();
+      if(ownedError||!owned)return fails('Modelo de funil não encontrado nesta empresa.',404);
+      const {error:updateError}=await admin.from('pipelines').update({name}).eq('id',pipelineId).eq('organization_id',orgId);
+      if(updateError)return fails('Falha ao atualizar o modelo: '+updateError.message,500);
+    }else{
+      const {data:newPipeline,error:newError}=await admin.from('pipelines').insert({organization_id:orgId,name,is_default:false,position:0}).select('id').single();
+      if(newError)return fails('Falha ao criar o modelo: '+newError.message,500);
+      pipelineId=newPipeline.id;
+    }
+    for(const stage of cleanStages){
+      const values={name:stage.name,color:stage.color,position:stage.position,is_won:stage.is_won,is_lost:stage.is_lost};
+      const result=stage.id
+        ?await admin.from('pipeline_stages').update(values).eq('id',stage.id).eq('pipeline_id',pipelineId)
+        :await admin.from('pipeline_stages').insert({pipeline_id:pipelineId,...values});
+      if(result.error)return fails('Falha ao salvar etapa: '+result.error.message,500);
+    }
+    if(payload?.pipeline_id){
+      const existing=await admin.from('pipeline_stages').select('id').eq('pipeline_id',pipelineId);
+      if(existing.error)return fails('Falha ao verificar etapas removidas: '+existing.error.message,500);
+      const keep=new Set(cleanStages.filter(x=>x.id).map(x=>x.id));
+      for(const old of (existing.data||[]).filter(x=>!keep.has(x.id))){
+        const used=await admin.from('leads').select('id',{count:'exact',head:true}).eq('organization_id',orgId).eq('pipeline_stage_id',old.id);
+        if(used.error)return fails('Falha ao verificar leads da etapa: '+used.error.message,500);
+        if((used.count||0)>0)continue;
+        const removed=await admin.from('pipeline_stages').delete().eq('id',old.id).eq('pipeline_id',pipelineId);
+        if(removed.error)return fails('Falha ao remover etapa: '+removed.error.message,500);
+      }
+    }
+    if(payload?.activate){
+      const clear=await admin.from('pipelines').update({is_default:false}).eq('organization_id',orgId);
+      if(clear.error)return fails('Falha ao preparar ativação: '+clear.error.message,500);
+      const activate=await admin.from('pipelines').update({is_default:true}).eq('id',pipelineId).eq('organization_id',orgId);
+      if(activate.error)return fails('Falha ao ativar o modelo: '+activate.error.message,500);
+    }
+    return reply({ok:true,message:payload?.activate?'Modelo salvo e ativado.':'Modelo salvo como rascunho.',pipeline_id:pipelineId});
   }
   if(action==='contact_create'){
     const first_name=val(payload?.first_name,130);

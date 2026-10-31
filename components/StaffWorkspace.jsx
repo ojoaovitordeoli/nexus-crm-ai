@@ -73,6 +73,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [appointmentType,setAppointmentType]=useState('meeting');
   const [appointmentLocation,setAppointmentLocation]=useState('');
   const [stages,setStages]=useState([]);
+  const [pipeline,setPipeline]=useState(null);
   const [appointmentFilter,setAppointmentFilter]=useState('upcoming');
   const [taskFilter,setTaskFilter]=useState('open');
   const [period,setPeriod]=useState(30);
@@ -201,7 +202,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     if(!validOrg){
       setData({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
       setCounts({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
-      setStages([]);setLoading(false);return;
+      setStages([]);setPipeline(null);setLoading(false);return;
     }
     setLoading(true);setError('');
     try{
@@ -209,6 +210,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       setData(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
       setCounts(result.counts||{leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages(result.stages||[]);
+      setPipeline(result.pipeline||null);
       if(result.warnings?.length)setError('Algumas informações não puderam ser carregadas: '+result.warnings.join(' · '));
       setLastSync(new Date());
     }catch(e){setError('Não foi possível carregar a empresa: '+e.message)}
@@ -453,7 +455,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         />}
         {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId}
-          readonly={readonly} stages={stages} onOperation={operation} onReload={load}
+          readonly={readonly} stages={stages} pipeline={pipeline} onOperation={operation} onReload={load}
         />}
         {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='whatsapp'&&<NexusWhatsAppInbox
