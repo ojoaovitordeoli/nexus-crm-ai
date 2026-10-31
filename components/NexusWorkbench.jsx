@@ -124,7 +124,7 @@ export default function NexusWorkbench({data,counts,loading,organizationName,ope
           <div className="w10-pills" role="group" aria-label="Período de análise">{[7,30,90].map(x=><button type="button" key={x} aria-pressed={period===x} className={period===x?'is-active':''} onClick={()=>setPeriod(x)}>{x} dias</button>)}</div>
         </div>
         <div className="w10-figure-meta"><strong>{number(rangeLeads.length)}</strong><span>novos registros</span><span className="w10-figure-legend"><i/> Leads</span></div>
-        <SparkChart series={series} period={period}/>
+        {rangeLeads.length?<SparkChart series={series} period={period}/>:<div className="w10-chart-empty" role="status"><strong>Sem entradas neste período</strong><span>Os novos leads aparecerão aqui quando forem cadastrados.</span><Link href="/leads">Consultar leads <ArrowRight size={15}/></Link></div>}
         <div className="w10-chartfoot"><span>Origem: leads cadastrados</span><Link href="/reports">Relatórios <ArrowRight size={15}/></Link></div>
       </section>
       <section className="w10-priority">
