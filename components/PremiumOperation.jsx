@@ -10,6 +10,7 @@ import {
   UserRound,UsersRound,Wallet,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
+import NexusLeadDetail from './NexusLeadDetail';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -333,7 +334,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,readonly=false,sta
       </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn"><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{l.contact?.whatsapp||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
       <div className="nxp-footnote">{filtered.length} leads exibidos · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
-    <Drawer data={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} pending={Boolean(busy)}/>
+    <NexusLeadDetail lead={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} pending={Boolean(busy)}/>
     {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
   </div>;
 }
