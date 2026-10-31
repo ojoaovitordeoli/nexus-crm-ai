@@ -89,7 +89,7 @@ export default function NexusV11Dashboard({data,counts,loading,organizationName,
       <Link href="/tasks" className="v11-summary-item"><span>Tarefas pendentes</span><strong>{loading?'—':n(toDo.length)}</strong><small className={late.length?'v11-danger':''}>{late.length?late.length+' vencidas':'Nenhuma vencida'}</small></Link>
     </div>
     <div className="v11-focus-grid">
-      <section className="v11-focus" aria-labelledby="v11-priority">
+      <section className="v11-focus" aria-label="Prioridades da operação">
         <Heading eyebrow="01 / TRABALHO" title="Prioridades" description="Retornos que precisam acontecer." action={<Link href="/tasks" className="v11-small-action">Abrir tarefas <ArrowUpRight size={16}/></Link>}/>
         {late.length>0&&<Link className="v11-pending-alert" href="/tasks"><AlertTriangle size={18}/><span><strong>{late.length} {late.length===1?'prazo vencido':'prazos vencidos'}</strong><small>Revise os retornos da equipe</small></span><ArrowRight size={16}/></Link>}
         <div className="v11-queue">{sorted.length?sorted.slice(0,5).map(t=><Link href="/tasks" className="v11-queue-row" key={t.id}>
@@ -98,7 +98,7 @@ export default function NexusV11Dashboard({data,counts,loading,organizationName,
           <span className="v11-queue-status">{t.priority==='urgent'?'Urgente':t.priority==='high'?'Alta prioridade':'Pendente'}</span><ArrowUpRight size={16}/>
         </Link>):<div className="v11-blank"><CheckCheck size={22}/><strong>Sem retornos pendentes</strong><p>As atividades da equipe aparecerão aqui.</p><Link href="/tasks">Ver tarefas <ArrowRight size={15}/></Link></div>}</div>
       </section>
-      <section className="v11-opportunities" aria-labelledby="v11-new-leads">
+      <section className="v11-opportunities" aria-label="Leads recentes">
         <Heading eyebrow="02 / OPORTUNIDADES" title="Leads recentes" description="Pessoas que chegaram à operação." action={<Link href="/leads" className="v11-small-action">Ver todos <ArrowUpRight size={16}/></Link>}/>
         <div className="v11-people">{newLeads.length?newLeads.slice(0,5).map(lead=>{
           const name=person(lead.contact),phone=phoneLink(lead.contact?.whatsapp);
