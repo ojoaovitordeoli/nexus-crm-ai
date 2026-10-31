@@ -95,6 +95,21 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     surface.style.setProperty('--pointer-x',((event.clientX-bounds.left)/bounds.width*100)+'%');
     surface.style.setProperty('--pointer-y',((event.clientY-bounds.top)/bounds.height*100)+'%');
   };
+  const rippleOnPointerDown=useCallback((event)=>{
+    if(event.button!==0||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)return;
+    const control=event.target?.closest?.('.staff-nav-item,.n9-kpi,.n9-primary-button,.nxp-button,.staff-command-trigger,.staff-icon-button,.nxp-lead-card-main');
+    if(!control||!event.currentTarget.contains(control)||control.disabled)return;
+    const bounds=control.getBoundingClientRect();
+    if(!bounds.width||!bounds.height)return;
+    const ripple=document.createElement('span');
+    ripple.className='n9-pointer-ripple';
+    ripple.setAttribute('aria-hidden','true');
+    ripple.style.left=(event.clientX-bounds.left)+'px';
+    ripple.style.top=(event.clientY-bounds.top)+'px';
+    ripple.style.setProperty('--n9-ripple-scale',String(Math.ceil(Math.max(bounds.width,bounds.height)/10)*3));
+    ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
+    control.appendChild(ripple);
+  },[]);
   const [lastSync,setLastSync]=useState(null);
   const [globalSearch,setGlobalSearch]=useState('');
   const [searchOpen,setSearchOpen]=useState(false);
@@ -363,7 +378,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
 
   if(section==='admin')return <main className="staff-denied"><ShieldCheck size={34}/><h1>Acesso restrito</h1><p>Este painel é exclusivo do Super Admin.</p><Link href="/dashboard">Voltar ao painel</Link></main>;
 
-  return <div className="staff-shell">
+  return <div className="staff-shell" onPointerDown={rippleOnPointerDown}>
     <NexusCommandMenu open={commandOpen} onOpenChange={setCommandOpen}
       dark={dark} onTheme={onToggleTheme}
       isSuperAdmin={isSuperAdmin}
