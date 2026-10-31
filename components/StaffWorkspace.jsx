@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
-import NexusV11Dashboard from './NexusV11Dashboard';
+import NexusDesk from './NexusDesk';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
 import MotionCalendar from './MotionCalendar';
 import NexusCommandMenu from './NexusCommandMenu';
@@ -418,7 +418,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <header className="staff-topbar">
         <div className="staff-topbar-left">
           <IconButton icon={Menu} title="Abrir menu" onClick={()=>setMobileOpen(true)}/>
-          <div className="staff-breadcrumb"><span>Área de trabalho</span><ChevronRight size={15}/><strong>{page}</strong></div>
+          <div className="staff-breadcrumb"><span>{currentOrganization.name}</span><ChevronRight size={15}/><strong>{page}</strong></div>
         </div>
         <div className="staff-topbar-right">
           <button type="button" className="staff-tour-button" onClick={startTour} disabled={tourLoading}
@@ -470,10 +470,11 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
-        {section==='dashboard'&&<NexusV11Dashboard
+        {section==='dashboard'&&<NexusDesk
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}
+          onOperation={operation} onReload={load} readonly={readonly}
         />}
         {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={currentOrganization.name}

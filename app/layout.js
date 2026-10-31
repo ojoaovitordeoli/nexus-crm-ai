@@ -23,5 +23,6 @@ import './nexus-v9-glass.css';
 import './nexus-v10-workbench.css';
 import './nexus-v10-operations.css';
 import './nexus-v11.css';
-export const metadata = { title: 'NEXUS CRM AI', description: 'Central de controle e operação' };
+import './nexus-product-reset.css';
+export const metadata = { title: 'NEXUS CRM', description: 'Gestão de clientes e vendas' };
 export default function RootLayout({children}) {return <html lang="pt-BR"><body className="dark" suppressHydrationWarning>{children}</body></html>}

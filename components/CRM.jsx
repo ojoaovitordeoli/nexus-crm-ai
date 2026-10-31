@@ -20,17 +20,12 @@ export default function CRM({section}){
  const emailInput=useRef(null);
  useEffect(()=>()=>{if(authTimer.current)clearTimeout(authTimer.current)},[]);
  const toggleRecovery=()=>{
-   if(authSwitching||submitting)return;
-   setError('');setNotice('');
-   const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-   if(reduced){setForgot(v=>!v);emailInput.current?.focus();return;}
-   setAuthSwitching(true);
-   authTimer.current=setTimeout(()=>{
-     setForgot(v=>!v);
-     emailInput.current?.focus();
-   },350);
- };
- const [orgs,setOrgs]=useState([]),[members,setMembers]=useState([]),[org,setOrg]=useState('');
+    if(submitting)return;
+    setError('');setNotice('');
+    setAuthSwitching(false);
+    setForgot(v=>!v);
+    requestAnimationFrame(()=>emailInput.current?.focus());
+  }; const [orgs,setOrgs]=useState([]),[members,setMembers]=useState([]),[org,setOrg]=useState('');
  const [users,setUsers]=useState([]),[metrics,setMetrics]=useState(null),[leads,setLeads]=useState([]),[tasks,setTasks]=useState([]),[period,setPeriod]=useState(30),[loadingData,setLoadingData]=useState(false);
  const [orgName,setOrgName]=useState(''),[taskName,setTaskName]=useState(''),[query,setQuery]=useState('');
  const isAdmin=Boolean(profile?.is_super_admin);
@@ -111,7 +106,7 @@ export default function CRM({section}){
  if(!ready)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><h1>Configuração pendente</h1><p className="muted">O site está publicado. Para habilitar o login, confira as variáveis no ambiente da hospedagem.</p>{!configStatus.urlReady&&<Alert><strong>URL faltando ou inválida:</strong> NEXT_PUBLIC_SUPABASE_URL. Use o endereço completo https://SEU-PROJETO.supabase.co</Alert>}{!configStatus.keyReady&&<Alert><strong>Chave pública faltando ou com valor de exemplo:</strong> NEXT_PUBLIC_SUPABASE_ANON_KEY. Use a chave anon ou publishable do mesmo projeto.</Alert>}<p className="small muted">No Render, configure as variáveis de ambiente do serviço. Depois salve e faça novo deploy com build. Nunca insira service_role nem senhas no código público.</p></div></div>;
  if(isLoading)return <div className="authwrap"><div className="glass auth"><HeaderLogo/><p className="muted">Verificando sua sessão e conexão...</p></div></div>;
  if(isAuthScreen){
-  return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(authSwitching?'auth--switching ':'')+(forgot?'auth--recover':'')}>
+  return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(forgot?'auth--recover':'')}>
    <div className="auth-v4-aura" aria-hidden="true"/>
    <div className="auth-v4-top"><HeaderLogo/><span>ACESSO SEGURO</span></div>
    <div className="auth-v4-blade" aria-hidden="true" onAnimationEnd={()=>setAuthSwitching(false)}/>
