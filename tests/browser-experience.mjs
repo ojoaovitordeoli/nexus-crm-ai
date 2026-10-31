@@ -67,6 +67,15 @@ try{
       stages:[],warnings:[],read_only:false};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
   });
+  // Optional integrations are not provisioned in CI. Exercise their explicit
+  // disconnected states instead of allowing server-side 503 responses to pollute
+  // visual regression results.
+  await page.route('**/api/whatsapp/inbox**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connections:[],messages:[],verified_server:false})});
+  });
+  await page.route('**/api/automations**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rules:[],executions:[],can_manage:true})});
+  });
   const jwt=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
   const token=[jwt({alg:'HS256',typ:'JWT'}),jwt({sub:userId,role:'authenticated',aud:'authenticated',exp:2000000000}),'mock'].join('.');
   await page.evaluate(({user,token})=>{
