@@ -28,7 +28,7 @@ const MENU=[
   {path:'contacts',label:'Contatos',icon:ContactRound},
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'automations',label:'Automações',icon:Workflow},
-  {path:'insights',label:'Copiloto IA',icon:Sparkles},
+
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
   {path:'reports',label:'Relatórios',icon:Activity},
