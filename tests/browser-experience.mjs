@@ -109,6 +109,16 @@ try{
     await page.waitForTimeout(500);
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
     await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
+    if(route==='leads'){
+      const hint=page.locator('.w10-kanban-notice');
+      await hint.waitFor({timeout:7000});
+      const bounds=await hint.boundingBox();
+      if(!bounds||bounds.height>145)throw new Error('Kanban empty state is not compact: '+bounds?.height);
+      if(await page.locator('.w10-kanban-setup').count())throw new Error('Old oversized Kanban configuration panel still visible');
+      await hint.getByRole('button',{name:/Configurar funil/}).click();
+      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
+      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar'}).click();
+    }
   }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
