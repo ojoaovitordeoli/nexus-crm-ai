@@ -18,7 +18,10 @@ const shortPhone=value=>{
   if(digits.length<10||digits.length>13)return '';
   return 'https://wa.me/'+(digits.length<=11?'55'+digits:digits);
 };
-const shortText=(v,fallback='Não informado')=>String(v||fallback).replace(/[_-]/g,' ');
+const shortText=(v,fallback='Não informado')=>{
+  const text=String(v||fallback).replace(/[_-]/g,' ');
+  return ({new:'Novo',pending:'Pendente',open:'Aberto',won:'Ganho',lost:'Perdido',completed:'Concluído'})[text.toLowerCase()]||text;
+};
 const isClosed=(lead,stages)=>{
   const found=stages.find(s=>s.id===lead.pipeline_stage_id);
   if(found)return Boolean(found.is_won||found.is_lost);
@@ -97,13 +100,13 @@ export default function NexusDashboard({data,counts,loading,organizationName,fir
   const path=coords.map(([x,y],i)=>(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)).join(' ');
   const area=path+' L 530 210 L 26 210 Z';
   const synced=lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Aguardando atualização';
-  const first=String(firstName||'').trim();
+
 
   return <div className="n9-dashboard">
     <div className="n9-overview-top">
       <div className="n9-heading">
         <span className="n9-overline">Painel comercial <span aria-hidden="true">/</span> {organizationName}</span>
-        <h1>Visão geral{first?', '+first:''}<span className="n9-heading-period">.</span></h1>
+        <h1>Visão geral<span className="n9-heading-period">.</span></h1>
         <p>Leads, vendas e próximos atendimentos em um só lugar.</p>
       </div>
       <div className="n9-overview-actions">
