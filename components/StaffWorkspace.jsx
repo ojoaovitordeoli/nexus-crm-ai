@@ -476,7 +476,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}
         />}
         {section==='leads'&&<PremiumLeads
-          leads={data.leads} count={counts.leads} organizationId={organizationId}
+          leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={currentOrganization.name}
           readonly={readonly} stages={stages} pipeline={pipeline} onOperation={operation} onReload={load}
         />}
         {section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} readonly={readonly} onOperation={operation} onReload={load}/>}
