@@ -20,17 +20,12 @@ export default function CRM({section}){
  const emailInput=useRef(null);
  useEffect(()=>()=>{if(authTimer.current)clearTimeout(authTimer.current)},[]);
  const toggleRecovery=()=>{
-   if(authSwitching||submitting)return;
-   setError('');setNotice('');
-   const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-   if(reduced){setForgot(v=>!v);emailInput.current?.focus();return;}
-   setAuthSwitching(true);
-   authTimer.current=setTimeout(()=>{
-     setForgot(v=>!v);
-     emailInput.current?.focus();
-   },350);
- };
- const [orgs,setOrgs]=useState([]),[members,setMembers]=useState([]),[org,setOrg]=useState('');
+    if(submitting)return;
+    setError('');setNotice('');
+    setAuthSwitching(false);
+    setForgot(v=>!v);
+    requestAnimationFrame(()=>emailInput.current?.focus());
+  }; const [orgs,setOrgs]=useState([]),[members,setMembers]=useState([]),[org,setOrg]=useState('');
  const [users,setUsers]=useState([]),[metrics,setMetrics]=useState(null),[leads,setLeads]=useState([]),[tasks,setTasks]=useState([]),[period,setPeriod]=useState(30),[loadingData,setLoadingData]=useState(false);
  const [orgName,setOrgName]=useState(''),[taskName,setTaskName]=useState(''),[query,setQuery]=useState('');
  const isAdmin=Boolean(profile?.is_super_admin);
