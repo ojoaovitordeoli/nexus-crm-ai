@@ -104,6 +104,18 @@ try{
   await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
   await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
+  for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(500);
+    if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
+    await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
+  }
+  await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.getByRole('button',{name:'Alternar tema'}).click();
+  await page.waitForTimeout(420);
+  await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  await page.getByRole('button',{name:'Alternar tema'}).click();
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(450);
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
