@@ -1,0 +1,69 @@
+/* NEXUS V10 — internal CRM workspaces share the editorial visual language. */
+.nxp-premium .nxp-page-head,.nxp-premium .nxp-section-title{margin-bottom:25px}
+.nxp-premium .nxp-page-head h1{font-family:'Sora','Manrope',sans-serif!important;font-size:clamp(29px,3vw,39px)!important;font-weight:610!important;letter-spacing:-.058em!important;line-height:1.13!important}
+.nxp-premium .nxp-page-head p{font-family:'Manrope',sans-serif!important;font-size:14px!important;font-weight:450!important;line-height:1.6!important}
+.nxp-premium .nxp-kicker{font-size:11px!important;font-weight:720!important;letter-spacing:.045em!important}
+.nxp-premium .nxp-total{border-radius:8px!important;font-size:12px!important;min-height:40px}
+.nxp-premium .nxp-button{border-radius:8px!important;font-size:12px!important;min-height:40px;font-weight:670!important}
+.nxp-premium .n9-module-summary{border-radius:12px!important;margin-top:23px!important;margin-bottom:22px!important}
+body.dark .nxp-premium .n9-module-summary{background:rgba(150,202,206,.11);border-color:rgba(160,206,207,.13)}
+body.dark .nxp-premium .n9-module-summary>div{background:rgba(14,33,44,.76);padding:19px 24px}
+.nxp-premium .n9-module-summary strong{font-family:'Sora',sans-serif!important;font-size:27px!important;font-weight:610!important;letter-spacing:-.055em!important}
+.nxp-premium .n9-module-summary span{font-size:12px!important}
+body.dark .nxp-premium .nxp-leads-workarea{background:rgba(11,28,40,.72)!important;border:1px solid rgba(160,206,207,.15)!important;border-radius:14px!important;box-shadow:none!important}
+.nxp-premium .nxp-filterbar{gap:18px!important}
+.nxp-premium .nxp-search input{font-size:13px!important}
+.nxp-premium .nxp-filter-select select{font-size:12px!important}
+.nxp-premium .nxp-board-column{border-radius:11px!important}
+body.dark .nxp-premium .nxp-board-column{background:rgba(22,44,54,.55)!important;border:1px solid rgba(151,207,209,.14)!important;box-shadow:none!important}
+.nxp-premium .nxp-column-title{font-family:'Manrope',sans-serif}
+.nxp-premium .nxp-column-title strong{font-size:13px!important;font-weight:680!important}
+.nxp-premium .nxp-column-title>span:last-child{font-size:11px!important;border-radius:7px!important}
+.nxp-premium .nxp-lead-card-main>strong{font-family:'Manrope',sans-serif!important;font-size:13px!important;font-weight:750!important;letter-spacing:-.02em!important}
+.nxp-premium .nxp-lead-card-main>small{font-size:12px!important}
+.nxp-premium .nxp-lead-card-foot,.nxp-premium .nxp-lead-date{font-size:11px!important}
+.nxp-premium .nxp-footnote{color:var(--w10-subtle)!important;font-size:11px!important}
+body.dark .nxp-premium .nxp-contact-card{background:rgba(18,40,51,.69)!important;border-radius:12px!important}
+body.dark .nxp-premium .nxp-lead-card{background:rgba(15,37,47,.74)!important;border-color:rgba(145,197,201,.15)!important;border-radius:10px!important}
+body.dark .nxp-premium .nxp-table th{font-size:11px!important;color:#95adb8!important;text-transform:none!important;letter-spacing:0!important;font-weight:660!important}
+body.dark .nxp-premium .nxp-table{font-size:12px!important}
+body.dark .nxp-premium .nxp-pill{font-size:11px!important}
+.nxp-premium .nxp-create-contact label{font-size:12px!important}
+.nxp-premium .nxp-create-contact input{font-size:13px!important}
+.nxp-premium .nxp-contact-card-person h3{font-size:15px!important;font-weight:670!important}
+.w10-kanban-setup{width:min(420px,100%);min-height:244px;padding:28px 28px 24px;border:1px dashed var(--w10-hairline);border-radius:12px;display:flex;flex-direction:column;gap:13px;background:rgba(153,204,205,.035);align-self:flex-start}
+.w10-kanban-setup-number{font:710 10px 'Manrope',sans-serif;letter-spacing:.1em;color:var(--w10-mint)}
+.w10-kanban-setup h3{font:580 20px/1.3 'Sora',sans-serif!important;letter-spacing:-.04em;color:var(--w10-text);margin:0}
+.w10-kanban-setup p{font:440 12px/1.7 'Manrope',sans-serif;color:var(--w10-soft);margin:0}
+.w10-kanban-setup-action{background:var(--w10-mint);color:#0a2630;border:0;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:auto;padding:10px 14px;font-weight:720;font-size:12px}
+body:not(.dark) .w10-kanban-setup-action{color:#fff}
+.w10-kanban-setup-action:hover{filter:brightness(1.05)}
+@media(max-width:680px){
+  .nxp-premium .nxp-page-head h1{font-size:28px!important}
+  .w10-kanban-setup{min-height:195px;width:100%}
+}
+@media(prefers-reduced-motion:reduce){.w10-kanban-setup-action{transition:none!important}}
+
+/* Inline configuration note: no billboard-sized empty state. */
+.w10-kanban-notice{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 16px;margin:12px 19px 0;border:1px solid var(--w10-hairline);border-radius:10px;background:rgba(118,169,173,.055);color:var(--w10-soft);font:450 12px/1.5 'Manrope',sans-serif}
+.w10-kanban-notice strong{font-weight:700;color:var(--w10-text)}
+.w10-kanban-notice button{border:1px solid var(--w10-hairline);border-radius:8px;padding:9px 12px;background:rgba(143,205,205,.13);color:var(--w10-mint);font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.w10-kanban-notice button:hover{background:rgba(143,205,205,.20)}
+@media(max-width:680px){.w10-kanban-notice{flex-direction:column;align-items:stretch;margin:10px 10px 0;padding:14px}.w10-kanban-notice button{justify-content:center}}
+
+/* Automation page: remove promotional presentation language and use a compact operational explanation. */
+.w10-automation-summary{margin:0 0 22px;display:flex;align-items:center;gap:16px;padding:18px 21px;border:1px solid var(--w10-hairline);border-radius:11px;background:var(--w10-surface);color:var(--w10-text)}
+.w10-automation-summary-icon{display:grid;place-items:center;height:40px;width:40px;flex-shrink:0;border-radius:9px;color:var(--w10-mint);background:rgba(111,190,190,.1)}
+.w10-automation-summary>div{min-width:0;flex:1}
+.w10-automation-summary strong{font:600 14px/1.3 'Manrope',sans-serif}
+.w10-automation-summary p{font:450 12px/1.55 'Manrope',sans-serif;color:var(--w10-soft);margin:6px 0 0}
+.w10-automation-summary-flow{display:inline-flex;gap:8px;align-items:center;white-space:nowrap;border:1px solid var(--w10-hairline);border-radius:7px;padding:8px 10px;color:var(--w10-mint);font-size:11px;font-weight:680}
+body.dark .nx-workflow-page .nx-workflow-card{background:rgba(18,39,50,.72)!important;border:1px solid var(--w10-hairline)!important;border-radius:12px!important;box-shadow:none!important}
+body.dark .nx-workflow-page .nx-workflow-head h1{font:590 clamp(29px,3vw,39px)/1.17 'Sora',sans-serif!important;letter-spacing:-.055em!important}
+body.dark .nx-workflow-page .nx-workflow-head p{font:450 13px/1.6 'Manrope',sans-serif!important;color:var(--w10-soft)!important}
+body.dark .nx-workflow-page .nx-workflow-kicker{letter-spacing:.02em!important;text-transform:none!important;color:var(--w10-mint)!important;font-size:11px!important}
+body.dark .nx-workflow-page .nx-workflow-card-head strong{font-size:14px!important}
+body.dark .nx-workflow-page .nx-workflow-card-head small{font-size:12px!important}
+body.dark .v4-report-header .v4-report-overline{letter-spacing:.025em!important;font-size:11px!important;text-transform:none!important;color:var(--w10-mint)!important}
+body.dark .v4-report-header h1{font:590 clamp(29px,3vw,39px)/1.17 'Sora',sans-serif!important;letter-spacing:-.055em!important}
+@media(max-width:720px){.w10-automation-summary{flex-wrap:wrap;align-items:flex-start}.w10-automation-summary-flow{margin-left:56px}}

@@ -80,19 +80,17 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
   const stageLabel=id=>stages.find(s=>s.id===id)?.name||'Etapa não disponível';
   return <div className="nx-workflow-page">
     <div className="nx-workflow-head">
-      <div><span className="nx-workflow-kicker"><Zap size={15}/> NEXUS / AUTOMAÇÕES</span>
-        <h1>Automações</h1><p>Crie regras que transformam mudanças no funil em tarefas de acompanhamento, sem depender de integrações externas.</p></div>
+      <div><span className="nx-workflow-kicker"><Zap size={15}/> Rotinas da operação</span>
+        <h1>Automações</h1><p>Configure tarefas automáticas a partir das mudanças de etapa do funil.</p></div>
       <button type="button" className="nx-workflow-refresh" disabled={loading} onClick={load}><RefreshCw size={16}/> Atualizar</button>
     </div>
-    <section className="nx-workflow-hero"><div><span><GitBranch size={20}/> CONSTRUTOR DE ROTINAS</span><h2>Seu CRM trabalhando junto com você.</h2><p>Quando um lead entra na etapa escolhida, o sistema cria automaticamente uma tarefa com prazo definido. Você pode pausar ou excluir cada regra.</p>
-    <div className="nx-workflow-chips"><span><ShieldCheck size={14}/> Por empresa</span><span><CheckCircle2 size={14}/> Execução rastreável</span><span><Clock3 size={14}/> Prazos automáticos</span></div></div>
-    <div className="nx-workflow-illustration" aria-hidden="true"><span className="nx-workflow-node"><Layers3 size={22}/><small>Lead mudou</small></span><ArrowRight size={20}/><span className="nx-workflow-node"><Zap size={22}/><small>Regra</small></span><ArrowRight size={20}/><span className="nx-workflow-node"><CheckCircle2 size={22}/><small>Tarefa</small></span></div></section>
+    <section className="w10-automation-summary"><span className="w10-automation-summary-icon"><GitBranch size={20}/></span><div><strong>Quando o lead mudar de etapa</strong><p>O Nexus pode criar uma tarefa de retorno para a equipe. A regra só será executada depois que você ativá-la.</p></div><span className="w10-automation-summary-flow">Gatilho <ArrowRight size={14}/> Tarefa</span></section>
     {error&&<div className="nx-workflow-alert nx-workflow-alert--error" role="alert"><Info size={18}/><span>{error}</span>{error.includes('migração')&&<a href="https://github.com/ojoaovitordeoli/nexus-crm-ai/blob/main/supabase/20261028_automation_whatsapp_foundation.sql" target="_blank" rel="noopener noreferrer">Ver arquivo SQL</a>}</div>}
     {notice&&<div className="nx-workflow-alert nx-workflow-alert--ok" role="status"><CheckCircle2 size={18}/>{notice}</div>}
     <section className="nx-workflow-card nx-workflow-preview">
       <div className="nx-workflow-card-head nx-workflow-card-head--static">
-        <span><Workflow size={20}/><strong>Visualização interativa do fluxo</strong></span>
-        <small>Atualiza com os campos abaixo</small>
+        <span><Workflow size={20}/><strong>Fluxo da regra</strong></span>
+        <small>Prévia da configuração</small>
       </div>
       <NexusAutomationGraph stageName={stages.find(x=>x.id===stage)?.name} taskTitle={title} delayDays={days}/>
       <p className="nx-flow-note">Clique nos blocos para editar o gatilho ou a tarefa no formulário. O diagrama representa a regra configurada; para executá-la, salve e ative a regra.</p>

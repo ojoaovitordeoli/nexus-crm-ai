@@ -67,6 +67,15 @@ try{
       stages:[],warnings:[],read_only:false};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
   });
+  // Optional integrations are not provisioned in CI. Exercise their explicit
+  // disconnected states instead of allowing server-side 503 responses to pollute
+  // visual regression results.
+  await page.route('**/api/whatsapp/inbox**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connections:[],messages:[],verified_server:false})});
+  });
+  await page.route('**/api/automations**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rules:[],executions:[],can_manage:true})});
+  });
   const jwt=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
   const token=[jwt({alg:'HS256',typ:'JWT'}),jwt({sub:userId,role:'authenticated',aud:'authenticated',exp:2000000000}),'mock'].join('.');
   await page.evaluate(({user,token})=>{
@@ -109,12 +118,30 @@ try{
     await page.waitForTimeout(500);
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
     await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
+    if(route==='leads'){
+      const hint=page.locator('.w10-kanban-notice');
+      await hint.waitFor({timeout:7000});
+      const bounds=await hint.boundingBox();
+      if(!bounds||bounds.height>145)throw new Error('Kanban empty state is not compact: '+bounds?.height);
+      if(await page.locator('.w10-kanban-setup').count())throw new Error('Old oversized Kanban configuration panel still visible');
+      await hint.getByRole('button',{name:/Configurar funil/}).click();
+      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
+      await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
+    }
+  }
+  for(const route of ['tasks','agenda','reports','settings','whatsapp','automations']){
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(550);
+    if(await page.getByText('Application error: a client-side exception',{exact:false}).count()){
+      throw new Error('Client exception on extended route: '+route);
+    }
+    await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   await page.waitForTimeout(400);
   const themeAndFonts=await page.evaluate(()=>{
-    const heading=document.querySelector('.n9-heading h1');
+    const heading=document.querySelector('.w10-heading h1');
     const body=document.body;
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
@@ -122,6 +149,9 @@ try{
   if(!themeAndFonts.font.includes('Sora'))throw new Error('Dashboard titles are not using Sora: '+themeAndFonts.font);
   if(!themeAndFonts.glass)throw new Error('Missing glass design tokens');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  if(!await page.locator('.w10-overview').count())throw new Error('WorkBench editorial overview missing');
+  if(!await page.locator('.w10-table').count())throw new Error('Leads table missing from editorial dashboard');
+  if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
   await page.evaluate(()=>{
     window.__n9RippleSeen=false;
     window.__n9RippleObserver=new MutationObserver(mutations=>{
