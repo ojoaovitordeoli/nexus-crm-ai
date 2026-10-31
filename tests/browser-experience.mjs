@@ -114,7 +114,7 @@ try{
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   await page.waitForTimeout(400);
   const themeAndFonts=await page.evaluate(()=>{
-    const heading=document.querySelector('.n9-heading h1');
+    const heading=document.querySelector('.w10-heading h1');
     const body=document.body;
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
@@ -122,6 +122,9 @@ try{
   if(!themeAndFonts.font.includes('Sora'))throw new Error('Dashboard titles are not using Sora: '+themeAndFonts.font);
   if(!themeAndFonts.glass)throw new Error('Missing glass design tokens');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  if(!await page.locator('.w10-overview').count())throw new Error('WorkBench editorial overview missing');
+  if(!await page.locator('.w10-table').count())throw new Error('Leads table missing from editorial dashboard');
+  if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
   await page.evaluate(()=>{
     window.__n9RippleSeen=false;
     window.__n9RippleObserver=new MutationObserver(mutations=>{
