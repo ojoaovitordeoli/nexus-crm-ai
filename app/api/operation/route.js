@@ -214,6 +214,13 @@ export async function POST(request){
     }
     return reply({ok:true,message:payload?.activate?'Modelo salvo e ativado.':'Modelo salvo como rascunho.',pipeline_id:pipelineId});
   }
+  if(action==='sale_create'){
+    const value=Number(payload?.value);
+    if(!Number.isFinite(value)||value<=0||value>100000000)return fails('Informe um valor de venda válido.');
+    const {data,error}=await admin.from('sales').insert({organization_id:orgId,value}).select('id,value,created_at').single();
+    if(error)return fails('Falha ao registrar venda: '+error.message,500);
+    return reply({ok:true,message:'Venda registrada e indicadores atualizados.',item:data},201);
+  }
   if(action==='contact_create'){
     const first_name=val(payload?.first_name,130);
     const whatsapp=String(payload?.whatsapp||'').replace(/\D/g,'');

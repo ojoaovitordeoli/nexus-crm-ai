@@ -8,7 +8,7 @@ import {
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
   LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,Sparkles,
   Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
-  UserRound,UsersRound,X,Zap
+  ReceiptText,UserRound,UsersRound,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {PremiumDashboard,PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
@@ -18,10 +18,12 @@ import NexusCommandMenu from './NexusCommandMenu';
 import NexusAutomations from './NexusAutomations';
 import NexusWhatsAppInbox from './NexusWhatsAppInbox';
 import NexusAIInsights from './NexusAIInsights';
+import PremiumSales from './PremiumSales';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
   {path:'leads',label:'Leads',icon:UsersRound},
+  {path:'sales',label:'Vendas',icon:ReceiptText},
   {path:'contacts',label:'Contatos',icon:ContactRound},
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'automations',label:'Automações',icon:Workflow},
@@ -32,7 +34,7 @@ const MENU=[
   {path:'settings',label:'Configurações',icon:ShieldCheck},
   {path:'minha-area',label:'Meu perfil',icon:UserRound}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',contacts:'Contatos',whatsapp:'WhatsApp',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -457,6 +459,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           leads={data.leads} count={counts.leads} organizationId={organizationId}
           readonly={readonly} stages={stages} pipeline={pipeline} onOperation={operation} onReload={load}
         />}
+        {section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='whatsapp'&&<NexusWhatsAppInbox
           organizationId={organizationId} contacts={data.contacts} isSuperAdmin={isSuperAdmin}
