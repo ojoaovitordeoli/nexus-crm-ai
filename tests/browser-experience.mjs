@@ -62,11 +62,12 @@ try{
       table==='organizations'?[organization]:[];
     return route.fulfill({status:200,headers,body:JSON.stringify(rows)});
   });
-  let createdTasks=0;
+  let createdTasks=0;let completedTasks=0;
   await page.route('**/api/operation**',async route=>{
     if(route.request().method()==='POST'){
       const payload=route.request().postDataJSON();
       if(payload.action==='task_create')createdTasks+=1;
+      if(payload.action==='task_status'&&payload.status==='completed')completedTasks+=1;
       return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
     }
     const response={data,counts:{leads:1,contacts:1,tasks:1,appointments:0,sales:0},
@@ -119,7 +120,13 @@ try{
   await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
   await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
-  await page.screenshot({path:'test-artifacts/dashboard-v11-desktop.png',fullPage:true});
+  await page.screenshot({path:'test-artifacts/dashboard-v12-desktop.png',fullPage:true});
+  await page.getByRole('button',{name:'Nova tarefa'}).click();
+  await page.locator('.desk-compose input[placeholder="Ex.: Retornar para o cliente"]').fill('Confirmar orçamento');
+  await page.getByRole('button',{name:'Salvar',exact:true}).click();
+  if(createdTasks!==1)throw new Error('Dashboard did not create the task through the operation API');
+  await page.getByRole('button',{name:'Concluir Retornar para Ana'}).click();
+  if(completedTasks!==1)throw new Error('Dashboard did not complete the task through the operation API');
   for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
     await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(500);
@@ -136,7 +143,7 @@ try{
       await detail.getByRole('button',{name:'Próxima ação'}).click();
       await detail.getByRole('button',{name:'Criar tarefa'}).click();
       await detail.getByText('Tarefa criada com sucesso.').waitFor({timeout:5000});
-      if(createdTasks!==1)throw new Error('Lead detail did not call task API exactly once');
+      if(createdTasks!==2)throw new Error('Lead detail did not create the second task');
       await page.screenshot({path:'test-artifacts/lead-detail-v11.png',fullPage:true});
       await detail.getByRole('button',{name:'Fechar atendimento'}).click();
       const hint=page.locator('.w10-kanban-notice');
@@ -158,35 +165,22 @@ try{
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:/Central de vendas/}).waitFor();
+  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   await page.waitForTimeout(400);
   const themeAndFonts=await page.evaluate(()=>{
-    const heading=document.querySelector('.v11-pageheading h1');
+    const heading=document.querySelector('.desk-pagehead h1');
     const body=document.body;
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
   if(!themeAndFonts.dark)throw new Error('Dark glass theme must be the default for a new workspace');
-  if(!themeAndFonts.font.includes('Sora'))throw new Error('Dashboard titles are not using Sora: '+themeAndFonts.font);
-  if(!themeAndFonts.glass)throw new Error('Missing glass design tokens');
+  if(!themeAndFonts.font.includes('Inter'))throw new Error('Dashboard titles are not using Inter: '+themeAndFonts.font);
+  if(!await page.locator('.desk-task-list').count())throw new Error('Operational task list missing');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
-  if(!await page.locator('.v11-summary').count())throw new Error('V11 commercial summary missing');
-  if(!await page.locator('.v11-focus-grid').count())throw new Error('Commercial work queue missing');
+  if(!await page.locator('.desk-metrics').count())throw new Error('V12 metrics rail missing');
+  if(!await page.locator('.desk-main-grid').count())throw new Error('V12 actionable work lists missing');
   if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
-  await page.evaluate(()=>{
-    window.__n9RippleSeen=false;
-    window.__n9RippleObserver=new MutationObserver(mutations=>{
-      if(mutations.some(record=>Array.from(record.addedNodes).some(node=>node.nodeType===1&&node.classList?.contains('n9-pointer-ripple')))){
-        window.__n9RippleSeen=true;
-      }
-    });
-    window.__n9RippleObserver.observe(document.body,{subtree:true,childList:true});
-  });
-  await page.getByRole('button',{name:'7d'}).click();
-  const rippleWasCreated=await page.evaluate(()=>{
-    window.__n9RippleObserver?.disconnect();
-    return window.__n9RippleSeen;
-  });
-  if(!rippleWasCreated)throw new Error('Expected ripple microinteraction during period click');
+  await page.getByRole('button',{name:'Vencidas'}).click();
+  await page.getByRole('button',{name:'Em aberto'}).click();
   await page.getByRole('button',{name:'Alternar tema'}).click();
   await page.waitForTimeout(350);
   if(await page.evaluate(()=>document.body.classList.contains('dark')))throw new Error('Light theme toggle did not work');
@@ -195,7 +189,7 @@ try{
   await page.waitForTimeout(250);
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(450);
-  await page.getByRole('heading',{name:/Central de vendas/}).waitFor();
+  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   const pageWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
   if(pageWidth>395)throw new Error('Dashboard overflows 390px mobile viewport: '+pageWidth);
   await page.screenshot({path:'test-artifacts/dashboard-mobile.png',fullPage:true});
