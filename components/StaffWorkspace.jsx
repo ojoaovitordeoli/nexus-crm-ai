@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
-import NexusDashboard from './NexusDashboard';
+import NexusWorkbench from './NexusWorkbench';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
 import MotionCalendar from './MotionCalendar';
 import NexusCommandMenu from './NexusCommandMenu';
@@ -34,6 +34,11 @@ const MENU=[
   {path:'reports',label:'Relatórios',icon:Activity},
   {path:'settings',label:'Configurações',icon:ShieldCheck},
   {path:'minha-area',label:'Meu perfil',icon:UserRound}
+]; 
+const NAV_GROUPS=[
+  {title:'Comercial',paths:['dashboard','leads','sales','contacts']},
+  {title:'Atendimento',paths:['whatsapp','agenda','tasks']},
+  {title:'Gestão',paths:['reports','automations','settings','minha-area']}
 ];
 const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
@@ -399,12 +404,11 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       onReplay={()=>{if(section==='dashboard')setMotionReplay(v=>v+1);else router.push('/dashboard')}}
     />
     <aside className={'staff-sidebar '+(mobileOpen?'staff-sidebar--open':'')}>
-      <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={23}/></div><div><strong>NEXUS <span>CRM</span></strong><small>Gestão comercial</small></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
+      <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={23}/></div><div><strong>NEXUS <span>CRM</span></strong><small>Sistema comercial</small></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}</div>
       {organizations.length>1&&<label className="staff-company-choice"><span>Alternar empresa</span><select value={organizationId} onChange={e=>onOrganizationChange(e.target.value)}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
-      <div className="staff-nav-title">Navegação</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {MENU.map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={19} strokeWidth={1.9}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}
+        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group"><div className="staff-nav-title">{group.title}</div>{MENU.filter(item=>group.paths.includes(item.path)).map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
@@ -466,7 +470,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
-        {section==='dashboard'&&<NexusDashboard
+        {section==='dashboard'&&<NexusWorkbench
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}
