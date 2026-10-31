@@ -9,7 +9,13 @@ import {
 
 const n=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
 const cash=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(v)||0);
-const shortDate=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'Sem prazo';
+const dueDate=v=>{
+  if(!v)return null;
+  const parts=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(parts)return new Date(Number(parts[1]),Number(parts[2])-1,Number(parts[3]));
+  const date=new Date(v);return Number.isNaN(date.getTime())?null:date;
+};
+const shortDate=v=>dueDate(v)?.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})||'Sem prazo';
 const name=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Nome não informado';
 const status=v=>({new:'Novo',pending:'Pendente',open:'Aberto',qualified:'Qualificado',won:'Ganho',lost:'Perdido'})[String(v||'').toLowerCase()]||String(v||'Sem etapa');
 const phoneHref=v=>{
@@ -35,22 +41,22 @@ export default function NexusDesk({data,counts,loading,organizationName,onOperat
   const [working,setWorking]=useState('');
   const [feedback,setFeedback]=useState('');
   const [error,setError]=useState('');
-  const now=new Date(), todayKey=now.toISOString().slice(0,10);
+  const today=new Date();today.setHours(0,0,0,0);
   const recentStart=Date.now()-30*86400000;
   const newLeads=leads.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=recentStart);
   const newSales=sales.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=recentStart);
   const revenue=newSales.reduce((a,x)=>a+(Number(x.value)||0),0);
   const partial=['leads','sales','tasks'].some(t=>Number(counts?.[t]||0)>(records[t]?.length||0));
-  const overdue=Array.isArray(overdueTasks)?overdueTasks:pending.filter(t=>t.due_date&&new Date(t.due_date).getTime()<Date.now());
+  const overdue=pending.filter(t=>dueDate(t.due_date)&&dueDate(t.due_date).getTime()<today.getTime());
   const stageOf=lead=>pipelineStages.find(s=>s.id===lead.pipeline_stage_id);
   const filteredTasks=useMemo(()=>{
     const start=new Date();start.setHours(0,0,0,0);
     const end=new Date(start);end.setDate(end.getDate()+1);
     return pending.filter(t=>{
-      const time=t.due_date?new Date(t.due_date).getTime():NaN;
+      const time=dueDate(t.due_date)?.getTime()??NaN;
       return taskView==='todos' || (taskView==='atrasadas'&&Number.isFinite(time)&&time<start.getTime())||
         (taskView==='hoje'&&Number.isFinite(time)&&time>=start.getTime()&&time<end.getTime());
-    }).sort((a,b)=>(a.due_date?new Date(a.due_date).getTime():Infinity)-(b.due_date?new Date(b.due_date).getTime():Infinity)).slice(0,7);
+    }).sort((a,b)=>(dueDate(a.due_date)?.getTime()??Infinity)-(dueDate(b.due_date)?.getTime()??Infinity)).slice(0,7);
   },[pending,taskView]);
   const filteredLeads=useMemo(()=>[...leads].filter(l=>[name(l.contact),l.contact?.whatsapp,l.source].join(' ').toLocaleLowerCase('pt-BR').includes(leadSearch.toLocaleLowerCase('pt-BR')))
     .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,7),[leads,leadSearch]);
@@ -110,7 +116,7 @@ export default function NexusDesk({data,counts,loading,organizationName,onOperat
         </div>
         <div className="desk-task-list">
           {filteredTasks.length?filteredTasks.map(t=>{
-            const late=t.due_date&&new Date(t.due_date).getTime()<Date.now();
+            const late=dueDate(t.due_date)&&dueDate(t.due_date).getTime()<today.getTime();
             return <div className="desk-task" key={t.id}>
               <button type="button" className="desk-task-check" title="Concluir tarefa" aria-label={'Concluir '+t.title} disabled={readonly||!!working} onClick={()=>action({action:'task_status',id:t.id,status:'completed'},t.id)}>{working===t.id?<Clock3 size={16}/>:<Check size={17}/>}</button>
               <div><strong>{t.title||'Sem título'}</strong><span>{t.due_date?'Prazo '+shortDate(t.due_date):'Sem prazo definido'}{t.priority==='urgent'?' · Urgente':t.priority==='high'?' · Alta prioridade':''}</span></div>
