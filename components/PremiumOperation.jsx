@@ -275,7 +275,7 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
 }
 
 export function PremiumLeads({leads=[],count=0,organizationId,organizationName,readonly=false,stages=[],pipeline,onOperation,onReload}){
-  const [mode,setMode]=useState('board');
+  const [mode,setMode]=useState('list');
   const [query,setQuery]=useState('');
   useEffect(()=>{
     const q=new URLSearchParams(window.location.search).get('q');
@@ -314,7 +314,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
   return <div className="nxp-premium">
-    <PanelHeader eyebrow="Funil de vendas" title="Oportunidades" detail="Acompanhe os leads e avance cada atendimento." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
+    <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
     <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> leads na empresa</span><i/><span><strong>{cols.length}</strong> etapas</span><i/><span><strong>{filtered.length}</strong> exibidos no filtro</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
@@ -392,7 +392,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
     setSuccess('CSV gerado com '+list.length+' contato(s) carregados e filtrados.');
   }
   return <div className="nxp-premium">
-    <PanelHeader eyebrow="Base de contatos" title="Contatos" detail="Consulte, cadastre e encontre as pessoas da sua empresa." right={<div className="nxp-contact-toolbar"><span className="nxp-total"><span/>{fmt(count)} na sua base</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={exportContacts} disabled={!list.length} title="Exportar os contatos carregados conforme o filtro atual"><Download size={15}/> Exportar CSV</button>}{!readonly&&<button className="nxp-button nxp-button--primary" type="button" onClick={()=>setShowCreate(v=>!v)}><Plus size={16}/>{showCreate?'Fechar':'Novo contato'}</button>}</div>}/>
+    <PanelHeader eyebrow="Cadastro" title="Contatos" detail="Pessoas cadastradas nesta empresa." right={<div className="nxp-contact-toolbar"><span className="nxp-total"><span/>{fmt(count)} na sua base</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={exportContacts} disabled={!list.length} title="Exportar os contatos carregados conforme o filtro atual"><Download size={15}/> Exportar CSV</button>}{!readonly&&<button className="nxp-button nxp-button--primary" type="button" onClick={()=>setShowCreate(v=>!v)}><Plus size={16}/>{showCreate?'Fechar':'Novo contato'}</button>}</div>}/>
 
     {error&&<div className="nxp-error" role="alert">{error}</div>}
     {success&&<div className="nxp-success" role="status"><CircleCheck size={16}/>{success}</div>}
