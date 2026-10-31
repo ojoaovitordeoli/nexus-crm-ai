@@ -64,7 +64,17 @@ export default function CRM({section}){
    });
   }catch(ex){setError(ex.message||'Erro ao consultar o Supabase.')}finally{setIsLoading(false)}
  },[section,router]);
- useEffect(()=>{initialize();if(!db)return;const {data:{subscription}}=db.auth.onAuthStateChange(()=>{setTimeout(()=>initialize(),0)});return()=>subscription.unsubscribe()},[initialize]);
+ useEffect(()=>{
+  let alive=true;
+  const timeout=window.setTimeout(()=>{
+   if(!alive)return;
+   setSession(null);setProfile(null);setIsLoading(false);setError('Não foi possível confirmar sua sessão. Verifique a conexão e entre novamente.');
+  },8000);
+  initialize().finally(()=>window.clearTimeout(timeout));
+  if(!db)return()=>{alive=false;window.clearTimeout(timeout)};
+  const {data:{subscription}}=db.auth.onAuthStateChange(()=>{setTimeout(()=>initialize(),0)});
+  return()=>{alive=false;window.clearTimeout(timeout);subscription.unsubscribe()};
+ },[initialize]);
  const fetchData=useCallback(async()=>{
   if(!db||!session||(!org&&!isAdmin))return;
   setLoadingData(true);setError('');
