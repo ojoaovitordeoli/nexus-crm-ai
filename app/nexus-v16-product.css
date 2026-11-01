@@ -459,3 +459,13 @@ body.dark .staff-shell .staff-topbar{background:rgba(255,255,255,.72)!important;
 body.dark .staff-shell .staff-nav-item--active,body.dark .staff-shell .staff-nav-item--active:hover{background:#eaf2ff!important;border-color:#d5e5ff!important;color:#3979e8!important}
 body.dark .staff-shell .staff-nav-item--active svg{color:#3979e8!important}
 body.dark .staff-shell .staff-logo-icon,body.dark .staff-shell .staff-workspace-icon,body.dark .staff-shell .staff-sidebar-footer .staff-initials,body.dark .staff-shell .staff-top-avatar .staff-initials{background:#eaf2ff!important;color:#3979e8!important}
+
+/* Aplicação direta no shell: não deixar a sidebar antiga escura ao lado do glass dashboard */
+.staff-shell .staff-sidebar{background:rgba(255,255,255,.78)!important;border-right:1px solid rgba(128,164,220,.25)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+.staff-shell .staff-logo strong{color:#18253a!important}.staff-shell .staff-logo strong span{color:#3979e8!important}.staff-shell .staff-logo small{color:#73849a!important}
+.staff-shell .staff-logo-icon,.staff-shell .staff-workspace-icon,.staff-shell .staff-sidebar-footer .staff-initials,.staff-shell .staff-top-avatar .staff-initials{background:#eaf2ff!important;color:#3979e8!important;border-color:rgba(128,164,220,.22)!important}
+.staff-shell .staff-workspace-picker{background:rgba(255,255,255,.58)!important;border-color:rgba(128,164,220,.22)!important;color:#18253a!important}
+.staff-shell .staff-workspace-picker strong,.staff-shell .staff-session strong{color:#18253a!important}.staff-shell .staff-workspace-picker small,.staff-shell .staff-session small{color:#73849a!important}
+.staff-shell .staff-nav-title{color:#8a9aae!important}.staff-shell .staff-nav-item{color:#60718b!important}.staff-shell .staff-nav-item svg{color:#7c8ea5!important}
+.staff-shell .staff-nav-item:hover{background:rgba(234,242,255,.72)!important;color:#31547f!important}.staff-shell .staff-nav-item--active,.staff-shell .staff-nav-item--active:hover{background:#eaf2ff!important;border-color:#d5e5ff!important;color:#3979e8!important}.staff-shell .staff-nav-item--active svg{color:#3979e8!important}
+.staff-shell .staff-sidebar-footer{border-color:rgba(128,164,220,.22)!important}
