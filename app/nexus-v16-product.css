@@ -272,3 +272,41 @@ body.dark .v16-brief{background:#244639;border-color:#37604e}
 @media(max-width:940px){
  body .nx13-layout{height:auto!important;min-height:0!important}
 }
+
+/* Revisão visual operacional: neutra, legível e sem aparência de produto de IA */
+body:not(.dark){
+  --v14-body:#f3f4f2;--v14-sidebar:#202b31;--v14-header:#fff;
+  --v14-card:#fff;--v14-elev:#f7f8f7;--v14-edge:#dfe3e1;
+  --v14-ink:#1d292d;--v14-muted:#667277;--v14-faint:#8a9598;
+  --v14-accent:#3d7068;--v14-accent-bg:#e8f0ee;
+  --v14-shadow:0 1px 2px rgba(20,35,39,.04);--v14-danger:#ae5148;
+  background:#f3f4f2!important;
+}
+body.dark{
+  --v14-body:#151a1d;--v14-sidebar:#11171a;--v14-header:#1b2226;
+  --v14-card:#1c2428;--v14-elev:#222b2f;--v14-edge:#303a3e;
+  --v14-ink:#e7ecec;--v14-muted:#a7b2b4;--v14-faint:#7f8d91;
+  --v14-accent:#aab9bf;--v14-accent-bg:#29363a;
+  --v14-shadow:none;--v14-danger:#df968b;
+  background:#151a1d!important;
+}
+.v14-hero{padding-top:2px!important;padding-bottom:20px!important}
+.v14-hero-eyebrow{color:var(--v14-accent)!important;letter-spacing:.08em!important;font-weight:700!important}
+.v14-hero-eyebrow span{color:var(--v14-faint)!important}
+.v14-hero-period{color:var(--v14-accent)!important}
+.v16-brief{background:var(--v14-card)!important;border:1px solid var(--v14-edge)!important;color:var(--v14-ink)!important;box-shadow:var(--v14-shadow)!important}
+body.dark .v16-brief{background:var(--v14-card)!important;border-color:var(--v14-edge)!important}
+.v16-brief-top,.v16-brief-top span,.v16-brief-main span,.v16-brief-bottom{color:var(--v14-muted)!important}
+.v16-brief-main strong{color:var(--v14-ink)!important}
+.v16-brief-bottom{border-color:var(--v14-edge)!important}
+.v16-brief-bottom a{color:var(--v14-accent)!important}
+.v16-section-caption>span{color:var(--v14-accent)!important;letter-spacing:.08em!important}
+.v15-action-strip-heading{letter-spacing:.08em!important}
+.v15-action-strip a>svg:first-child{color:var(--v14-accent)!important}
+.v14-stat-head svg{color:var(--v14-accent)!important}
+.v14-stat strong{font-weight:700!important}
+.v14-panel-heading h2{font-weight:700!important}
+.v14-hero-actions{margin-top:18px!important}
+.v14-action-primary{background:var(--v14-ink)!important;border-color:var(--v14-ink)!important;color:var(--v14-card)!important;box-shadow:none!important}
+body.dark .v14-action-primary{background:#e4e9e9!important;border-color:#e4e9e9!important;color:#182124!important}
+.v14-action-ghost{background:transparent!important;border-color:var(--v14-edge)!important;color:var(--v14-ink)!important}
