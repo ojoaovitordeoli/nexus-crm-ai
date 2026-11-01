@@ -99,7 +99,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         {label:'Novos leads',value:int(leads30.length),detail:'Últimos 30 dias',to:'/leads',symbol:UsersRound},
         {label:'Vendas',value:int(sales30.length),detail:'Últimos 30 dias',to:'/sales',symbol:CircleCheck},
         {label:'Receita registrada',value:brl(revenue),detail:'Últimos 30 dias',to:'/sales',symbol:Wallet2},
-        {label:'Compromissos futuros',value:int(nextAppointments.length),detail:'Nos registros carregados',to:'/agenda',symbol:CalendarDays}
+        {label:'Compromissos futuros',value:int(appointments.filter(x=>x.start_at&&toDate(x.start_at)?.getTime()>=Date.now()&&!['cancelled','completed'].includes(String(x.status||'').toLowerCase())).length),detail:'Nos registros carregados',to:'/agenda',symbol:CalendarDays}
       ].map((s,i)=>{const Icon=s.symbol;return <Link key={s.label} href={s.to} className="v14-stat">
         <div className="v14-stat-head"><span>{s.label}</span><Icon size={18}/></div>
         <strong>{loading?'—':s.value}</strong><div className="v14-stat-bottom"><small>{s.detail}</small><ArrowUpRight size={15}/></div>
