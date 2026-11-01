@@ -37,3 +37,11 @@ A nova direção do Nexus será: fundo de trabalho neutro; sidebar compacta; sup
 - React Flow: https://reactflow.dev/
 - Twenty CRM: https://github.com/twentyhq/twenty
 - Coleção Instagram analisada: https://www.instagram.com/ojoaovitordeoliveir/saved/j/1363251799284939/
+
+## Referência visual específica V4/V5 encontrada
+
+A coleção local antiga da primeira conta contém o post do criador `code.xr` com a referência **Glassy Dashboard V5**: https://www.instagram.com/reel/De_78COzoPO/. A descrição confirma dashboard glassmorphism, cards translúcidos, analytics, gráficos suaves, design azul e branco, responsividade, React, Tailwind e Redux Toolkit.
+
+A busca pública também encontrou a referência **Glassy Dashboard V4** do mesmo criador: https://www.instagram.com/_t/reel/De9XFBQTG0D/. A descrição confirma glassmorphism, cards translúcidos, analytics, visuais suaves e estética branca e azul minimalista.
+
+A aplicação dessas referências ao Nexus não será uma cópia literal. O que será incorporado é a composição: fundo claro com profundidade sutil, transparência controlada, cards com hierarquia e bordas delicadas, gráficos com contraste, ritmo visual consistente e microinterações curtas. Não serão usados slogans de IA, excesso de brilho, gradientes decorativos ou efeitos que atrapalhem leitura e operação.

@@ -411,3 +411,51 @@ body.dark .staff-shell .staff-global-search{background:#f7f8f7!important;border-
 body.dark .staff-shell .staff-global-search input{color:#20272b!important}
 body.dark .staff-shell .staff-command-trigger,body.dark .staff-shell .staff-icon-button{background:#fff!important;border-color:#dfe3e1!important;color:#657075!important}
 body.dark .staff-shell .staff-top-avatar .staff-initials{background:#e8f0ed!important;border-color:#d9dfdc!important;color:#265f56!important}
+
+/* Referência visual code.xr V4/V5: glassmorphism branco/azul, aplicado com moderação */
+.v14-home{
+  --v14-accent:#3979e8!important;
+  --v14-accent-bg:#eaf2ff!important;
+  --v14-body:rgba(245,249,255,.72)!important;
+  --v14-card:rgba(255,255,255,.66)!important;
+  --v14-elev:rgba(255,255,255,.82)!important;
+  --v14-edge:rgba(128,164,220,.25)!important;
+  --v14-ink:#18253a!important;
+  --v14-muted:#60718b!important;
+  --v14-faint:#8797ad!important;
+  background:
+    radial-gradient(520px 260px at 82% -4%,rgba(107,164,255,.20),transparent 72%),
+    radial-gradient(430px 250px at 7% 98%,rgba(184,215,255,.25),transparent 74%),
+    linear-gradient(135deg,#f8fbff 0%,#edf5ff 100%)!important;
+  border-color:rgba(128,164,220,.28)!important;
+  box-shadow:0 20px 60px rgba(73,112,168,.10),inset 0 1px rgba(255,255,255,.9)!important;
+  overflow:hidden!important;
+}
+.v14-hero h1,.v16-section-caption>strong,.v14-panel-heading h2,.v14-stat strong,.v16-brief-main strong,.v14-taskrow strong,.v14-leadrow strong{color:#18253a!important}
+.v14-hero-eyebrow,.v14-section-caption>span,.v14-eyebrow,.v14-stat-head svg,.v14-quiet-link,.v16-brief-bottom a{color:#3979e8!important}
+.v14-hero p,.v14-stat-head,.v14-panel-heading p,.v14-taskrow small,.v14-leadrow small{color:#60718b!important}
+.v14-hero-period{color:#3979e8!important}
+.v14-brief,.v14-stats,.v14-panel,.v15-action-strip{
+  background:rgba(255,255,255,.62)!important;
+  border-color:rgba(128,164,220,.25)!important;
+  box-shadow:0 10px 28px rgba(73,112,168,.08),inset 0 1px rgba(255,255,255,.88)!important;
+  backdrop-filter:blur(18px)!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+}
+.v14-brief:hover,.v14-panel:hover,.v14-stat:hover{background:rgba(255,255,255,.76)!important}
+.v14-stat{background:rgba(255,255,255,.48)!important;border-color:rgba(128,164,220,.20)!important}
+.v14-stat:not(:last-child){border-right-color:rgba(128,164,220,.20)!important}
+.v14-action-primary{background:#3979e8!important;border-color:#3979e8!important;box-shadow:0 7px 17px rgba(57,121,232,.22)!important}
+.v14-action-primary:hover{background:#2869d9!important;box-shadow:0 9px 20px rgba(57,121,232,.28)!important}
+.v14-action-ghost{background:rgba(255,255,255,.60)!important;border-color:rgba(128,164,220,.28)!important;color:#31547f!important;backdrop-filter:blur(12px)!important}
+.v14-action-ghost:hover{background:rgba(255,255,255,.9)!important;border-color:#3979e8!important;color:#2869d9!important}
+.v14-search{background:rgba(255,255,255,.58)!important;border-color:rgba(128,164,220,.24)!important}
+.v14-initial{background:#eaf2ff!important;color:#3979e8!important}
+.v14-filters button.active{color:#3979e8!important;border-color:#3979e8!important}
+.v15-action-strip a:hover{background:#eaf2ff!important;color:#2869d9!important}
+body.dark .staff-shell,body.dark .staff-shell::before,body.dark .staff-shell .staff-main{background:#eef5ff!important}
+body.dark .staff-shell .staff-sidebar{background:rgba(255,255,255,.78)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;border-right-color:rgba(128,164,220,.25)!important}
+body.dark .staff-shell .staff-topbar{background:rgba(255,255,255,.72)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border-color:rgba(128,164,220,.22)!important}
+body.dark .staff-shell .staff-nav-item--active,body.dark .staff-shell .staff-nav-item--active:hover{background:#eaf2ff!important;border-color:#d5e5ff!important;color:#3979e8!important}
+body.dark .staff-shell .staff-nav-item--active svg{color:#3979e8!important}
+body.dark .staff-shell .staff-logo-icon,body.dark .staff-shell .staff-workspace-icon,body.dark .staff-shell .staff-sidebar-footer .staff-initials,body.dark .staff-shell .staff-top-avatar .staff-initials{background:#eaf2ff!important;color:#3979e8!important}
