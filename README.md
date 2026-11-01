@@ -80,6 +80,8 @@ Instruções: [Copiloto e React Flow](docs/copiloto-ia-e-reactflow.md).
 - A versão PDF do dossiê está disponível em [`docs/dossie-referencias-ia-instagram.pdf`](docs/dossie-referencias-ia-instagram.pdf).
 - A análise comparativa aprofundada do sistema óptico, com o diagnóstico do Nexus e a ordem correta de reconstrução, está em [`docs/analise-comparativa-optica-v2.md`](docs/analise-comparativa-optica-v2.md) e [`docs/analise-comparativa-optica-v2.pdf`](docs/analise-comparativa-optica-v2.pdf).
 - O plano de produto está em [`plan.md`](plan.md) e os critérios funcionais estão em [`TODO.md`](TODO.md).
+- O dossiê GitHub Intelligence, com fontes verificadas, licenças, riscos, decisões de adoção e arquitetura escolhida, está em [`docs/github-intelligence-dossier-20261101.md`](docs/github-intelligence-dossier-20261101.md).
+- O quality gate do projeto está em [`.github/workflows/quality.yml`](.github/workflows/quality.yml) e executa testes unitários, build de produção e smoke test de navegador com Chromium.
 
 ## Arquitetura
 
@@ -91,6 +93,7 @@ Instruções: [Copiloto e React Flow](docs/copiloto-ia-e-reactflow.md).
 - `app/api/insights/` — respostas de IA, quotas e consentimento.
 - `lib/tenant-session.js` — autenticação/isolamento dos novos módulos.
 - `tests/` — testes de regressão e validação de eventos assinados.
+- `tests/browser-experience.mjs` — smoke test Playwright do login, dashboard, paleta de comandos, tarefas e viewport mobile.
 - `supabase/` — scripts SQL sujeitos a revisão e execução pelo responsável do banco.
 
 [Auditoria de código aberto e roadmap](docs/auditoria-open-source-2026-10.md).
