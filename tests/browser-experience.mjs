@@ -133,27 +133,40 @@ try{
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
     await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
     if(route==='leads'){
+      const search=page.getByRole('searchbox',{name:'Pesquisar leads'});
+      await search.fill('não existe');
+      await page.getByText('Nenhum lead encontrado').waitFor({timeout:5000});
+      await search.fill('Ana');
+      await page.getByRole('region',{name:'Ficha de Ana Teste'}).waitFor({timeout:5000});
+      await page.getByRole('combobox',{name:'Ordenar leads'}).selectOption('name');
       const downloadPromise=page.waitForEvent('download');
-      await page.getByRole('button',{name:'Exportar leads filtrados em CSV'}).click();
+      await page.getByRole('button',{name:'Exportar'}).click();
       const download=await downloadPromise;
       if(!download.suggestedFilename().endsWith('.csv'))throw new Error('Export did not create CSV');
-      await page.getByRole('button',{name:'Abrir lead Ana Teste'}).click();
-      const detail=page.getByRole('dialog',{name:'Atendimento de Ana Teste'});
-      await detail.waitFor({timeout:5000});
-      await detail.getByRole('button',{name:'Próxima ação'}).click();
-      await detail.getByRole('button',{name:'Criar tarefa'}).click();
+      const detail=page.getByRole('region',{name:'Ficha de Ana Teste'});
+      await detail.getByRole('tab',{name:'Retorno'}).click();
+      await detail.getByRole('textbox',{name:'O que precisa ser feito?'}).fill('Retornar orçamento');
+      await detail.getByRole('button',{name:'Adicionar tarefa'}).click();
       await detail.getByText('Tarefa criada com sucesso.').waitFor({timeout:5000});
-      if(createdTasks!==2)throw new Error('Lead detail did not create the second task');
-      await page.screenshot({path:'test-artifacts/lead-detail-v11.png',fullPage:true});
-      await detail.getByRole('button',{name:'Fechar atendimento'}).click();
+      if(createdTasks!==2)throw new Error('Lead workspace did not create follow-up');
+      await page.screenshot({path:'test-artifacts/leads-v13-split-desk.png',fullPage:true});
+      await detail.getByRole('button',{name:'Fechar ficha'}).click();
+      await page.getByRole('button',{name:/Ana Teste/}).click();
+      await detail.waitFor({timeout:5000});
+      await page.getByRole('button',{name:/Quadro/}).click();
       const hint=page.locator('.w10-kanban-notice');
       await hint.waitFor({timeout:7000});
-      const bounds=await hint.boundingBox();
-      if(!bounds||bounds.height>145)throw new Error('Kanban empty state is not compact: '+bounds?.height);
       if(await page.locator('.w10-kanban-setup').count())throw new Error('Old oversized Kanban configuration panel still visible');
       await hint.getByRole('button',{name:/Configurar funil/}).click();
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
+      await page.getByRole('button',{name:'Lista'}).click();
+      await page.locator('.nx13-layout').waitFor({timeout:5000});
+      await page.setViewportSize({width:390,height:844});
+      await page.waitForTimeout(200);
+      if(await page.evaluate(()=>document.documentElement.scrollWidth)>395)throw new Error('Leads page horizontal overflow mobile');
+      await page.screenshot({path:'test-artifacts/leads-v13-mobile.png',fullPage:true});
+      await page.setViewportSize({width:1440,height:900});
     }
   }
   for(const route of ['tasks','agenda','reports','settings','whatsapp','automations']){
