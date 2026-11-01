@@ -73,8 +73,8 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
     <div className="v14-topline"><span className="v14-kicker"><span/> {organizationName||'Sua empresa'} <span className="v14-kicker-div">/</span> Comercial</span><span className="v14-synced">{snapshot}</span></div>
     <div className="v14-hero">
       <div className="v14-hero-main">
-        <span className="v14-hero-eyebrow">COMERCIAL <span>RESUMO DA OPERAÇÃO</span></span>
-        <h1>Visão geral<span className="v14-hero-period">.</span></h1>
+        <span className="v14-hero-eyebrow">Comercial <span>Resumo do dia</span></span>
+        <h1>Visão geral</h1>
         <p>Veja o que precisa de atenção, acompanhe os resultados e abra rapidamente o próximo registro.</p>
         <div className="v14-hero-actions">
           <Link className="v14-action-primary" href="/leads">Abrir leads <ArrowUpRight size={17}/></Link>
@@ -82,13 +82,13 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         </div>
       </div>
       <aside className="v16-brief" aria-label="Resumo das tarefas abertas">
-        <div className="v16-brief-top"><span>PENDÊNCIAS</span><Clock3 size={18}/></div>
+        <div className="v16-brief-top"><span>Pendências</span><Clock3 size={18}/></div>
         <div className="v16-brief-main"><strong>{loading?'—':int(pending.length)}</strong><span>{pending.length===1?'tarefa em aberto':'tarefas em aberto'}</span></div>
         <div className="v16-brief-bottom"><span>{late.length?late.length+' '+(late.length===1?'vencida':'vencidas')+' para priorizar':'Nenhuma tarefa vencida'}</span><Link href="/tasks">Ver pendências <ArrowUpRight size={15}/></Link></div>
       </aside>
     </div>
     <nav className="v15-action-strip" aria-label="Ações imediatas da operação">
-      <span className="v15-action-strip-heading">PRIORIDADES</span>
+      <span className="v15-action-strip-heading">Atalhos de hoje</span>
       <Link href="/tasks" className={late.length?'v15-action-strip-urgent':''} title="Tarefas vencidas entre os registros carregados"><Clock3 size={16}/><strong>{late.length}</strong> {late.length===1?'tarefa vencida':'tarefas vencidas'} <ArrowUpRight size={14}/></Link>
       <Link href="/tasks" title="Tarefas com prazo para hoje entre os registros carregados"><Check size={16}/><strong>{dueToday.length}</strong> {dueToday.length===1?'tarefa hoje':'tarefas hoje'} <ArrowUpRight size={14}/></Link>
       <Link href="/agenda" title="Próximo compromisso entre os registros carregados"><CalendarDays size={16}/><span>{nextAppointment?'Próxima agenda: '+toDate(nextAppointment.start_at)?.toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Ver agenda'}</span><ArrowUpRight size={14}/></Link>
@@ -101,7 +101,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
       <button type="submit" disabled={readonly||submitting||!newTask.trim()}>Criar <ArrowRight size={16}/></button>
       <button type="button" className="v14-cancel" onClick={()=>setCompose(false)}>Cancelar</button>
     </form>}
-    <div className="v16-section-caption"><span>RESUMO</span><strong>Indicadores da operação</strong><small>Últimos 30 dias</small></div>
+    <div className="v16-section-caption"><span>Resumo</span><strong>Indicadores da operação</strong><small>Últimos 30 dias</small></div>
     <div className="v14-stats" aria-label="Indicadores dos últimos 30 dias">
       {[
         {label:'Novos leads',value:int(leads30.length),detail:coverage.leads?'Amostra · 30 dias':'Últimos 30 dias',to:'/leads',symbol:UsersRound},
@@ -113,10 +113,10 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         <strong>{loading?'—':s.value}</strong><div className="v14-stat-bottom"><small>{s.detail}</small><ArrowUpRight size={15}/></div>
       </Link>})}
     </div>
-    <div className="v16-section-caption v16-section-caption--work"><span>TRABALHO</span><strong>Tarefas e contatos</strong><small>Acompanhamento da equipe</small></div>
+    <div className="v16-section-caption v16-section-caption--work"><span>Trabalho</span><strong>Tarefas e contatos</strong><small>Acompanhamento da equipe</small></div>
     <div className="v14-workgrid">
       <section className="v14-panel v14-tasks-panel">
-        <Title index="ACOMPANHAMENTO" title="Próximos passos" sub="Tarefas que aguardam uma ação da equipe" link="Todas as tarefas" href="/tasks"/>
+        <Title index="Acompanhamento" title="Próximos passos" sub="Tarefas que aguardam uma ação da equipe" link="Todas as tarefas" href="/tasks"/>
         <div className="v14-filters" role="group" aria-label="Filtrar tarefas">
           {[['all','Em aberto'],['today','Hoje'],['late','Vencidas']].map(([key,l])=><button key={key} type="button" className={tab===key?'active':''} aria-pressed={tab===key} onClick={()=>setTab(key)}>{l}{key==='late'&&late.length>0&&<span>{late.length}</span>}</button>)}
         </div>
@@ -129,7 +129,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         <div className="v14-panel-foot"><span>{int(pending.length)} em aberto</span><Link href="/tasks">Gerenciar tarefas <ArrowRight size={15}/></Link></div>
       </section>
       <section className="v14-panel v14-leads-panel">
-        <Title index="CARTEIRA" title="Leads recentes" sub="Contatos que chegaram à empresa" link="Abrir lista" href="/leads"/>
+        <Title index="Carteira" title="Leads recentes" sub="Contatos que chegaram à empresa" link="Abrir lista" href="/leads"/>
         <label className="v14-search"><Search size={17}/><input type="search" value={term} onChange={e=>setTerm(e.target.value)} placeholder="Buscar lead" aria-label="Buscar lead"/></label>
         <div className="v14-rows">{recent.length?recent.map(l=>{
           const who=fullName(l.contact),w=whatsapp(l.contact?.whatsapp),stage=pipelineStages.find(s=>s.id===l.pipeline_stage_id);
@@ -139,14 +139,14 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
           </div> }):<div className="v14-empty"><ContactRound size={24}/><strong>Nenhum lead encontrado</strong><p>{term?'Tente outra busca.':'Os novos contatos aparecerão aqui.'}</p></div>}</div>
       </section>
     </div>
-    <div className="v16-section-caption v16-section-caption--lower"><span>PIPELINE E AGENDA</span><strong>Etapas e compromissos</strong><small>Situação atual</small></div>
+    <div className="v16-section-caption v16-section-caption--lower"><span>Pipeline e agenda</span><strong>Etapas e compromissos</strong><small>Situação atual</small></div>
     <div className="v14-lowergrid">
       <section className="v14-panel">
-        <Title index="PIPELINE" title="Distribuição do funil" sub="Leads entre os registros carregados" link="Ver quadro" href="/leads"/>
+        <Title index="Pipeline" title="Distribuição do funil" sub="Leads entre os registros carregados" link="Ver quadro" href="/leads"/>
         <div className="v14-stage-list">{groups.length?groups.map((g,i)=><div key={i} className="v14-stage"><span className="v14-stage-marker" style={{background:g.color}}/><strong>{g.name}</strong><div className="v14-stage-track"><span style={{background:g.color,width:Math.max(4,g.count/Math.max(1,leads.length)*100)+'%'}}/></div><b>{g.count}</b></div>):<div className="v14-empty-small">As etapas do funil aparecerão conforme os leads forem cadastrados.</div>}</div>
       </section>
       <section className="v14-panel">
-        <Title index="CALENDÁRIO" title="Agenda" sub="Próximos compromissos" link="Abrir agenda" href="/agenda"/>
+        <Title index="Calendário" title="Agenda" sub="Próximos compromissos" link="Abrir agenda" href="/agenda"/>
         <div className="v14-agenda-list">{nextAppointments.length?nextAppointments.map(a=><Link key={a.id} href="/agenda" className="v14-agenda-row">
           <CalendarDays size={18}/><span><strong>{a.title||'Compromisso'}</strong><small>{toDate(a.start_at)?.toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</small></span><ChevronRight size={17}/>
         </Link>):<div className="v14-empty-small">Sem compromissos futuros entre os registros carregados.</div>}</div>
