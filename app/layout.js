@@ -26,5 +26,6 @@ import './nexus-v11.css';
 import './nexus-product-reset.css';
 import './nexus-opportunity-desk.css';
 import './nexus-v14-design.css';
+import './nexus-v15-actions.css';
 export const metadata = { title: 'NEXUS CRM', description: 'Gestão de clientes e vendas' };
 export default function RootLayout({children}) {return <html lang="pt-BR"><body className="dark" suppressHydrationWarning>{children}</body></html>}

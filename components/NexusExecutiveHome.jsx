@@ -2,6 +2,7 @@
 
 import {useMemo,useState} from 'react';
 import Link from 'next/link';
+import {normalizeLeadSearch,getSnapshotCoverage} from '../lib/dashboard-snapshot.mjs';
 import {
   Activity,ArrowRight,ArrowUpRight,CalendarDays,Check,ChevronRight,
   CircleCheck,Clock3,ContactRound,MessageCircle,Plus,RefreshCcw,
@@ -39,7 +40,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
     return [...pending].filter(x=>tab==='all'||(tab==='today'?dueToday.some(y=>y.id===x.id):late.some(y=>y.id===x.id)))
       .sort((a,b)=>(toDate(a.due_date)?.getTime()??Infinity)-(toDate(b.due_date)?.getTime()??Infinity)).slice(0,5);
   },[pending,tab]);
-  const recent=useMemo(()=>[...leads].filter(l=>fullName(l.contact).toLowerCase().includes(term.trim().toLowerCase())||String(l.contact?.whatsapp||'').includes(term.trim()))
+  const recent=useMemo(()=>[...leads].filter(l=>normalizeLeadSearch([fullName(l.contact),l.contact?.whatsapp,l.source].join(' ')).includes(normalizeLeadSearch(term.trim())))
     .sort((a,b)=>(toDate(b.created_at)?.getTime()||0)-(toDate(a.created_at)?.getTime()||0)).slice(0,5),[leads,term]);
   const groups=useMemo(()=>{
     const out=new Map();
@@ -48,9 +49,11 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
       out.get(id).count++}
     return [...out.values()].sort((a,b)=>b.count-a.count).slice(0,5);
   },[leads,pipelineStages]);
-  const nextAppointments=useMemo(()=>appointments.filter(x=>x.start_at&&toDate(x.start_at).getTime()>=Date.now()&&!['cancelled','completed'].includes(String(x.status||'').toLowerCase()))
+  const nextAppointments=useMemo(()=>appointments.filter(x=>x.start_at&&toDate(x.start_at)?.getTime()>=Date.now()&&!['cancelled','completed'].includes(String(x.status||'').toLowerCase()))
     .sort((a,b)=>toDate(a.start_at)-toDate(b.start_at)).slice(0,3),[appointments]);
-  const filteredCounts=['leads','sales','tasks'].some(key=>Number(counts?.[key]||0)>(d[key]?.length||0));
+  const coverage=getSnapshotCoverage(counts,d);
+  const filteredCounts=Object.values(coverage).some(Boolean);
+  const nextAppointment=nextAppointments[0];
   const snapshot=lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Aguardando atualização';
   async function action(payload,kind){
     if(readonly||activeAction)return false;
@@ -86,6 +89,12 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
       </div>
       <svg className="v14-hero-motif" viewBox="0 0 500 380" aria-hidden="true"><circle cx="310" cy="183" r="126"/><circle cx="310" cy="183" r="184"/><circle cx="310" cy="183" r="245"/><path d="M-50 345L500 -25 M-50 378L500 8"/></svg>
     </div>
+    <nav className="v15-action-strip" aria-label="Ações imediatas da operação">
+      <span className="v15-action-strip-heading">PRIORIDADES</span>
+      <Link href="/tasks" className={late.length?'v15-action-strip-urgent':''} title="Tarefas vencidas entre os registros carregados"><Clock3 size={16}/><strong>{late.length}</strong> {late.length===1?'tarefa vencida':'tarefas vencidas'} <ArrowUpRight size={14}/></Link>
+      <Link href="/tasks" title="Tarefas com prazo para hoje entre os registros carregados"><Check size={16}/><strong>{dueToday.length}</strong> {dueToday.length===1?'tarefa hoje':'tarefas hoje'} <ArrowUpRight size={14}/></Link>
+      <Link href="/agenda" title="Próximo compromisso entre os registros carregados"><CalendarDays size={16}/><span>{nextAppointment?'Próxima agenda: '+toDate(nextAppointment.start_at)?.toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Ver agenda'}</span><ArrowUpRight size={14}/></Link>
+    </nav>
     {error&&<div className="v14-home-alert v14-home-error" role="alert">{error}</div>}
     {notice&&<div className="v14-home-alert v14-home-success" role="status"><CircleCheck size={16}/>{notice}<button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}>×</button></div>}
     {compose&&<form className="v14-compose" onSubmit={createTask}>
@@ -96,9 +105,9 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
     </form>}
     <div className="v14-stats" aria-label="Indicadores dos últimos 30 dias">
       {[
-        {label:'Novos leads',value:int(leads30.length),detail:'Últimos 30 dias',to:'/leads',symbol:UsersRound},
-        {label:'Vendas',value:int(sales30.length),detail:'Últimos 30 dias',to:'/sales',symbol:CircleCheck},
-        {label:'Receita registrada',value:brl(revenue),detail:'Últimos 30 dias',to:'/sales',symbol:Wallet2},
+        {label:'Novos leads',value:int(leads30.length),detail:coverage.leads?'Amostra · 30 dias':'Últimos 30 dias',to:'/leads',symbol:UsersRound},
+        {label:'Vendas',value:int(sales30.length),detail:coverage.sales?'Amostra · 30 dias':'Últimos 30 dias',to:'/sales',symbol:CircleCheck},
+        {label:'Receita registrada',value:brl(revenue),detail:coverage.sales?'Receita parcial · 30 dias':'Últimos 30 dias',to:'/sales',symbol:Wallet2},
         {label:'Compromissos futuros',value:int(appointments.filter(x=>x.start_at&&toDate(x.start_at)?.getTime()>=Date.now()&&!['cancelled','completed'].includes(String(x.status||'').toLowerCase())).length),detail:'Nos registros carregados',to:'/agenda',symbol:CalendarDays}
       ].map((s,i)=>{const Icon=s.symbol;return <Link key={s.label} href={s.to} className="v14-stat">
         <div className="v14-stat-head"><span>{s.label}</span><Icon size={18}/></div>
@@ -142,6 +151,6 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         </Link>):<div className="v14-empty-small">Sem compromissos futuros entre os registros carregados.</div>}</div>
       </section>
     </div>
-    <div className="v14-home-note">{filteredCounts?'Atenção: alguns indicadores consideram somente os 250 registros recentes carregados, não o histórico completo.':'Indicadores calculados a partir dos registros carregados na empresa.'} Consulte os relatórios para os totais consolidados.</div>
+    <div className="v14-home-note">{filteredCounts?'Atenção: existem mais registros no banco do que os exibidos. Os cartões sinalizados como amostra não são totais consolidados.':'Indicadores calculados a partir dos registros carregados na empresa.'} Consulte os relatórios para os totais consolidados.</div>
   </div>;
 }
