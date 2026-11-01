@@ -120,10 +120,10 @@ try{
   await page.getByText('Operador de Teste',{exact:false}).first().waitFor();
   await page.waitForTimeout(2800); // allow staged cards/charts to reach their final state
   await page.screenshot({path:'test-artifacts/dashboard-desktop.png',fullPage:true});
-  await page.screenshot({path:'test-artifacts/dashboard-v12-desktop.png',fullPage:true});
+  await page.screenshot({path:'test-artifacts/dashboard-v14-desktop.png',fullPage:true});
   await page.getByRole('button',{name:'Nova tarefa'}).click();
-  await page.locator('.desk-compose input[placeholder="Ex.: Retornar para o cliente"]').fill('Confirmar orçamento');
-  await page.getByRole('button',{name:'Salvar',exact:true}).click();
+  await page.locator('.v14-compose input[placeholder="Ex.: Retornar orçamento"]').fill('Confirmar orçamento');
+  await page.locator('.v14-compose button[type="submit"]').click();
   if(createdTasks!==1)throw new Error('Dashboard did not create the task through the operation API');
   await page.getByRole('button',{name:'Concluir Retornar para Ana'}).click();
   if(completedTasks!==1)throw new Error('Dashboard did not complete the task through the operation API');
@@ -181,16 +181,16 @@ try{
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   await page.waitForTimeout(400);
   const themeAndFonts=await page.evaluate(()=>{
-    const heading=document.querySelector('.desk-pagehead h1');
+    const heading=document.querySelector('.v14-hero h1');
     const body=document.body;
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
   if(!themeAndFonts.dark)throw new Error('Dark glass theme must be the default for a new workspace');
   if(!themeAndFonts.font.includes('Inter'))throw new Error('Dashboard titles are not using Inter: '+themeAndFonts.font);
-  if(!await page.locator('.desk-task-list').count())throw new Error('Operational task list missing');
+  if(!await page.locator('.v14-tasks-panel .v14-rows').count())throw new Error('Operational task list missing');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
-  if(!await page.locator('.desk-metrics').count())throw new Error('V12 metrics rail missing');
-  if(!await page.locator('.desk-main-grid').count())throw new Error('V12 actionable work lists missing');
+  if(!await page.locator('.v14-stats').count())throw new Error('V14 metrics section missing');
+  if(!await page.locator('.v14-workgrid').count())throw new Error('V14 actionable work section missing');
   if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
   await page.getByRole('button',{name:'Vencidas'}).click();
   await page.getByRole('button',{name:'Em aberto'}).click();
