@@ -382,3 +382,32 @@ body.dark .v14-action-primary{background:#e4e9e9!important;border-color:#e4e9e9!
 .v14-panel-foot,.v14-home-note{font-size:10px!important;color:#8a9498!important}
 .v14-home-note{border-top:1px solid #e4e8e6!important;padding-top:14px!important}
 @media(max-width:760px){.v14-home{padding:17px 15px 24px!important}.v14-hero h1{font-size:30px!important}.v14-hero{padding-bottom:16px!important}}
+
+/* Shell claro: a moldura do produto acompanha a área de trabalho */
+body.dark .staff-shell,body.dark .staff-shell::before,body.dark .staff-shell .staff-main{background:#f5f5f3!important;color:#20272b!important}
+body.dark .staff-shell .staff-sidebar{background:#ffffff!important;border-right:1px solid #dfe3e1!important}
+body.dark .staff-shell .staff-logo strong{color:#20272b!important}
+body.dark .staff-shell .staff-logo strong span{color:#265f56!important}
+body.dark .staff-shell .staff-logo small{color:#7b878a!important}
+body.dark .staff-shell .staff-logo-icon{background:#e8f0ed!important;border:1px solid #d9dfdc!important}
+body.dark .staff-shell .staff-logo-icon svg{color:#265f56!important}
+body.dark .staff-shell .staff-workspace-picker{background:#f7f8f7!important;border-color:#dfe3e1!important;color:#20272b!important}
+body.dark .staff-shell .staff-workspace-picker strong{color:#20272b!important}
+body.dark .staff-shell .staff-workspace-picker small{color:#7b878a!important}
+body.dark .staff-shell .staff-workspace-icon{background:#e8f0ed!important;color:#265f56!important}
+body.dark .staff-shell .staff-nav-title{color:#8a9498!important}
+body.dark .staff-shell .staff-nav-item{color:#657075!important}
+body.dark .staff-shell .staff-nav-item svg{color:#7b878a!important}
+body.dark .staff-shell .staff-nav-item:hover{background:#f0f2f1!important;color:#20272b!important}
+body.dark .staff-shell .staff-nav-item--active,body.dark .staff-shell .staff-nav-item--active:hover{background:#e8f0ed!important;border-color:#d5e5df!important;color:#265f56!important}
+body.dark .staff-shell .staff-nav-item--active svg{color:#265f56!important}
+body.dark .staff-shell .staff-sidebar-footer{border-color:#dfe3e1!important}
+body.dark .staff-shell .staff-session strong{color:#20272b!important}
+body.dark .staff-shell .staff-session small{color:#7b878a!important}
+body.dark .staff-shell .staff-sidebar-footer .staff-initials{background:#e8f0ed!important;color:#265f56!important;border-color:#d9dfdc!important}
+body.dark .staff-shell .staff-topbar{background:#ffffff!important;border-color:#dfe3e1!important}
+body.dark .staff-shell .staff-breadcrumb,body.dark .staff-shell .staff-breadcrumb strong{color:#657075!important}
+body.dark .staff-shell .staff-global-search{background:#f7f8f7!important;border-color:#dfe3e1!important}
+body.dark .staff-shell .staff-global-search input{color:#20272b!important}
+body.dark .staff-shell .staff-command-trigger,body.dark .staff-shell .staff-icon-button{background:#fff!important;border-color:#dfe3e1!important;color:#657075!important}
+body.dark .staff-shell .staff-top-avatar .staff-initials{background:#e8f0ed!important;border-color:#d9dfdc!important;color:#265f56!important}
