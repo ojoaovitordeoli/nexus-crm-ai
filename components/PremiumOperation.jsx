@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import NexusLeadDetail from './NexusLeadDetail';
+import NexusOpportunityDesk from './NexusOpportunityDesk';
 import {exportFilteredLeads} from '../lib/exportFilteredLeads';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
@@ -313,6 +314,12 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
     </button>
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
+  if(mode==='list')return <>
+    <NexusOpportunityDesk leads={leads} count={count} organizationName={organizationName} readonly={readonly}
+      stages={stages} onOperation={onOperation} onReload={onReload}
+      onShowBoard={()=>setMode('board')} onConfigure={()=>setEditorOpen(true)}/>
+    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
+  </>;
   return <div className="nxp-premium">
     <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
     <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'lead na empresa':'leads na empresa'}</span><i/><span><strong>{cols.length}</strong> {cols.length===1?'etapa':'etapas'}</span><i/><span><strong>{filtered.length}</strong> {filtered.length===1?'exibido no filtro':'exibidos no filtro'}</span></div>
