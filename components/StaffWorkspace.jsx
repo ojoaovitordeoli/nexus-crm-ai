@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
-import NexusDesk from './NexusDesk';
+import NexusExecutiveHome from './NexusExecutiveHome';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
 import MotionCalendar from './MotionCalendar';
 import NexusCommandMenu from './NexusCommandMenu';
@@ -470,7 +470,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
-        {section==='dashboard'&&<NexusDesk
+        {section==='dashboard'&&<NexusExecutiveHome
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}
