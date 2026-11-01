@@ -116,7 +116,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
     <div className="v16-section-caption v16-section-caption--work"><span>02 / ROTINA</span><strong>Onde a operação acontece</strong><small>Atendimento e acompanhamento</small></div>
     <div className="v14-workgrid">
       <section className="v14-panel v14-tasks-panel">
-        <Title index="01 / ACOMPANHAMENTO" title="Próximos passos" sub="Tarefas que aguardam uma ação da equipe" link="Todas as tarefas" href="/tasks"/>
+        <Title index="ACOMPANHAMENTO" title="Próximos passos" sub="Tarefas que aguardam uma ação da equipe" link="Todas as tarefas" href="/tasks"/>
         <div className="v14-filters" role="group" aria-label="Filtrar tarefas">
           {[['all','Em aberto'],['today','Hoje'],['late','Vencidas']].map(([key,l])=><button key={key} type="button" className={tab===key?'active':''} aria-pressed={tab===key} onClick={()=>setTab(key)}>{l}{key==='late'&&late.length>0&&<span>{late.length}</span>}</button>)}
         </div>
@@ -129,7 +129,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         <div className="v14-panel-foot"><span>{int(pending.length)} em aberto</span><Link href="/tasks">Gerenciar tarefas <ArrowRight size={15}/></Link></div>
       </section>
       <section className="v14-panel v14-leads-panel">
-        <Title index="02 / CARTEIRA" title="Leads recentes" sub="Contatos que chegaram à empresa" link="Abrir lista" href="/leads"/>
+        <Title index="CARTEIRA" title="Leads recentes" sub="Contatos que chegaram à empresa" link="Abrir lista" href="/leads"/>
         <label className="v14-search"><Search size={17}/><input type="search" value={term} onChange={e=>setTerm(e.target.value)} placeholder="Buscar lead" aria-label="Buscar lead"/></label>
         <div className="v14-rows">{recent.length?recent.map(l=>{
           const who=fullName(l.contact),w=whatsapp(l.contact?.whatsapp),stage=pipelineStages.find(s=>s.id===l.pipeline_stage_id);
@@ -142,11 +142,11 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
     <div className="v16-section-caption v16-section-caption--lower"><span>03 / CONTROLE</span><strong>Funil e agenda</strong><small>Informações para decidir melhor</small></div>
     <div className="v14-lowergrid">
       <section className="v14-panel">
-        <Title index="03 / PIPELINE" title="Distribuição do funil" sub="Leads entre os registros carregados" link="Ver quadro" href="/leads"/>
+        <Title index="PIPELINE" title="Distribuição do funil" sub="Leads entre os registros carregados" link="Ver quadro" href="/leads"/>
         <div className="v14-stage-list">{groups.length?groups.map((g,i)=><div key={i} className="v14-stage"><span className="v14-stage-marker" style={{background:g.color}}/><strong>{g.name}</strong><div className="v14-stage-track"><span style={{background:g.color,width:Math.max(4,g.count/Math.max(1,leads.length)*100)+'%'}}/></div><b>{g.count}</b></div>):<div className="v14-empty-small">As etapas do funil aparecerão conforme os leads forem cadastrados.</div>}</div>
       </section>
       <section className="v14-panel">
-        <Title index="04 / CALENDÁRIO" title="Agenda" sub="Próximos compromissos" link="Abrir agenda" href="/agenda"/>
+        <Title index="CALENDÁRIO" title="Agenda" sub="Próximos compromissos" link="Abrir agenda" href="/agenda"/>
         <div className="v14-agenda-list">{nextAppointments.length?nextAppointments.map(a=><Link key={a.id} href="/agenda" className="v14-agenda-row">
           <CalendarDays size={18}/><span><strong>{a.title||'Compromisso'}</strong><small>{toDate(a.start_at)?.toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</small></span><ChevronRight size={17}/>
         </Link>):<div className="v14-empty-small">Sem compromissos futuros entre os registros carregados.</div>}</div>
