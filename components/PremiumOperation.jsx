@@ -173,13 +173,13 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
   const greeting=hour<12?'Bom dia':hour<18?'Boa tarde':'Boa noite';
   return <div className="nxp-premium">
     <section className="nxp-presentation">
-      <div className="nxp-presentation-copy"><div className="nxp-overline"><span/> NEXUS / COMMAND CENTER</div>
-      <h1>{greeting}, <em>{firstName}.</em></h1><p>O centro de comando da sua operação: atendimento, pipeline, agenda e receita conectados em uma única visão acionável.</p>
-      <div className="nxp-presentation-actions"><Link href="/leads" className="nxp-white-button">Abrir meu pipeline <ArrowUpRight size={17}/></Link><span className="nxp-live-text"><Signal size={14}/> Dados sincronizados</span></div></div>
+      <div className="nxp-presentation-copy"><div className="nxp-overline"><span/> NEXUS / OPERAÇÃO COMERCIAL</div>
+      <h1>{greeting}, <em>{firstName}.</em></h1><p>Acompanhe os contatos, as oportunidades e os compromissos que precisam de atenção hoje.</p>
+      <div className="nxp-presentation-actions"><Link href="/leads" className="nxp-white-button">Abrir pipeline <ArrowUpRight size={17}/></Link><span className="nxp-live-text"><Signal size={14}/> Última atualização {lastSync?lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'em andamento'}</span></div></div>
       <div className="nxp-orbits" aria-hidden="true"><span className="nxp-orbit nxp-orbit--one"/><span className="nxp-orbit nxp-orbit--two"/><span className="nxp-orbit nxp-orbit--three"/><span className="nxp-orbit-logo"><Layers3 size={51} strokeWidth={1.45}/></span><span className="nxp-orbit-glow"/></div>
       <div className="nxp-presentation-foot"><span><Briefcase size={14}/>{organizationName}</span><span><Clock3 size={14}/>{lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Preparando indicadores'}</span></div>
     </section>
-    <div className="nxp-section-title"><div><span className="nxp-kicker">PERFORMANCE</span><h2>Visão da operação</h2><p>Indicadores calculados com registros recentes carregados; totais históricos podem ser maiores.</p></div><div className="nxp-switch">{[7,30,90].map(d=><button type="button" className={d===period?'active':''} onClick={()=>setPeriod(d)} key={d}>{d} dias</button>)}</div></div>
+    <div className="nxp-section-title"><div><span className="nxp-kicker">RESUMO</span><h2>Indicadores da operação</h2><p>Dados do período selecionado. Use os links abaixo para abrir os registros.</p></div><div className="nxp-switch">{[7,30,90].map(d=><button type="button" className={d===period?'active':''} onClick={()=>setPeriod(d)} key={d}>{d} dias</button>)}</div></div>
     <div className="nxp-metrics">
       <Metric tone="blue" icon={UsersRound} label="Oportunidades abertas" value={loading?'—':openLeads} footer={currentLeads.length+' leads entre os registros carregados'}/>
       <Metric tone="green" icon={Wallet} label="Receita realizada" value={loading?'—':recentIncome} displayValue={loading?'—':brl(recentIncome)} footer={currentSales.length+' vendas carregadas · ticket '+brl(averageSale)}/>
@@ -187,7 +187,7 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
       <Metric tone="orange" icon={ListTodo} label="Ações pendentes" value={loading?'—':openTasks.length} footer={overdueTasks.length+' com prazo vencido · registros carregados'}/>
     </div>
     <div className="nxp-analytics-grid">
-      <section className="nxp-surface nxp-graph-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">AQUISIÇÃO</span><h3>Movimento de leads</h3><p>Distribuição nos últimos {period} dias</p></div><div className="nxp-circle-icon"><Activity size={21}/></div></div>
+      <section className="nxp-surface nxp-graph-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">ENTRADA</span><h3>Novos leads</h3><p>Registros criados nos últimos {period} dias</p></div><div className="nxp-circle-icon"><Activity size={21}/></div></div>
       <div key={"trend-"+period} className="nxp-graph-line">
         <svg className="nxp-graph-svg" viewBox="0 0 300 125" role="img" aria-label={'Gráfico de leads nos últimos '+period+' dias'}>
           <defs><linearGradient id="nxp-area-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#5c83f8" stopOpacity=".32"/><stop offset="100%" stopColor="#5c83f8" stopOpacity=".025"/></linearGradient></defs>
@@ -203,7 +203,7 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
       </div>
       <div className="nxp-panel-bottom"><span><i className="nxp-legend"/> Leads cadastrados</span><Link href="/leads">Ver oportunidades <ArrowRight size={15}/></Link></div>
       </section>
-      <section className="nxp-surface nxp-funnel-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">DISTRIBUIÇÃO</span><h3>Seu funil</h3><p>Etapas utilizadas pelos leads</p></div><div className="nxp-circle-icon"><BarChart3 size={21}/></div></div>
+      <section className="nxp-surface nxp-funnel-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">PIPELINE</span><h3>Oportunidades por etapa</h3><p>Onde os leads estão agora</p></div><div className="nxp-circle-icon"><BarChart3 size={21}/></div></div>
       <div className="nxp-donut-layout">
         <div key={"donut-"+period} className="nxp-donut nxp-donut--svg">
           <svg viewBox="0 0 160 160" className="nxp-donut-svg" role="img" aria-label="Distribuição de leads por etapa">
@@ -225,11 +225,11 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
     <div className="nxp-analytics-grid nxp-analytics-grid--bottom">
       <section className="nxp-surface"><div className="nxp-panel-head"><div><span className="nxp-kicker">PRIORIDADES</span><h3>Próximas tarefas</h3><p>O que ainda precisa ser feito</p></div><Link href="/tasks" className="nxp-icon-link">Ver todas <ArrowRight size={15}/></Link></div>
       <div className="nxp-compact-list">{openTasks.slice(0,5).map(t=><div key={t.id} className="nxp-task-item"><span className="nxp-task-square"/><div><strong>{t.title}</strong><small>{t.due_date?'Prazo: '+date(t.due_date):'Sem data de vencimento'}</small></div><Pill value={t.priority||t.status}/></div>)}{!openTasks.length&&<Empty icon={CircleCheck} title="Tudo em dia" detail="Você não tem tarefas em aberto agora."/>}</div></section>
-      <section className="nxp-surface nxp-quick-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">CENTRAL DE TRABALHO</span><h3>Continue seu fluxo</h3><p>Acessos que simplificam a rotina</p></div><span className="nxp-circle-icon"><Zap size={20}/></span></div>
+      <section className="nxp-surface nxp-quick-panel"><div className="nxp-panel-head"><div><span className="nxp-kicker">ATALHOS</span><h3>Abrir uma área</h3><p>Acesse rapidamente o que precisa fazer</p></div><span className="nxp-circle-icon"><Zap size={20}/></span></div>
       {[['/leads',UsersRound,'Oportunidades','Consultar leads e etapas'],['/contacts',ContactRound,'Base de contatos','Pessoas e WhatsApp'],['/whatsapp',MessageCircle,'WhatsApp','Ver opções de conexão']].map(([href,Icon,title,desc])=><Link href={href} key={href} className="nxp-quick-link"><span><Icon size={20}/></span><div><strong>{title}</strong><small>{desc}</small></div><ArrowUpRight size={16}/></Link>)}</section>
     </div>
     <section className="nxp-surface nxp-timeline-panel">
-      <div className="nxp-panel-head"><div><span className="nxp-kicker">ATIVIDADE / TEMPO REAL DOS REGISTROS</span><h3>Movimentações recentes</h3><p>Histórico das últimas ações registradas na empresa</p></div><div className="nxp-circle-icon"><Activity size={20}/></div></div>
+      <div className="nxp-panel-head"><div><span className="nxp-kicker">HISTÓRICO</span><h3>Atividade recente</h3><p>Últimos registros criados ou atualizados</p></div><div className="nxp-circle-icon"><Activity size={20}/></div></div>
       <div className="nxp-timeline">
         {activity.map((item,i)=>{
           const Icon=item.kind==='lead'?UsersRound:item.kind==='contact'?ContactRound:item.kind==='task'?ListTodo:item.kind==='appointment'?CalendarDays:Wallet;
