@@ -310,3 +310,13 @@ body .staff-shell .staff-sidebar{background:var(--v14-sidebar)!important}
  .v14-workgrid .v14-leads-panel,.v14-workgrid .v14-tasks-panel{min-height:200px}
  .v14-lowergrid .v14-panel{min-height:125px}
 }
+
+/* The sidebar is sticky at viewport height. Paint its column through the full
+   grid height instead of leaving a light strip below long pages. */
+body:not(.dark) .staff-shell{
+  background:linear-gradient(90deg,var(--v14-sidebar) 0 258px,var(--v14-body) 258px 100%)!important
+}
+body:not(.dark) .staff-shell::before{display:none!important}
+@media(max-width:800px){
+  body:not(.dark) .staff-shell{background:var(--v14-body)!important}
+}
