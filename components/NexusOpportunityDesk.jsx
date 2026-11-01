@@ -26,7 +26,7 @@ function Avatar({person,large=false}){
   const initials=person.trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase();
   return <span className={'nx13-avatar'+(large?' nx13-avatar-large':'')} aria-hidden="true">{initials||'?'}</span>;
 }
-function Detail({lead,stages,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
+function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
   const [tab,setTab]=useState('detalhes'),[note,setNote]=useState(''),[due,setDue]=useState(''),[priority,setPriority]=useState('medium');
   const [saving,setSaving]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
@@ -79,7 +79,7 @@ function Detail({lead,stages,readonly,busy,onStageChange,onOperation,onReload,on
           <h3>Contato</h3>
           <div className="nx13-keyval"><span>Nome</span><strong>{person}</strong></div>
           <div className="nx13-keyval"><span>WhatsApp</span><strong>{phone||'Não informado'}</strong></div>
-          <div className="nx13-keyval"><span>Empresa</span><strong>Empresa selecionada</strong></div>
+          <div className="nx13-keyval"><span>Empresa</span><strong>{organizationName||"Não informada"}</strong></div>
         </div>
       </div>}
       {tab==='retorno'&&<div role="tabpanel" className="nx13-followup">
@@ -181,7 +181,7 @@ export default function NexusOpportunityDesk({
         </div>
         <footer className="nx13-collection-foot">{partial?'Até 250 registros recentes carregados.':'Registros carregados na empresa.'} {readonly?'Acesso somente leitura.':'Selecione um contato para atender.'}</footer>
       </section>
-      {selected&&!closed?<Detail key={selected.id} lead={selected} stages={stages} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
+      {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}
     </div>
   </div>;
