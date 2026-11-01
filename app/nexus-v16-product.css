@@ -252,3 +252,23 @@ body.dark .v16-brief{background:#244639;border-color:#37604e}
 @media(prefers-reduced-motion:reduce){
  .v14-stat,.v14-action-primary{transition:none!important}
 }
+
+/* Split desk: large data sets scroll inside their own columns; sparse databases
+   no longer produce an enormous empty left pane. */
+@media(min-width:941px){
+ body .nx13-layout{
+   height:min(760px,calc(100dvh - 193px))!important;
+   min-height:610px!important;
+ }
+ body .nx13-collection,body .nx13-detail{min-height:0!important;overflow:hidden!important}
+ body .nx13-list{
+   flex:1 1 auto!important;max-height:none!important;min-height:0!important;
+   overflow-y:auto!important
+ }
+ body .nx13-detail-body{
+   flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;
+ }
+}
+@media(max-width:940px){
+ body .nx13-layout{height:auto!important;min-height:0!important}
+}
