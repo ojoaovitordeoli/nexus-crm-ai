@@ -310,3 +310,75 @@ body.dark .v16-brief{background:var(--v14-card)!important;border-color:var(--v14
 .v14-action-primary{background:var(--v14-ink)!important;border-color:var(--v14-ink)!important;color:var(--v14-card)!important;box-shadow:none!important}
 body.dark .v14-action-primary{background:#e4e9e9!important;border-color:#e4e9e9!important;color:#182124!important}
 .v14-action-ghost{background:transparent!important;border-color:var(--v14-edge)!important;color:var(--v14-ink)!important}
+
+/* Cut de produto: área de trabalho clara e neutra, independente do tema do shell */
+.v14-home{
+  --v14-body:#f5f5f3!important;
+  --v14-card:#ffffff!important;
+  --v14-elev:#f0f2f1!important;
+  --v14-edge:#d9dfdc!important;
+  --v14-ink:#20272b!important;
+  --v14-muted:#657075!important;
+  --v14-faint:#8a9498!important;
+  --v14-accent:#265f56!important;
+  --v14-accent-bg:#e8f0ed!important;
+  --v14-danger:#a84d45!important;
+  --v14-shadow:0 1px 2px rgba(24,34,37,.04)!important;
+  background:#f5f5f3!important;
+  border:1px solid #dfe3e1!important;
+  border-radius:12px!important;
+  padding:24px 26px 32px!important;
+}
+.v14-home,.v14-home h1,.v14-home h2,.v14-home h3,.v14-home strong,.v14-home span,.v14-home p{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif!important}
+.v14-topline{margin-bottom:20px!important}
+.v14-kicker{color:#5f6c70!important;font-size:11px!important;font-weight:600!important}
+.v14-synced{color:#7b878a!important}
+.v14-hero{grid-template-columns:minmax(0,1fr) 245px!important;background:transparent!important;border:0!important;padding:0 0 22px!important;margin:0!important;min-height:0!important;gap:22px!important}
+.v14-hero-eyebrow{color:#265f56!important;font-size:10px!important;font-weight:650!important;letter-spacing:.04em!important}
+.v14-hero-eyebrow span{color:#859093!important;font-weight:500!important}
+.v14-hero h1{font-size:34px!important;font-weight:650!important;letter-spacing:-.045em!important;color:#20272b!important;margin:4px 0 8px!important}
+.v14-hero-period{color:#265f56!important}
+.v14-hero p{color:#657075!important;font-size:13px!important;max-width:540px!important;line-height:1.55!important}
+.v14-action-primary{background:#20272b!important;border-color:#20272b!important;color:#fff!important;border-radius:6px!important;font-size:11px!important;font-weight:650!important}
+.v14-action-primary:hover{background:#314047!important;transform:none!important}
+.v14-action-ghost{background:#fff!important;border:1px solid #d9dfdc!important;color:#334146!important;border-radius:6px!important;font-size:11px!important;font-weight:600!important}
+.v14-action-ghost:hover{border-color:#265f56!important;background:#fff!important}
+.v16-brief{min-height:132px!important;padding:16px 17px!important;border-radius:8px!important;background:#fff!important;border:1px solid #d9dfdc!important;box-shadow:none!important;color:#20272b!important}
+.v16-brief-top span{color:#5f6c70!important;font-size:9px!important;letter-spacing:.06em!important;font-weight:700!important}
+.v16-brief-main{margin:10px 0!important}
+.v16-brief-main strong{font-size:34px!important;color:#20272b!important;font-weight:650!important}
+.v16-brief-main span{font-size:11px!important;color:#657075!important}
+.v16-brief-bottom{border-color:#e4e8e6!important;color:#7b878a!important}
+.v16-brief-bottom a{color:#265f56!important;font-size:10px!important}
+.v15-action-strip{border-radius:7px!important;padding:7px 10px!important;background:#fff!important;box-shadow:none!important;margin-bottom:17px!important}
+.v15-action-strip-heading{font-size:9px!important;color:#788488!important;font-weight:700!important}
+.v15-action-strip a{font-size:10px!important;color:#334146!important;min-height:32px!important;padding:6px 11px!important}
+.v16-section-caption{margin:17px 0 9px!important}
+.v16-section-caption>span{font-size:9px!important;color:#265f56!important;letter-spacing:.05em!important;font-weight:700!important}
+.v16-section-caption>strong{font-size:14px!important;color:#20272b!important;font-weight:650!important;letter-spacing:-.015em!important}
+.v16-section-caption>small{font-size:10px!important;color:#8a9498!important}
+.v14-stats{border-radius:8px!important;box-shadow:none!important;background:#fff!important}
+.v14-stat{min-height:125px!important;padding:17px 18px!important;background:#fff!important}
+.v14-stat:hover{background:#fafbfa!important}
+.v14-stat-head{font-size:11px!important;color:#657075!important;font-weight:600!important}
+.v14-stat-head svg{color:#265f56!important}
+.v14-stat strong{font-size:28px!important;color:#20272b!important;font-weight:650!important;margin-top:13px!important}
+.v14-stat-bottom small{font-size:10px!important;color:#8a9498!important}
+.v14-workgrid,.v14-lowergrid{gap:13px!important}
+.v14-panel{border-radius:8px!important;box-shadow:none!important;padding:18px 19px 14px!important;background:#fff!important}
+.v14-panel-heading h2{font-size:16px!important;color:#20272b!important;font-weight:650!important;letter-spacing:-.025em!important}
+.v14-panel-heading p{font-size:11px!important;color:#657075!important}
+.v14-eyebrow{font-size:9px!important;color:#265f56!important;letter-spacing:.05em!important;font-weight:700!important}
+.v14-quiet-link{font-size:10px!important;color:#265f56!important;font-weight:600!important}
+.v14-filters{margin:17px 0 4px!important;gap:11px!important}
+.v14-filters button{font-size:10px!important;color:#7b878a!important}
+.v14-filters button.active{color:#20272b!important;border-color:#265f56!important}
+.v14-taskrow,.v14-leadrow{min-height:60px!important;padding:9px 2px!important;border-color:#e4e8e6!important}
+.v14-taskrow strong,.v14-leadrow strong{font-size:11px!important;color:#20272b!important;font-weight:600!important}
+.v14-taskrow small,.v14-leadrow small{font-size:10px!important;color:#8a9498!important}
+.v14-search{background:#f5f6f5!important;border:1px solid #e1e5e3!important;border-radius:6px!important}
+.v14-initial{background:#e8f0ed!important;color:#265f56!important;border-radius:6px!important}
+.v14-empty,.v14-empty-small{color:#8a9498!important}
+.v14-panel-foot,.v14-home-note{font-size:10px!important;color:#8a9498!important}
+.v14-home-note{border-top:1px solid #e4e8e6!important;padding-top:14px!important}
+@media(max-width:760px){.v14-home{padding:17px 15px 24px!important}.v14-hero h1{font-size:30px!important}.v14-hero{padding-bottom:16px!important}}
