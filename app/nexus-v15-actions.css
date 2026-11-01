@@ -1,0 +1,36 @@
+/* V15: informação acionável, sem criar mais uma camada de cartões decorativos. */
+.v15-action-strip {
+  display:flex;align-items:center;gap:0;flex-wrap:wrap;
+  margin:-3px 0 19px;padding:10px 16px;
+  border:1px solid var(--v14-edge);border-radius:11px;
+  background:var(--v14-card);color:var(--v14-ink);
+  box-shadow:var(--v14-shadow);font-size:12px;
+}
+.v15-action-strip-heading {
+  font-size:10px;letter-spacing:.12em;font-weight:760;
+  color:var(--v14-muted);padding-right:16px;margin-right:8px;
+}
+.v15-action-strip a {
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 14px;color:var(--v14-ink);text-decoration:none;
+  border-left:1px solid var(--v14-edge);border-radius:3px;
+  min-height:36px;transition:background-color .16s ease;
+}
+.v15-action-strip a:hover {background:color-mix(in srgb,var(--v14-accent) 9%,transparent)}
+.v15-action-strip a:focus-visible {outline:2px solid var(--v14-accent);outline-offset:2px}
+.v15-action-strip a>svg:first-child {color:var(--v14-accent);flex-shrink:0}
+.v15-action-strip a>svg:last-child {opacity:.65;flex-shrink:0}
+.v15-action-strip strong {font-variant-numeric:tabular-nums;font-weight:740}
+.v15-action-strip a.v15-action-strip-urgent,.v15-action-strip-urgent>svg:first-child {
+  color:var(--v14-danger);
+}
+@media(max-width:760px) {
+  .v15-action-strip {padding:9px 11px;margin-bottom:13px}
+  .v15-action-strip-heading {width:100%;padding:4px 8px 7px}
+  .v15-action-strip a {flex:1 1 auto;padding:8px 10px}
+  .v15-action-strip a:first-of-type {border-left:0}
+}
+@media(max-width:450px) {
+  .v15-action-strip a {flex:1 1 100%;border-left:0;border-top:1px solid var(--v14-edge)}
+}
+@media(prefers-reduced-motion:reduce){.v15-action-strip a{transition:none}}
