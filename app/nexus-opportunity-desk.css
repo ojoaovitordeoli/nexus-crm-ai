@@ -147,7 +147,7 @@ body.dark .nx13-workspace{
 @media(max-width:880px){
  .nx13-layout{display:flex;flex-direction:column;min-height:0}
  .nx13-collection{border-right:0;border-bottom:1px solid var(--n-line)}
- .nx13-list{max-height:330px;min-height:150px}
+ .nx13-list{flex:0 1 auto;max-height:330px;min-height:0}
  .nx13-detail{min-height:0;scroll-margin-top:10px}
  .nx13-nodetail{min-height:180px}
 }
