@@ -145,7 +145,7 @@ export default function NexusOpportunityDesk({
   const total=Number(count||0),partial=total>leads.length;
   return <div className="nx13-workspace">
     <header className="nx13-header">
-      <div className="nx13-header-title"><div className="nx13-crumb">CRM <ChevronRight size={13}/> {organizationName||'Empresa'} <ChevronRight size={13}/> Leads</div>
+      <div className="nx13-header-title">
         <div className="nx13-titleline"><h1>Leads</h1><span className="nx13-count">{fmt(total)}</span></div><p>Contatos, oportunidades e próximos passos em uma só tela.</p>
       </div>
       <div className="nx13-header-actions">
