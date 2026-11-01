@@ -73,21 +73,19 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
     <div className="v14-topline"><span className="v14-kicker"><span/> {organizationName||'Sua empresa'} <span className="v14-kicker-div">/</span> Comercial</span><span className="v14-synced">{snapshot}</span></div>
     <div className="v14-hero">
       <div className="v14-hero-main">
-        <span className="v14-hero-eyebrow">ÁREA DE TRABALHO <span>01 / COMERCIAL</span></span>
+        <span className="v14-hero-eyebrow">WORKSPACE <span>COMERCIAL / VISÃO UNIFICADA</span></span>
         <h1>Visão geral<span className="v14-hero-period">.</span></h1>
-        <p>Os números da operação e o que precisa acontecer agora.</p>
+        <p>O que merece atenção, os números da sua empresa e os próximos passos. Tudo em um só lugar.</p>
         <div className="v14-hero-actions">
           <Link className="v14-action-primary" href="/leads">Abrir leads <ArrowUpRight size={17}/></Link>
           {!readonly&&<button type="button" className="v14-action-ghost" onClick={()=>setCompose(x=>!x)}><Plus size={17}/> Nova tarefa</button>}
         </div>
       </div>
-      <div className="v14-hero-right" aria-label="Tarefas e prioridades">
-        <div className="v14-hero-right-top"><span>EM ABERTO</span><Clock3 size={18}/></div>
-        <div className="v14-hero-number">{loading?'—':int(pending.length)}<span>tarefas</span></div>
-        <div className="v14-hero-rule"/>
-        <div className="v14-hero-right-bottom"><span>{late.length?late.length+' '+(late.length===1?'vencida':'vencidas'):'Sem tarefas vencidas'}</span><Link href="/tasks" aria-label="Abrir lista de tarefas"><ArrowRight size={18}/></Link></div>
-      </div>
-      <svg className="v14-hero-motif" viewBox="0 0 500 380" aria-hidden="true"><circle cx="310" cy="183" r="126"/><circle cx="310" cy="183" r="184"/><circle cx="310" cy="183" r="245"/><path d="M-50 345L500 -25 M-50 378L500 8"/></svg>
+      <aside className="v16-brief" aria-label="Resumo das tarefas abertas">
+        <div className="v16-brief-top"><span>SEU FOCO AGORA</span><Clock3 size={18}/></div>
+        <div className="v16-brief-main"><strong>{loading?'—':int(pending.length)}</strong><span>{pending.length===1?'tarefa em aberto':'tarefas em aberto'}</span></div>
+        <div className="v16-brief-bottom"><span>{late.length?late.length+' '+(late.length===1?'vencida':'vencidas')+' para priorizar':'Nenhuma tarefa vencida'}</span><Link href="/tasks">Ver pendências <ArrowUpRight size={15}/></Link></div>
+      </aside>
     </div>
     <nav className="v15-action-strip" aria-label="Ações imediatas da operação">
       <span className="v15-action-strip-heading">PRIORIDADES</span>
@@ -103,6 +101,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
       <button type="submit" disabled={readonly||submitting||!newTask.trim()}>Criar <ArrowRight size={16}/></button>
       <button type="button" className="v14-cancel" onClick={()=>setCompose(false)}>Cancelar</button>
     </form>}
+    <div className="v16-section-caption"><span>01 / DESEMPENHO</span><strong>Indicadores da operação</strong><small>Últimos 30 dias · Agenda conforme compromissos</small></div>
     <div className="v14-stats" aria-label="Indicadores dos últimos 30 dias">
       {[
         {label:'Novos leads',value:int(leads30.length),detail:coverage.leads?'Amostra · 30 dias':'Últimos 30 dias',to:'/leads',symbol:UsersRound},
@@ -114,6 +113,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         <strong>{loading?'—':s.value}</strong><div className="v14-stat-bottom"><small>{s.detail}</small><ArrowUpRight size={15}/></div>
       </Link>})}
     </div>
+    <div className="v16-section-caption v16-section-caption--work"><span>02 / ROTINA</span><strong>Onde a operação acontece</strong><small>Atendimento e acompanhamento</small></div>
     <div className="v14-workgrid">
       <section className="v14-panel v14-tasks-panel">
         <Title index="01 / ACOMPANHAMENTO" title="Próximos passos" sub="Tarefas que aguardam uma ação da equipe" link="Todas as tarefas" href="/tasks"/>
@@ -139,6 +139,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
           </div> }):<div className="v14-empty"><ContactRound size={24}/><strong>Nenhum lead encontrado</strong><p>{term?'Tente outra busca.':'Os novos contatos aparecerão aqui.'}</p></div>}</div>
       </section>
     </div>
+    <div className="v16-section-caption v16-section-caption--lower"><span>03 / CONTROLE</span><strong>Funil e agenda</strong><small>Informações para decidir melhor</small></div>
     <div className="v14-lowergrid">
       <section className="v14-panel">
         <Title index="03 / PIPELINE" title="Distribuição do funil" sub="Leads entre os registros carregados" link="Ver quadro" href="/leads"/>
