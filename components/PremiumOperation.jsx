@@ -275,7 +275,7 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
   </div>;
 }
 
-export function PremiumLeads({leads=[],count=0,organizationId,organizationName,readonly=false,stages=[],pipeline,onOperation,onReload}){
+export function PremiumLeads({leads=[],count=0,organizationId,organizationName,readonly=false,canManagePipeline=!readonly,stages=[],pipeline,onOperation,onReload}){
   const [mode,setMode]=useState('list');
   const [query,setQuery]=useState('');
   useEffect(()=>{
@@ -317,18 +317,18 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
   if(mode==='list')return <>
     <NexusOpportunityDesk leads={leads} count={count} organizationName={organizationName} readonly={readonly}
       stages={stages} onOperation={onOperation} onReload={onReload}
-      onShowBoard={()=>setMode('board')} onConfigure={()=>setEditorOpen(true)}/>
-    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
+      onShowBoard={()=>setMode('board')} onConfigure={canManagePipeline?()=>setEditorOpen(true):null}/>
+    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly||!canManagePipeline} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
   </>;
   return <div className="nxp-premium">
-    <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
+    <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&canManagePipeline&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
     <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'lead na empresa':'leads na empresa'}</span><i/><span><strong>{cols.length}</strong> {cols.length===1?'etapa':'etapas'}</span><i/><span><strong>{filtered.length}</strong> {filtered.length===1?'exibido no filtro':'exibidos no filtro'}</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
       <div className="nxp-mode-switch"><button type="button" className={mode==='board'?'active':''} onClick={()=>setMode('board')} title="Quadro Kanban" aria-label="Quadro Kanban"><Columns3 size={18}/></button><button type="button" className={mode==='list'?'active':''} onClick={()=>setMode('list')} title="Lista" aria-label="Lista"><LayoutList size={18}/></button></div></div></div>
       {error&&<div className="nxp-error" role="alert">{error}</div>}
-      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
+      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&canManagePipeline&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
       {mode==='board'?<div className="nxp-board" aria-label="Funil Kanban">
       {groups.map(({key,title,rows},idx)=><section key={key} className="nxp-board-column"
         onDragOver={e=>{if(!readonly&&hasStages&&stages.length>1)e.preventDefault()}}
@@ -343,7 +343,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
       <div className="nxp-footnote">{filtered.length} {filtered.length===1?'lead exibido':'leads exibidos'} · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
     <NexusLeadDetail lead={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} pending={Boolean(busy)}/>
-    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
+    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly||!canManagePipeline} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
   </div>;
 }
 

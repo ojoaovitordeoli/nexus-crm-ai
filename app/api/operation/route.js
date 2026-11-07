@@ -1,6 +1,7 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {runLeadStageAutomations} from '../../../lib/automation-runner';
+import {buildLeadTimeline,canManagePipeline,canWriteOperation,READ_ACTIONS} from '../../../lib/operation-rules.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -50,10 +51,10 @@ export async function GET(request){
   const names=['leads','tasks','contacts','appointments','sales'];
   const fields=[
     'id,organization_id,source,status,temperature,created_at,pipeline_stage_id,contact:contacts(id,first_name,last_name,whatsapp)',
-    'id,title,status,priority,due_date,due_time,created_at,created_by,assigned_to,completed_at',
+    'id,title,status,priority,due_date,due_time,created_at,created_by,assigned_to,completed_at,lead_id',
     'id,first_name,last_name,whatsapp,created_at',
-    'id,title,description,type,start_at,end_at,status,location,created_at',
-    'id,value,created_at'
+    'id,title,description,type,start_at,end_at,status,location,created_at,lead_id',
+    'id,value,created_at,sale_date,lead_id,contact_id,seller_id'
   ];
   const requestRows=names.map((name,i)=>admin.from(name).select(fields[i]).eq('organization_id',orgId)
     .order(name==='appointments'?'start_at':'created_at',{ascending:name==='appointments'?true:false}).limit(250));
@@ -79,7 +80,8 @@ export async function GET(request){
     if(st.error)warnings.push('etapas: '+st.error.message);
     else stages=st.data||[];
   }
-  return reply({data,counts:total,pipeline,stages,warnings,read_only:auth.role==='VIEWER'});
+  return reply({data,counts:total,pipeline,stages,warnings,role:auth.role,
+    read_only:!canWriteOperation(auth.role),can_manage_pipeline:canManagePipeline(auth.role)});
 }
 
 export async function POST(request){
@@ -90,18 +92,58 @@ export async function POST(request){
   const orgId=String(payload?.org_id||'');
   const auth=await authorize(request,admin,orgId);
   if(auth.error)return fails(auth.error,auth.status);
-  if(auth.role==='VIEWER')return fails('Seu perfil permite apenas visualizar os dados.',403);
   const action=String(payload?.action||'');
+  if(!READ_ACTIONS.has(action)&&!canWriteOperation(auth.role))return fails('Seu perfil permite apenas visualizar os dados.',403);
   const base={organization_id:orgId};
+  // Vínculo opcional com lead: só aceito se o lead pertencer à empresa autorizada.
+  const linkedLead=async()=>{
+    if(payload?.lead_id==null||payload?.lead_id==='')return {lead:null};
+    if(!validId(payload.lead_id))return {error:'Lead inválido.',status:400};
+    const {data,error}=await admin.from('leads').select('id,contact_id')
+      .eq('id',payload.lead_id).eq('organization_id',orgId).maybeSingle();
+    if(error)return {error:'Falha ao validar o lead: '+error.message,status:500};
+    if(!data)return {error:'Lead não encontrado nesta empresa.',status:404};
+    return {lead:data};
+  };
+  if(action==='lead_timeline'){
+    if(!validId(payload?.lead_id))return fails('Lead inválido.');
+    const {data:lead,error:leadError}=await admin.from('leads')
+      .select('id,source,created_at,pipeline_id,pipeline_stage_id').eq('id',payload.lead_id).eq('organization_id',orgId).maybeSingle();
+    if(leadError)return fails('Falha ao consultar o lead: '+leadError.message,500);
+    if(!lead)return fails('Lead não encontrado nesta empresa.',404);
+    const limit=100;
+    const [history,tasks,appointments,sales,notes]=await Promise.all([
+      admin.from('lead_stage_history').select('id,from_stage_id,to_stage_id,changed_by,changed_at').eq('lead_id',lead.id).order('changed_at',{ascending:false}).limit(limit),
+      admin.from('tasks').select('id,title,status,due_date,created_at').eq('organization_id',orgId).eq('lead_id',lead.id).order('created_at',{ascending:false}).limit(limit),
+      admin.from('appointments').select('id,title,status,start_at').eq('organization_id',orgId).eq('lead_id',lead.id).order('start_at',{ascending:false}).limit(limit),
+      admin.from('sales').select('id,value,sale_date,created_at').eq('organization_id',orgId).eq('lead_id',lead.id).order('created_at',{ascending:false}).limit(limit),
+      admin.from('notes').select('id,content,created_at').eq('organization_id',orgId).eq('lead_id',lead.id).order('created_at',{ascending:false}).limit(limit)
+    ]);
+    const warnings=[];
+    const pick=(name,res)=>{if(res.error){warnings.push(name+': '+res.error.message);return []}return res.data||[]};
+    const parts={history:pick('histórico',history),tasks:pick('tarefas',tasks),appointments:pick('agenda',appointments),sales:pick('vendas',sales),notes:pick('notas',notes)};
+    // Nomes das etapas citadas no histórico, restritos aos funis desta empresa.
+    const stageIds=[...new Set(parts.history.flatMap(h=>[h.from_stage_id,h.to_stage_id]).filter(validId))];
+    let stages=[];
+    if(stageIds.length){
+      const st=await admin.from('pipeline_stages').select('id,name,pipeline:pipelines!inner(organization_id)')
+        .in('id',stageIds).eq('pipeline.organization_id',orgId);
+      if(st.error)warnings.push('etapas: '+st.error.message);else stages=st.data||[];
+    }
+    const events=buildLeadTimeline({lead,stages,...parts});
+    return reply({ok:true,events,warnings,truncated:Object.values(parts).some(x=>x.length>=limit)});
+  }
   if(action==='task_create'){
     const title=val(payload?.title);
     if(title.length<2)return fails('Digite uma tarefa com pelo menos 2 caracteres.');
     const priority=['low','medium','high','urgent'].includes(payload?.priority)?payload.priority:'medium';
     const due=payload?.due_date?safeDate(payload.due_date):null;
     if(payload?.due_date&&!due)return fails('Data inválida.');
+    const link=await linkedLead();
+    if(link.error)return fails(link.error,link.status);
     const {data,error}=await admin.from('tasks').insert({
-      ...base,title,priority,due_date:due,created_by:auth.user.id,status:'pending'
-    }).select('id,title,status,priority,due_date').single();
+      ...base,title,priority,due_date:due,created_by:auth.user.id,status:'pending',lead_id:link.lead?.id||null
+    }).select('id,title,status,priority,due_date,lead_id').single();
     if(error)return fails('Falha ao criar tarefa: '+error.message,500);
     return reply({ok:true,message:'Tarefa criada com sucesso.',item:data},201);
   }
@@ -125,9 +167,11 @@ export async function POST(request){
     const location=val(payload?.location,220)||null;
     const end=payload?.end_at?validateDateTime(payload.end_at):null;
     if(end&&new Date(end)<=new Date(start))return fails('O horário final deve ser posterior ao início.');
+    const link=await linkedLead();
+    if(link.error)return fails(link.error,link.status);
     const {data,error}=await admin.from('appointments').insert({
-      ...base,title,type,start_at:start,end_at:end,location,created_by:auth.user.id,status:'scheduled'
-    }).select('id,title,start_at,status,type').single();
+      ...base,title,type,start_at:start,end_at:end,location,created_by:auth.user.id,status:'scheduled',lead_id:link.lead?.id||null
+    }).select('id,title,start_at,status,type,lead_id').single();
     if(error)return fails('Falha ao agendar: '+error.message,500);
     return reply({ok:true,message:'Agendamento criado e salvo na agenda da empresa.',item:data},201);
   }
@@ -153,16 +197,24 @@ export async function POST(request){
       .select('id').eq('id',stage.pipeline_id).eq('organization_id',orgId).maybeSingle();
     if(pipelineError||!pipeline)return fails('A etapa não pertence à empresa.',403);
     if(lead.pipeline_id&&lead.pipeline_id!==pipeline.id)return fails('A etapa pertence a outro funil.',400);
+    if(lead.pipeline_stage_id===stage.id)return reply({ok:true,message:'O lead já está nesta etapa.',history:'unchanged'});
     const {error:updateError}=await admin.from('leads').update({pipeline_stage_id:stage.id,pipeline_id:pipeline.id})
       .eq('id',lead.id).eq('organization_id',orgId);
     if(updateError)return fails('Falha ao mover lead: '+updateError.message,500);
+    // Trilha de etapas. Ainda não é transacional com o update acima (próximo passo: RPC);
+    // se falhar, a resposta informa explicitamente em vez de esconder.
+    const trail=await admin.from('lead_stage_history').insert({
+      lead_id:lead.id,from_stage_id:lead.pipeline_stage_id||null,to_stage_id:stage.id,changed_by:auth.user.id
+    });
     // Execute only after the stage update was saved. Missing migration never blocks the lead.
     const automation=await runLeadStageAutomations(admin,{
       organizationId:orgId,leadId:lead.id,stageId:stage.id,actorId:auth.user.id
     });
-    return reply({ok:true,message:'Lead movido no funil.',automation});
+    return reply({ok:true,message:trail.error?'Lead movido, mas o histórico da etapa não foi registrado.':'Lead movido no funil.',
+      history:trail.error?'failed':'recorded',automation});
   }
   if(action==='pipeline_model_save'){
+    if(!canManagePipeline(auth.role))return fails('Somente gerente ou administrador pode alterar a estrutura do funil.',403);
     const name=val(payload?.name,120);
     const incoming=Array.isArray(payload?.stages)?payload.stages:[];
     if(name.length<2)return fails('Informe um nome para o modelo de funil.');
@@ -218,7 +270,12 @@ export async function POST(request){
   if(action==='sale_create'){
     const value=Number(payload?.value);
     if(!Number.isFinite(value)||value<=0||value>100000000)return fails('Informe um valor de venda válido.');
-    const {data,error}=await admin.from('sales').insert({organization_id:orgId,value}).select('id,value,created_at').single();
+    const link=await linkedLead();
+    if(link.error)return fails(link.error,link.status);
+    const {data,error}=await admin.from('sales').insert({
+      organization_id:orgId,value,seller_id:auth.user.id,sale_date:new Date().toISOString(),
+      lead_id:link.lead?.id||null,contact_id:link.lead?.contact_id||null
+    }).select('id,value,created_at,lead_id').single();
     if(error)return fails('Falha ao registrar venda: '+error.message,500);
     return reply({ok:true,message:'Venda registrada e indicadores atualizados.',item:data},201);
   }

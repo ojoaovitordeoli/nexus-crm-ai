@@ -13,6 +13,7 @@ const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'
 const simplify=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
 const date=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'Não informado';
+const dateTime=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Sem data';
 const since=v=>v&&!Number.isNaN(Date.parse(v))?new Intl.RelativeTimeFormat('pt-BR',{numeric:'auto'}).format(Math.round((new Date(v).getTime()-Date.now())/86400000),'day'):'Sem data';
 const label=s=>({new:'Novo',open:'Aberto',pending:'Pendente',won:'Ganho',lost:'Perdido',qualified:'Qualificado',hot:'Quente',warm:'Morno',cold:'Frio'})[String(s||'').toLowerCase()]||String(s||'Não informado').replaceAll('_',' ');
 const validPhone=phone=>{
@@ -30,15 +31,25 @@ function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOper
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
   const [tab,setTab]=useState('detalhes'),[note,setNote]=useState(''),[due,setDue]=useState(''),[priority,setPriority]=useState('medium');
   const [saving,setSaving]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
-  const selectedStage=stages.find(s=>s.id===lead.pipeline_stage_id);
-  useEffect(()=>{setTab('detalhes');setNote('');setDue('');setPriority('medium');setMessage('');setError('')},[lead.id]);
+  const [timeline,setTimeline]=useState({status:'idle',events:[],warnings:[],truncated:false});
+  useEffect(()=>{setTab('detalhes');setNote('');setDue('');setPriority('medium');setMessage('');setError('');setTimeline({status:'idle',events:[],warnings:[],truncated:false})},[lead.id]);
+  const loadTimeline=useCallback(async()=>{
+    if(!onOperation)return;
+    setTimeline(t=>({...t,status:'loading'}));
+    try{
+      const res=await onOperation({action:'lead_timeline',lead_id:lead.id});
+      setTimeline({status:'ready',events:res?.events||[],warnings:res?.warnings||[],truncated:Boolean(res?.truncated)});
+    }catch(err){setTimeline({status:'error',events:[],warnings:[err.message||'Falha ao carregar o histórico.'],truncated:false})}
+  },[lead.id,onOperation]);
+  useEffect(()=>{if(tab==='atividade'&&timeline.status==='idle')loadTimeline()},[tab,timeline.status,loadTimeline]);
   async function createFollowup(e){
     e.preventDefault();
     if(saving||readonly||!onOperation||!note.trim())return;
     setSaving(true);setError('');setMessage('');
     try{
-      const res=await onOperation({action:'task_create',title:(note.trim()+' — '+person).slice(0,190),priority,due_date:due||null});
+      const res=await onOperation({action:'task_create',lead_id:lead.id,title:(note.trim()+' — '+person).slice(0,190),priority,due_date:due||null});
       await onReload?.();
+      setTimeline(t=>({...t,status:'idle'}));
       setMessage(res?.message||'Tarefa criada.');setNote('');setDue('');setPriority('medium');
     }catch(err){setError(err.message||'Falha ao criar tarefa.')}finally{setSaving(false)}
   }
@@ -92,13 +103,19 @@ function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOper
           </div>
           <button type="submit" disabled={readonly||saving||!note.trim()} className="nx13-submit">{saving?'Salvando...':'Adicionar tarefa'} <ArrowRight size={16}/></button>
         </form>
-        <p className="nx13-disclosure">A tarefa é salva na empresa atual. O nome do contato é incluído no título; a vinculação direta entre registros ainda não está disponível.</p>
+        <p className="nx13-disclosure">A tarefa fica vinculada a este lead e aparece na aba Atividade. O nome do contato também vai no título para facilitar a leitura na lista de tarefas.</p>
       </div>}
-      {tab==='atividade'&&<div role="tabpanel" className="nx13-eventlog">
-        <h3>Informações registradas</h3>
-        <div className="nx13-event"><span/><div><strong>Etapa atual</strong><small>{selectedStage?.name||label(lead.status)}</small></div></div>
-        <div className="nx13-event"><span/><div><strong>Contato cadastrado</strong><small>{date(lead.created_at)}</small></div></div>
-        <p>Eventos de atendimento, mensagens e mudanças anteriores não são exibidos sem um histórico persistente verificado.</p>
+      {tab==='atividade'&&<div role="tabpanel" className="nx13-eventlog" aria-busy={timeline.status==='loading'}>
+        <h3>Histórico do lead</h3>
+        {timeline.status==='loading'&&<p>Carregando registros vinculados…</p>}
+        {timeline.status==='error'&&<div role="alert" className="nx13-feedback error">{timeline.warnings[0]} <button type="button" className="nx13-inline-retry" onClick={loadTimeline}>Tentar novamente</button></div>}
+        {timeline.status==='ready'&&<>
+          {timeline.events.map(ev=><div className={'nx13-event nx13-event--'+ev.kind} key={ev.id}><span/><div><strong>{ev.title}</strong><small>{dateTime(ev.at)}{ev.detail?' · '+ev.detail:''}</small></div></div>)}
+          {!timeline.events.length&&<p>Nenhum registro vinculado ainda.</p>}
+          {timeline.warnings.length>0&&<p role="status">Parte do histórico não pôde ser carregada: {timeline.warnings.join(' · ')}</p>}
+          {timeline.truncated&&<p>Exibindo os 100 registros mais recentes de cada tipo.</p>}
+          <p>Inclui mudanças de etapa, retornos, agendamentos, vendas e notas vinculados a este lead. Mensagens de WhatsApp ainda não entram neste histórico.</p>
+        </>}
       </div>}
     </div>
     <div className="nx13-detail-foot"><ShieldCheck size={15}/> Dados da empresa selecionada</div>
@@ -150,7 +167,7 @@ export default function NexusOpportunityDesk({
       </div>
       <div className="nx13-header-actions">
         <button type="button" onClick={exportList} disabled={!filtered.length} className="nx13-softbutton"><Download size={16}/> Exportar</button>
-        {!readonly&&<button type="button" onClick={onConfigure} className="nx13-softbutton"><Settings2 size={16}/> Configurar funil</button>}
+        {!readonly&&onConfigure&&<button type="button" onClick={onConfigure} className="nx13-softbutton"><Settings2 size={16}/> Configurar funil</button>}
       </div>
     </header>
     <div className="nx13-layout">

@@ -17,6 +17,7 @@ jobs:
           cache-dependency-path: package.json
       - run: npm install --no-audit --no-fund
       - run: npm test
+      - run: npm run test:rls
       - run: npm run build
 
   experience:
