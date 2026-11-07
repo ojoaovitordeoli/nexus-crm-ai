@@ -82,6 +82,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [appointmentLocation,setAppointmentLocation]=useState('');
   const [stages,setStages]=useState([]);
   const [pipeline,setPipeline]=useState(null);
+  const [pipelines,setPipelines]=useState([]);
+  const [allStages,setAllStages]=useState([]);
   const [appointmentFilter,setAppointmentFilter]=useState('upcoming');
   const [taskFilter,setTaskFilter]=useState('open');
   const [period,setPeriod]=useState(30);
@@ -218,14 +220,18 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       ...(payload?{body:JSON.stringify({org_id:organizationId,...payload})}:{})
     });
     const result=await response.json().catch(()=>null);
-    if(!response.ok)throw new Error(result?.error||'Falha de comunicação com o servidor.');
+    if(!response.ok){
+      const failure=new Error(result?.error||'Falha de comunicação com o servidor.');
+      if(Array.isArray(result?.missing))failure.missing=result.missing;
+      throw failure;
+    }
     return result;
   },[organizationId]);
   const load=useCallback(async()=>{
     if(!validOrg){
       setData({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
       setCounts({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
-      setStages([]);setPipeline(null);setLoading(false);return;
+      setStages([]);setPipeline(null);setPipelines([]);setAllStages([]);setLoading(false);return;
     }
     setLoading(true);setError('');
     try{
@@ -234,6 +240,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       setCounts(result.counts||{leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages(result.stages||[]);
       setPipeline(result.pipeline||null);
+      setPipelines(result.pipelines||(result.pipeline?[result.pipeline]:[]));
+      setAllStages(result.all_stages||result.stages||[]);
       if(result.warnings?.length)setError('Algumas informações não puderam ser carregadas: '+result.warnings.join(' · '));
       setLastSync(new Date());
     }catch(e){setError('Não foi possível carregar a empresa: '+e.message)}
@@ -268,6 +276,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     };
   },[validOrg,organizationId,load]);
 
+  const dashboardStages=useMemo(()=>pipelines.length>1
+    ?allStages.map(s=>({...s,name:(pipelines.find(p=>p.id===s.pipeline_id)?.name||'Funil')+' · '+s.name}))
+    :allStages,[pipelines,allStages]);
   const since=useMemo(()=>Date.now()-period*86400000,[period]);
   const recentLeads=useMemo(()=>data.leads.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.leads,since]);
   const recentAppointments=useMemo(()=>data.appointments.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.appointments,since]);
@@ -473,12 +484,12 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='dashboard'&&<NexusExecutiveHome
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
-          openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={stages}
+          openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages}
           onOperation={operation} onReload={load} readonly={readonly}
         />}
         {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={currentOrganization.name}
-          readonly={readonly} stages={stages} pipeline={pipeline} onOperation={operation} onReload={load}
+          readonly={readonly} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} onOperation={operation} onReload={load}
         />}
         {section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}

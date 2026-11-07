@@ -26,7 +26,7 @@ function Avatar({person,large=false}){
   const initials=person.trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase();
   return <span className={'nx13-avatar'+(large?' nx13-avatar-large':'')} aria-hidden="true">{initials||'?'}</span>;
 }
-function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
+function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
   const [tab,setTab]=useState('detalhes'),[note,setNote]=useState(''),[due,setDue]=useState(''),[priority,setPriority]=useState('medium');
   const [saving,setSaving]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
@@ -70,6 +70,17 @@ function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOper
             </select><ChevronDown size={16}/>
           </div>
           {!stages.length&&<p className="nx13-muted">Configure um funil para mover este registro entre etapas.</p>}
+          {!readonly&&transferTargets.length>0&&<>
+            <label htmlFor="nx13-transfer" className="nx13-field-label" style={{marginTop:12}}>Transferir de funil</label>
+            <div className="nx13-stage-select">
+              <select id="nx13-transfer" value="" disabled={busy} onChange={e=>{if(e.target.value)onStageChange(lead,e.target.value,{transfer:true})}}>
+                <option value="">Escolha o funil e a etapa…</option>
+                {transferTargets.map(t=><optgroup key={t.pipeline.id} label={t.pipeline.name}>
+                  {t.stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                </optgroup>)}
+              </select><ChevronDown size={16}/>
+            </div>
+          </>}
           {[
             ['Origem',lead.source||'Não informada'],['Temperatura',label(lead.temperature)],
             ['Status',label(lead.status)],['Cadastro',date(lead.created_at)]
@@ -105,7 +116,8 @@ function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOper
   </section>;
 }
 export default function NexusOpportunityDesk({
- leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure
+ leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure,
+ onRequestStage,pipelines=[],allStages=[],pipelineBar=null
 }){
   const [search,setSearch]=useState(''),[stageFilter,setStageFilter]=useState('all'),[presence,setPresence]=useState('all'),[order,setOrder]=useState('recent');
   const [selectedId,setSelectedId]=useState(null),[closed,setClosed]=useState(false),[busy,setBusy]=useState(''),[problem,setProblem]=useState(''),[notice,setNotice]=useState('');
@@ -121,14 +133,23 @@ export default function NexusOpportunityDesk({
       (presence==='all'||(presence==='yes'?Boolean(validPhone(l.contact?.whatsapp)):!validPhone(l.contact?.whatsapp)));
   }).sort((a,b)=>sortFn(a,b,order)),[staged,search,stageFilter,presence,order,stages]);
   const selected=filtered.find(l=>l.id===selectedId)||filtered[0]||null;
-  const changeStage=async (lead,next)=>{
+  const changeStage=async (lead,next,opts={})=>{
     if(!next||!onOperation||readonly||busy||lead.pipeline_stage_id===next)return;
     setProblem('');setNotice('');setBusy(lead.id);
-    setLocalStages(p=>({...p,[lead.id]:next}));
-    try{const result=await onOperation({action:'lead_stage',id:lead.id,stage_id:next});await onReload?.();setNotice(result?.message||'Etapa atualizada.')}
-    catch(e){setLocalStages(p=>({...p,[lead.id]:lead.pipeline_stage_id}));setProblem(e.message||'Não foi possível mover o lead.')}
+    const revert=()=>setLocalStages(p=>{const c={...p};delete c[lead.id];return c});
+    if(!opts.transfer)setLocalStages(p=>({...p,[lead.id]:next}));
+    try{
+      // Com onRequestStage, a mudança passa pelos campos obrigatórios da etapa (null = cancelado).
+      const result=onRequestStage?await onRequestStage(lead,next,opts):await onOperation({action:'lead_stage',id:lead.id,stage_id:next});
+      if(!result){revert();return}
+      await onReload?.();revert();setNotice(result?.message||'Etapa atualizada.');
+    }
+    catch(e){revert();setProblem(e.message||'Não foi possível mover o lead.')}
     finally{setBusy('')}
   };
+  const transferTargets=useMemo(()=>pipelines.filter(p=>!stages.some(s=>s.pipeline_id===p.id)).map(p=>({
+    pipeline:p,stages:allStages.filter(s=>s.pipeline_id===p.id)
+  })).filter(x=>x.stages.length),[pipelines,allStages,stages]);
   const exportList=()=>{exportFilteredLeads(filtered,stageOf,organizationName);setNotice('CSV dos registros carregados e filtrados gerado.')};
   const select=id=>{setSelectedId(id);setClosed(false);
     if(window.matchMedia('(max-width: 880px)').matches)window.requestAnimationFrame(()=>document.getElementById('nx13-detail')?.scrollIntoView({behavior:'smooth',block:'start'}));
@@ -153,6 +174,7 @@ export default function NexusOpportunityDesk({
         {!readonly&&<button type="button" onClick={onConfigure} className="nx13-softbutton"><Settings2 size={16}/> Configurar funil</button>}
       </div>
     </header>
+    {pipelineBar}
     <div className="nx13-layout">
       <section className="nx13-collection" aria-label="Lista de leads">
         <div className="nx13-toolbar">
@@ -181,7 +203,7 @@ export default function NexusOpportunityDesk({
         </div>
         <footer className="nx13-collection-foot">{partial?'Até 250 registros recentes carregados.':'Registros carregados na empresa.'} {readonly?'Acesso somente leitura.':'Selecione um contato para atender.'}</footer>
       </section>
-      {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
+      {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}
     </div>
   </div>;
