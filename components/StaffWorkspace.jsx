@@ -179,6 +179,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const activeMember=members.find(m=>m.organization_id===organizationId&&m.status==='active');
   const role=isSuperAdmin?'AGENCY_ADMIN':(activeMember?.role||'');
   const readonly=role==='VIEWER';
+  // Espelha a regra do servidor (lib/operation-rules.mjs); a API continua sendo a barreira real.
+  const canManagePipeline=['AGENCY_ADMIN','ORGANIZATION_ADMIN','MANAGER'].includes(role);
   const validOrg=Boolean(currentOrganization&&currentOrganization.status==='active'&&(isSuperAdmin||activeMember)&&session?.id&&profile?.status==='active');
   const roleLabel=ROLES[role]||'Colaborador';
   const page=PAGES[section]||'Visão geral';
@@ -489,7 +491,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         />}
         {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={currentOrganization.name}
-          readonly={readonly} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} onOperation={operation} onReload={load}
+          readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} onOperation={operation} onReload={load}
         />}
         {section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}

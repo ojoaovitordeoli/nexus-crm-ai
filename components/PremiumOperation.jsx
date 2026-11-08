@@ -287,7 +287,7 @@ function PipelineBar({pipelines,active,onChange,readonly,onNew,shown}){
     {!readonly&&<button type="button" className="nxg-secondary" onClick={onNew}><Plus size={15}/> Novo funil</button>}
   </div>;
 }
-export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizationName,readonly=false,stages:defaultStages=[],pipeline:defaultPipeline,pipelines=[],allStages=[],onOperation,onReload}){
+export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizationName,readonly=false,canManagePipeline=!readonly,stages:defaultStages=[],pipeline:defaultPipeline,pipelines=[],allStages=[],onOperation,onReload}){
   const [pipelineId,setPipelineId]=useState('');
   const pipeline=pipelines.find(p=>p.id===pipelineId)||defaultPipeline||pipelines[0]||null;
   const stages=useMemo(()=>pipeline&&allStages.length?allStages.filter(s=>s.pipeline_id===pipeline.id):defaultStages,[pipeline,allStages,defaultStages]);
@@ -332,11 +332,11 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
     }catch(e){setError('Não foi possível mover o lead: '+e.message)}
     finally{setBusy('')}
   }
-  const bar=<PipelineBar pipelines={pipelines} active={pipeline} readonly={readonly} shown={leads.length}
+  const bar=<PipelineBar pipelines={pipelines} active={pipeline} readonly={readonly||!canManagePipeline} shown={leads.length}
     onChange={id=>{setPipelineId(id);setFilter('all')}} onNew={()=>setEditorOpen('new')}/>;
   const editor=editorOpen&&<PipelineEditor key={editorOpen==='new'?'new':pipeline?.id||'none'}
     pipeline={editorOpen==='new'?null:pipeline} stages={editorOpen==='new'?[]:stages}
-    readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>;
+    readonly={readonly||!canManagePipeline} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>;
   const Card=({item})=><div className="nxp-lead-card" draggable={!readonly&&hasStages&&stages.length>1} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
     <button type="button" className="nxp-lead-card-main" onClick={()=>setSelected(item)} aria-label={'Abrir lead '+display(item.contact)}>
       <div className="nxp-lead-card-top"><Avatar value={display(item.contact)}/><span className="nxp-lead-date">{date(item.created_at)}</span></div>
@@ -349,7 +349,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
     <NexusOpportunityDesk leads={leads} count={visibleCount} organizationName={organizationName} readonly={readonly}
       stages={stages} onOperation={onOperation} onReload={onReload} onRequestStage={requestStage}
       pipelines={pipelines} allStages={allStages} pipelineBar={bar}
-      onShowBoard={()=>setMode('board')} onConfigure={()=>setEditorOpen(true)}/>
+      onShowBoard={()=>setMode('board')} onConfigure={canManagePipeline?()=>setEditorOpen(true):null}/>
     {editor}{gateView}
   </>;
   return <div className="nxp-premium">
@@ -361,7 +361,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
       <div className="nxp-mode-switch"><button type="button" className={mode==='board'?'active':''} onClick={()=>setMode('board')} title="Quadro Kanban" aria-label="Quadro Kanban"><Columns3 size={18}/></button><button type="button" className={mode==='list'?'active':''} onClick={()=>setMode('list')} title="Lista" aria-label="Lista"><LayoutList size={18}/></button></div></div></div>
       {error&&<div className="nxp-error" role="alert">{error}</div>}
-      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
+      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&canManagePipeline&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
       {mode==='board'?<div className="nxp-board" aria-label="Funil Kanban">
       {groups.map(({key,title,rows},idx)=><section key={key} className="nxp-board-column"
         onDragOver={e=>{if(!readonly&&hasStages&&stages.length>1)e.preventDefault()}}

@@ -175,3 +175,10 @@ body.dark .nx13-workspace{
 @media(prefers-reduced-motion:reduce){
  .nx13-workspace *{transition:none!important;scroll-behavior:auto!important}
 }
+/* V17 — linha do tempo persistida do lead (mesma folha do componente; sem nova camada) */
+.nx13-event--stage_changed>span{background:var(--n-ink)}
+.nx13-event--sale>span{background:#15803d}
+.nx13-event--appointment>span{background:#b45309}
+.nx13-event--note>span{background:var(--n-secondary)}
+.nx13-inline-retry{background:none;border:0;padding:0;margin-left:6px;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.nx13-inline-retry:focus-visible{outline:2px solid var(--n-accent);outline-offset:2px}
