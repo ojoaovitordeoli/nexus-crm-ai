@@ -2,16 +2,16 @@
    Dedicated design, scoped to one working surface. Intentionally not overriding
    old cards or forms globally: this is a replacement workspace, not a skin. */
 .nx13-workspace{
-  --n-bg:#fcfcfd;--n-raised:#fff;--n-ink:#1c2937;--n-secondary:#596a78;--n-subtle:#82909b;
-  --n-line:#e4e9ec;--n-strong:#d3dce1;--n-accent:#27766a;--n-accent-soft:#e6f1ed;
-  --n-hover:#f4f7f7;--n-shadow:0 8px 30px rgba(31,53,67,.035);
+  --n-bg:#fcfcfe;--n-raised:#fff;--n-ink:#2a2a2c;--n-secondary:#68686a;--n-subtle:#8e8e90;
+  --n-line:#e8e8ea;--n-strong:#dadadc;--n-accent:var(--fx-accent-text);--n-accent-soft:#ececee;
+  --n-hover:#f6f6f8;--n-shadow:0 8px 30px rgba(49, 49, 51, .035);
   width:min(1550px,100%);margin:0 auto;color:var(--n-ink);font-family:Inter,Manrope,system-ui,sans-serif;
   font-size:13px;line-height:1.5
 }
 body.dark .nx13-workspace{
-  --n-bg:#111b22;--n-raised:#17232b;--n-ink:#e9eff1;--n-secondary:#a6b4ba;--n-subtle:#869aa4;
-  --n-line:#2e4049;--n-strong:#41545d;--n-accent:#a2d9c9;--n-accent-soft:#203c38;
-  --n-hover:#21303a;--n-shadow:0 12px 40px rgba(0,0,0,.09)
+  --n-bg:#1a1a1c;--n-raised:#212123;--n-ink:#ededef;--n-secondary:#b0b0b2;--n-subtle:#959597;
+  --n-line:#3c3c3e;--n-strong:#4f4f51;--n-accent:var(--fx-accent-text);--n-accent-soft:#2e2e30;
+  --n-hover:#2e2e30;--n-shadow:0 12px 40px rgba(0,0,0,.09)
 }
 .nx13-workspace *{box-sizing:border-box}
 .nx13-workspace h1,.nx13-workspace h2,.nx13-workspace h3{font-family:Inter,Manrope,system-ui,sans-serif!important;letter-spacing:-.033em!important;color:var(--n-ink)!important}

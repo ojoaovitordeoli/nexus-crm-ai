@@ -91,6 +91,12 @@ try{
   await page.route('**/api/whatsapp/inbox**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connections:[],messages:[],verified_server:false})});
   });
+  await page.route('**/api/crm-settings**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({can_manage:true,catalogs:{
+      lost_reasons:{kind:'lost_reasons',installed:true,items:[]},lead_origins:{kind:'lead_origins',installed:true,items:[]},
+      contact_categories:{kind:'contact_categories',installed:false,items:[]},company_sectors:{kind:'company_sectors',installed:false,items:[]}},
+      fields:[],pipelines:[],stages:[],requirements:[]})});
+  });
   await page.route('**/api/automations**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rules:[],executions:[],can_manage:true})});
   });
@@ -206,7 +212,7 @@ try{
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
   if(themeAndFonts.dark)throw new Error('Light theme must be the default for a new workspace');
-  if(!themeAndFonts.font.includes('Inter'))throw new Error('Dashboard titles are not using Inter: '+themeAndFonts.font);
+  if(!themeAndFonts.font.includes('Archivo'))throw new Error('Dashboard titles are not using Archivo (tema Fluxo): '+themeAndFonts.font);
   if(!await page.locator('.v14-tasks-panel .v14-rows').count())throw new Error('Operational task list missing');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
   if(!await page.locator('.v14-stats').count())throw new Error('V14 metrics section missing');

@@ -1,0 +1,169 @@
+/* NEXUS — camada única de tema (Fluxo: branco, preto e roxo #5F00E6).
+   Carregada por último. Define os tokens uma vez e redireciona as variáveis
+   das camadas antigas (staff, p, nxp, v11, v14, w10, n, g...) para eles.
+   Próximo passo (P5): remover as camadas antigas e usar só estes tokens. */
+
+:root{
+  --fx-font:'Archivo',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --fx-purple:#5f00e6;
+  --fx-purple-hover:#4b00b8;
+  --fx-radius:10px;
+  --fx-radius-sm:7px;
+
+  /* claro */
+  --fx-bg:#ffffff;
+  --fx-surface:#ffffff;
+  --fx-subtle:#f5f5f7;
+  --fx-hover:#efeff2;
+  --fx-border:#e4e4e9;
+  --fx-border-strong:#cfcfd6;
+  --fx-text:#0b0b0d;
+  --fx-muted:#5d5d68;
+  --fx-faint:#8a8a95;
+  --fx-accent:#5f00e6;          /* preenchimentos com texto branco */
+  --fx-accent-text:#5f00e6;     /* links e texto em destaque */
+  --fx-accent-soft:#f1e8ff;
+  --fx-on-accent:#ffffff;
+  --fx-nav:#0b0b0d;
+  --fx-nav-text:#c9c9d1;
+  --fx-nav-active:#ffffff;
+  --fx-danger:#c81e1e;
+  --fx-danger-soft:#fdecec;
+  --fx-success:#0d8a4f;
+  --fx-warning:#a15c00;
+  --fx-shadow:0 1px 2px rgba(11,11,13,.06);
+  --fx-shadow-lg:0 12px 32px rgba(11,11,13,.12);
+  color-scheme:light;
+}
+body.dark{
+  --fx-bg:#09090b;
+  --fx-surface:#121215;
+  --fx-subtle:#18181c;
+  --fx-hover:#202026;
+  --fx-border:#26262d;
+  --fx-border-strong:#3a3a44;
+  --fx-text:#f4f4f6;
+  --fx-muted:#a3a3ae;
+  --fx-faint:#76767f;
+  --fx-accent:#6a12f0;
+  --fx-accent-text:#a77bff;     /* contraste AA sobre preto */
+  --fx-accent-soft:rgba(122,44,240,.18);
+  --fx-nav:#000000;
+  --fx-nav-text:#a3a3ae;
+  --fx-danger:#ff6b6b;
+  --fx-danger-soft:rgba(255,107,107,.12);
+  --fx-success:#3ddc97;
+  --fx-warning:#f5b041;
+  --fx-shadow:0 1px 2px rgba(0,0,0,.5);
+  --fx-shadow-lg:0 16px 40px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+/* ---------- variáveis legadas -> tokens (vale para claro e escuro) ---------- */
+:root,body,body.dark{
+  --product-font:var(--fx-font);--nexus-font:var(--fx-font);--nexus-display:var(--fx-font);--nexus-heading:var(--fx-font);--nexus-text:var(--fx-font);
+  --v11-sora:var(--fx-font);--v11-text:var(--fx-font);--w10-heading:var(--fx-font);--w10-body:var(--fx-font);
+
+  --bg:var(--fx-bg);--app-bg:var(--fx-bg);--surface:var(--fx-surface);--panel:var(--fx-surface);--panel-solid:var(--fx-surface);--panel-soft:var(--fx-subtle);--solid:var(--fx-surface);
+  --text:var(--fx-text);--text-main:var(--fx-text);--text-muted:var(--fx-muted);--muted:var(--fx-muted);--line:var(--fx-border);--border-soft:var(--fx-border);
+  --accent:var(--fx-accent);--brand-blue:var(--fx-accent);--brand-blue-soft:var(--fx-accent-soft);--danger:var(--fx-danger);--success:var(--fx-success);--warning:var(--fx-warning);
+  --shadow:var(--fx-shadow);--shadow-panel:var(--fx-shadow);--shadow-glow:none;--sidebar:var(--fx-nav);--sidebar-text:var(--fx-nav-text);
+  --glass-bg:var(--fx-surface);--glass-border:var(--fx-border);--glass-blur:0px;--cmd-border:var(--fx-border);
+
+  --staff-bg:var(--fx-bg);--staff-surface:var(--fx-surface);--staff-text:var(--fx-text);--staff-muted:var(--fx-muted);--staff-border:var(--fx-border);--staff-accent:var(--fx-accent);
+
+  --p-bg:var(--fx-bg);--p-panel:var(--fx-surface);--p-soft:var(--fx-subtle);--p-hover:var(--fx-hover);--p-text:var(--fx-text);--p-muted:var(--fx-muted);--p-border:var(--fx-border);
+  --p-accent:var(--fx-accent);--p-accent-bg:var(--fx-accent-soft);--p-button:var(--fx-text);--p-button-text:var(--fx-bg);--p-danger:var(--fx-danger);--p-nav:var(--fx-nav);--p-shadow:var(--fx-shadow);
+
+  --nxp-surface:var(--fx-surface);--nxp-ink:var(--fx-text);--nxp-muted:var(--fx-muted);--nxp-border:var(--fx-border);--nxp-accent:var(--fx-accent);--nxp-shadow:var(--fx-shadow);
+  --nx-panel:var(--fx-surface);--nx-ink:var(--fx-text);--nx-muted:var(--fx-muted);--nx-border:var(--fx-border);--nx-accent:var(--fx-accent);
+  --n9-surface:var(--fx-surface);--n9-ink:var(--fx-text);--n9-muted:var(--fx-muted);--n9-line:var(--fx-border);--n9-accent:var(--fx-accent);
+  --n-bg:var(--fx-bg);--n-raised:var(--fx-surface);--n-hover:var(--fx-hover);--n-ink:var(--fx-text);--n-strong:var(--fx-text);--n-secondary:var(--fx-muted);--n-subtle:var(--fx-faint);--n-line:var(--fx-border);--n-accent:var(--fx-accent);--n-accent-soft:var(--fx-accent-soft);--n-shadow:var(--fx-shadow);
+  --g-raised:var(--fx-surface);--g-ink:var(--fx-text);--g-strong:var(--fx-text);--g-secondary:var(--fx-muted);--g-line:var(--fx-border);--g-accent:var(--fx-accent);--g-accent-ink:var(--fx-on-accent);--g-accent-soft:var(--fx-accent-soft);--g-danger:var(--fx-danger);--g-danger-soft:var(--fx-danger-soft);
+
+  --v11-bg:var(--fx-bg);--v11-panel:var(--fx-surface);--v11-panel-solid:var(--fx-surface);--v11-ink:var(--fx-text);--v11-strong:var(--fx-text);--v11-secondary:var(--fx-muted);--v11-faint:var(--fx-faint);--v11-line:var(--fx-border);--v11-accent:var(--fx-accent);--v11-shadow:var(--fx-shadow);--v11-warning:var(--fx-warning);
+  --v14-body:var(--fx-bg);--v14-card:var(--fx-surface);--v14-elev:var(--fx-subtle);--v14-ink:var(--fx-text);--v14-muted:var(--fx-muted);--v14-faint:var(--fx-faint);--v14-edge:var(--fx-border);--v14-accent:var(--fx-accent);--v14-accent-bg:var(--fx-accent-soft);--v14-danger:var(--fx-danger);--v14-shadow:var(--fx-shadow);--v14-header:var(--fx-surface);--v14-sidebar:var(--fx-nav);
+  --v14-hero-start:var(--fx-surface);--v14-hero-mid:var(--fx-surface);--v14-hero-end:var(--fx-surface);--v14-hero-border:var(--fx-border);
+  --w10-bg:var(--fx-bg);--w10-surface:var(--fx-surface);--w10-soft:var(--fx-subtle);--w10-text:var(--fx-text);--w10-subtle:var(--fx-muted);--w10-hairline:var(--fx-border);--w10-mint:var(--fx-accent);--w10-deep:var(--fx-text);--w10-shade:var(--fx-subtle);--w10-amber:var(--fx-warning);
+  --nexus-ink:var(--fx-text);--nexus-mist:var(--fx-subtle);--nexus-sea:var(--fx-accent);--nexus-stroke:var(--fx-border);--nexus-glass:var(--fx-surface);--nexus-shadow:var(--fx-shadow);--nexus-copper:var(--fx-warning);
+}
+
+/* ---------- base ---------- */
+html,body{background:var(--fx-bg)!important;color:var(--fx-text)!important}
+body,body *:not(svg):not(path):not(code):not(pre):not(kbd){font-family:var(--fx-font)!important}
+body{font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,h4{color:var(--fx-text);letter-spacing:-.015em;font-weight:750}
+h1{font-weight:800;letter-spacing:-.025em}
+::selection{background:var(--fx-accent);color:#fff}
+:focus-visible{outline:2px solid var(--fx-accent-text)!important;outline-offset:2px!important}
+a{color:inherit}
+input,select,textarea{color:var(--fx-text);background-color:var(--fx-surface);border-color:var(--fx-border)}
+input::placeholder,textarea::placeholder{color:var(--fx-faint)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ---------- casca do app (menu, topo, área principal) ---------- */
+:root:root:root body .staff-shell,:root:root:root body.dark .staff-shell{background:var(--fx-bg)!important;color:var(--fx-text)!important}
+:root:root:root body .staff-main,:root:root:root body.dark .staff-main{background:var(--fx-bg)!important;color:var(--fx-text)!important}
+:root:root:root body .staff-sidebar,:root:root:root body.dark .staff-sidebar{background:var(--fx-nav)!important;color:var(--fx-nav-text)!important;border-right:1px solid #1d1d22!important;backdrop-filter:none!important;box-shadow:none!important}
+:root:root:root body .staff-sidebar *{color:inherit}
+:root:root:root body .staff-sidebar strong,:root:root:root body .staff-sidebar h1,:root:root:root body .staff-sidebar h2,:root:root:root body .staff-sidebar b{color:#fff!important}
+:root:root:root body .staff-sidebar small,:root:root:root body .staff-sidebar .staff-nav-label,:root:root:root body .staff-sidebar [class*=section-title],:root:root:root body .staff-sidebar [class*=group-title]{color:#7c7c86!important}
+:root:root:root body .staff-logo-icon,:root:root:root body.dark .staff-logo-icon{background:var(--fx-purple)!important;color:#fff!important;border:0!important;box-shadow:none!important}
+:root:root:root body .staff-workspace-picker,:root:root:root body.dark .staff-workspace-picker{background:#141418!important;border:1px solid #26262d!important;color:#fff!important}
+:root:root:root body .staff-workspace-icon,:root:root:root body.dark .staff-workspace-icon{background:#232329!important;color:#d9c7ff!important}
+:root:root:root body .staff-nav-item,:root:root:root body.dark .staff-nav-item{color:#b9b9c2!important;background:transparent!important;border:0!important;border-radius:8px!important;box-shadow:none!important}
+:root:root:root body .staff-nav-item svg{color:#8b8b95!important}
+:root:root:root body .staff-nav-item:hover,:root:root:root body.dark .staff-nav-item:hover{background:#17171b!important;color:#fff!important}
+:root:root:root body .staff-nav-item--active,:root:root:root body.dark .staff-nav-item--active{background:#1c1328!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--fx-purple)!important}
+:root:root:root body .staff-nav-item--active svg{color:#b48cff!important}
+:root:root:root body .staff-initials,:root:root:root body.dark .staff-initials{background:var(--fx-purple)!important;color:#fff!important;border:0!important}
+:root:root:root body .staff-sidebar button,:root:root:root body.dark .staff-sidebar button{background:transparent!important;border-color:#2a2a31!important;color:#c9c9d1!important}
+:root:root:root body .staff-sidebar button:hover{background:#17171b!important;color:#fff!important}
+:root:root:root body .staff-topbar,:root:root:root body.dark .staff-topbar{background:var(--fx-bg)!important;border-bottom:1px solid var(--fx-border)!important;color:var(--fx-text)!important;backdrop-filter:none!important;box-shadow:none!important}
+:root:root:root body .staff-topbar *{color:inherit}
+:root:root:root body .staff-global-search,:root:root:root body.dark .staff-global-search{background:var(--fx-subtle)!important;border:1px solid var(--fx-border)!important;color:var(--fx-muted)!important}
+:root:root:root body .staff-global-search input{background:transparent!important;color:var(--fx-text)!important}
+:root:root:root body .staff-icon-button,:root:root:root body .staff-command-trigger,:root:root:root body.dark .staff-icon-button,:root:root:root body.dark .staff-command-trigger{background:var(--fx-surface)!important;border:1px solid var(--fx-border)!important;color:var(--fx-text)!important;box-shadow:none!important}
+:root:root:root body .staff-icon-button:hover,:root:root:root body .staff-command-trigger:hover{background:var(--fx-hover)!important}
+:root:root:root body .staff-command-trigger kbd,:root:root:root body .staff-topbar kbd{background:var(--fx-subtle)!important;color:var(--fx-muted)!important;border:1px solid var(--fx-border)!important}
+
+/* ---------- superfícies: sem vidro, sem gradiente decorativo ---------- */
+:root:root:root body [class*="v14-home"],:root:root:root body [class*="v16-home"],:root:root:root body .nxp-premium{background:transparent!important;background-image:none!important}
+:root:root:root body .v14-home{border:0!important;box-shadow:none!important;padding-left:0!important;padding-right:0!important}
+:root:root:root body .v14-panel,:root:root:root body .v14-stats,:root:root:root body .v15-action-strip,:root:root:root body .v16-brief,:root:root:root body .v14-stat,:root:root:root body [class*="-panel"]:not([class*="panel-title"]):not([class*="panel-head"]):not(.nxs-panel),:root:root:root body [class*="-card"]:not([class*="card-"]){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root:root:root body .v14-panel,:root:root:root body .v14-stats,:root:root:root body .v15-action-strip,:root:root:root body .v16-brief{background:var(--fx-surface)!important;border:1px solid var(--fx-border)!important;box-shadow:none!important;border-radius:var(--fx-radius)!important;color:var(--fx-text)!important}
+:root:root:root body .v14-stat{background:transparent!important;color:var(--fx-text)!important;border-color:var(--fx-border)!important}
+:root:root:root body .v14-stat:hover{background:var(--fx-subtle)!important}
+:root:root:root body .v14-search,:root:root:root body .v14-search input{background:var(--fx-surface)!important;border-color:var(--fx-border)!important;color:var(--fx-text)!important}
+:root:root:root body .v14-initial,:root:root:root body [class*="initial"]:not(.staff-initials){background:var(--fx-accent-soft)!important;color:var(--fx-accent-text)!important}
+:root:root:root body .v14-stage-track{background:var(--fx-subtle)!important}
+:root:root:root body .v14-home h1,:root:root:root body .v14-home h2,:root:root:root body .v14-home h3,:root:root:root body .v14-home strong{color:var(--fx-text)!important}
+:root:root:root body .v14-home p,:root:root:root body .v14-home small{color:var(--fx-muted)}
+
+/* ---------- botões ---------- */
+:root:root:root body .v14-action-primary,:root:root:root body.dark .v14-action-primary,:root:root:root body .nxp-button--primary,:root:root:root body .nxg-primary,:root:root:root body [class*="button--primary"],:root:root:root body [class*="btn-primary"]{background:var(--fx-accent)!important;border-color:var(--fx-accent)!important;color:#fff!important;box-shadow:none!important}
+:root:root:root body .v14-action-primary:hover,:root:root:root body [class*="button--primary"]:hover{background:var(--fx-purple-hover)!important}
+:root:root:root body .v14-action-ghost,:root:root:root body.dark .v14-action-ghost{background:var(--fx-surface)!important;border:1px solid var(--fx-border-strong)!important;color:var(--fx-text)!important;box-shadow:none!important}
+:root:root:root body .v14-action-ghost:hover{background:var(--fx-hover)!important}
+
+/* ---------- escuro: pegar o que ainda vem de camadas antigas ---------- */
+:root:root:root body.dark .staff-main [style*="background: rgb(255"],:root:root:root body.dark .staff-main [style*="background:#fff"]{background:var(--fx-surface)!important}
+:root:root:root body.dark input,:root:root:root body.dark select,:root:root:root body.dark textarea{background:var(--fx-surface)!important;color:var(--fx-text)!important;border-color:var(--fx-border-strong)!important}
+:root:root:root body.dark option{background:var(--fx-surface);color:var(--fx-text)}
+
+/* ---------- ajustes finais da casca ---------- */
+:root:root:root body .staff-sidebar{overflow-y:auto!important;scrollbar-width:thin;scrollbar-color:#2a2a31 transparent}
+:root:root:root body .staff-sidebar [class*="logo"] span,:root:root:root body .staff-sidebar [class*="brand"] span{color:#fff!important}
+:root:root:root body .staff-sidebar [class*="logo"] small,:root:root:root body .staff-sidebar [class*="brand"] small{color:#8b8b95!important}
+:root:root:root body .btn.primary,:root:root:root body .adm-primary,:root:root:root body .nxai-primary{background:var(--fx-accent)!important;border-color:var(--fx-accent)!important;color:#fff!important;box-shadow:none!important}
+:root:root:root body .btn.primary:hover,:root:root:root body .adm-primary:hover{background:var(--fx-purple-hover)!important}
+:root:root:root body .btn.primary:disabled{opacity:.6}
+
+/* celular: título da visão geral ocupa a largura toda e o resumo desce */
+@media (max-width:720px){
+  :root:root:root body .v14-hero{display:flex!important;flex-direction:column!important;gap:16px!important}
+  :root:root:root body .v14-hero h1{font-size:34px!important;line-height:1.08!important}
+  :root:root:root body .v16-brief{width:100%!important;max-width:none!important}
+  :root:root:root body .v14-hero-actions{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+  :root:root:root body .v14-hero-actions>*{flex:1 1 auto!important;justify-content:center!important;white-space:nowrap!important}
+}

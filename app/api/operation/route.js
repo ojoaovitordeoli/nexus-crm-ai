@@ -71,6 +71,12 @@ async function loadStageGate(admin,orgId,payload){
   const byId=new Map(fields.map(f=>[f.id,f]));
   // Requisito apontando para campo de outra empresa ou inexistente é ignorado (nunca exposto).
   const requirements=(reqRows||[]).map(r=>describeRequirement(r,byId.get(r.custom_field_id))).filter(Boolean);
+  // Origem vira lista quando a empresa cadastrou origens (paridade com o Agendor).
+  if(requirements.some(r=>r.kind==='core'&&r.field==='source')){
+    const lo=await admin.from('lead_origins').select('name').eq('organization_id',orgId).eq('is_active',true).order('position',{ascending:true});
+    const origins=lo.error?[]:(lo.data||[]).map(x=>x.name);
+    if(origins.length)for(const r of requirements)if(r.kind==='core'&&r.field==='source'){r.type='select';r.options=origins}
+  }
 
   const needs=new Set(requirements.map(r=>r.field));
   const current={

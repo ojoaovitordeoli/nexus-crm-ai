@@ -4,7 +4,7 @@
 .staff-agenda-form{display:grid;grid-template-columns:minmax(175px,1.4fr) minmax(175px,1fr) minmax(130px,.65fr) minmax(150px,1fr);gap:14px;align-items:end;padding:0 24px 25px}
 .staff-agenda-form label{display:flex;flex-direction:column;gap:8px;color:var(--staff-muted);font-size:10px;font-weight:800}
 .staff-agenda-form input,.staff-agenda-form select{height:43px;border:1px solid var(--staff-border);border-radius:10px;padding:0 12px;background:var(--staff-surface);color:var(--staff-text);min-width:0;font-size:11px}
-.staff-agenda-form input:focus,.staff-agenda-form select:focus,.staff-new-task input:focus,.staff-new-task select:focus{outline:2px solid rgba(80,120,240,.3);outline-offset:1px}
+.staff-agenda-form input:focus,.staff-agenda-form select:focus,.staff-new-task input:focus,.staff-new-task select:focus{outline:2px solid rgba(95, 0, 230, .3);outline-offset:1px}
 .staff-agenda-form>.staff-btn{height:43px;grid-column:1/-1;justify-self:end}
 .staff-appt-status,.staff-quick-field,.staff-date-input{height:40px;border:1px solid var(--staff-border);border-radius:10px;background:var(--staff-surface);color:var(--staff-text);font-size:11px;padding:0 10px}
 .staff-quick-field{max-width:117px}
@@ -21,8 +21,8 @@
 .nxp-create-contact label{display:flex;flex-direction:column;gap:7px;font-size:10px;color:var(--nxp-muted);font-weight:800}
 .nxp-create-contact input{height:43px;background:var(--nxp-surface);color:var(--nxp-ink);border:1px solid var(--nxp-border);border-radius:10px;padding:0 13px;font-size:11px;min-width:0}
 .nxp-create-contact .nxp-button{height:43px}
-.nxp-success{border:1px solid rgba(39,174,143,.2);color:#149b7d;border-radius:10px;background:rgba(39,174,143,.07);display:flex;align-items:center;gap:10px;padding:12px 15px;margin-bottom:16px;font-size:11px;font-weight:750}
-.nxp-premium input:focus-visible,.nxp-premium button:focus-visible,.nxp-premium a:focus-visible,.nxp-premium select:focus-visible{outline:2px solid #6a90ff;outline-offset:3px}
+.nxp-success{border:1px solid rgba(95, 0, 230, .2);color:var(--fx-accent-text);border-radius:10px;background:rgba(95, 0, 230, .07);display:flex;align-items:center;gap:10px;padding:12px 15px;margin-bottom:16px;font-size:11px;font-weight:750}
+.nxp-premium input:focus-visible,.nxp-premium button:focus-visible,.nxp-premium a:focus-visible,.nxp-premium select:focus-visible{outline:2px solid var(--fx-accent-text);outline-offset:3px}
 .nxp-pill,.nxp-chip{transition:background-color .2s,color .2s}
 .nxp-metric:nth-child(1){animation:nxp-reveal .38s both .03s}
 .nxp-metric:nth-child(2){animation:nxp-reveal .38s both .1s}
@@ -31,10 +31,10 @@
 @keyframes nxp-reveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .nxp-graph-line{position:relative;width:100%;height:196px;padding:5px 24px 24px}
 .nxp-graph-svg{width:100%;height:100%;overflow:visible}
-.nxp-graph-line-path{fill:none;stroke:#587df7;stroke-width:3.3;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;animation:nxp-draw 1.05s cubic-bezier(.2,.8,.2,1) forwards}
+.nxp-graph-line-path{fill:none;stroke:var(--fx-accent-text);stroke-width:3.3;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;animation:nxp-draw 1.05s cubic-bezier(.2,.8,.2,1) forwards}
 .nxp-graph-line-area{fill:url(#nxp-area-fill);opacity:.78}
 .nxp-graph-line-grid{stroke:var(--nxp-border);stroke-dasharray:3 5;stroke-width:1}
-.nxp-graph-line-dot{fill:#4c75f2;stroke:var(--nxp-surface);stroke-width:3;cursor:pointer;transition:r .16s}
+.nxp-graph-line-dot{fill:var(--fx-accent);stroke:var(--nxp-surface);stroke-width:3;cursor:pointer;transition:r .16s}
 .nxp-graph-line-dot:hover{r:6}
 .nxp-graph-line-labels{display:flex;justify-content:space-between;gap:5px;margin-top:7px}
 .nxp-graph-line-labels span{color:var(--nxp-muted);font-size:9px;font-weight:800;flex:1;text-align:center}
