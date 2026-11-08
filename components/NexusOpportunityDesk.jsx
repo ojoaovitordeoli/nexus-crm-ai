@@ -13,6 +13,7 @@ const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'
 const simplify=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
 const date=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'Não informado';
+const dateTime=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Sem data';
 const since=v=>v&&!Number.isNaN(Date.parse(v))?new Intl.RelativeTimeFormat('pt-BR',{numeric:'auto'}).format(Math.round((new Date(v).getTime()-Date.now())/86400000),'day'):'Sem data';
 const label=s=>({new:'Novo',open:'Aberto',pending:'Pendente',won:'Ganho',lost:'Perdido',qualified:'Qualificado',hot:'Quente',warm:'Morno',cold:'Frio'})[String(s||'').toLowerCase()]||String(s||'Não informado').replaceAll('_',' ');
 const validPhone=phone=>{
@@ -26,19 +27,29 @@ function Avatar({person,large=false}){
   const initials=person.trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase();
   return <span className={'nx13-avatar'+(large?' nx13-avatar-large':'')} aria-hidden="true">{initials||'?'}</span>;
 }
-function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
+function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
   const [tab,setTab]=useState('detalhes'),[note,setNote]=useState(''),[due,setDue]=useState(''),[priority,setPriority]=useState('medium');
   const [saving,setSaving]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
-  const selectedStage=stages.find(s=>s.id===lead.pipeline_stage_id);
-  useEffect(()=>{setTab('detalhes');setNote('');setDue('');setPriority('medium');setMessage('');setError('')},[lead.id]);
+  const [timeline,setTimeline]=useState({status:'idle',events:[],warnings:[],truncated:false});
+  useEffect(()=>{setTab('detalhes');setNote('');setDue('');setPriority('medium');setMessage('');setError('');setTimeline({status:'idle',events:[],warnings:[],truncated:false})},[lead.id]);
+  const loadTimeline=useCallback(async()=>{
+    if(!onOperation)return;
+    setTimeline(t=>({...t,status:'loading'}));
+    try{
+      const res=await onOperation({action:'lead_timeline',lead_id:lead.id});
+      setTimeline({status:'ready',events:res?.events||[],warnings:res?.warnings||[],truncated:Boolean(res?.truncated)});
+    }catch(err){setTimeline({status:'error',events:[],warnings:[err.message||'Falha ao carregar o histórico.'],truncated:false})}
+  },[lead.id,onOperation]);
+  useEffect(()=>{if(tab==='atividade'&&timeline.status==='idle')loadTimeline()},[tab,timeline.status,loadTimeline]);
   async function createFollowup(e){
     e.preventDefault();
     if(saving||readonly||!onOperation||!note.trim())return;
     setSaving(true);setError('');setMessage('');
     try{
-      const res=await onOperation({action:'task_create',title:(note.trim()+' — '+person).slice(0,190),priority,due_date:due||null});
+      const res=await onOperation({action:'task_create',lead_id:lead.id,title:(note.trim()+' — '+person).slice(0,190),priority,due_date:due||null});
       await onReload?.();
+      setTimeline(t=>({...t,status:'idle'}));
       setMessage(res?.message||'Tarefa criada.');setNote('');setDue('');setPriority('medium');
     }catch(err){setError(err.message||'Falha ao criar tarefa.')}finally{setSaving(false)}
   }
@@ -70,6 +81,17 @@ function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOper
             </select><ChevronDown size={16}/>
           </div>
           {!stages.length&&<p className="nx13-muted">Configure um funil para mover este registro entre etapas.</p>}
+          {!readonly&&transferTargets.length>0&&<>
+            <label htmlFor="nx13-transfer" className="nx13-field-label" style={{marginTop:12}}>Transferir de funil</label>
+            <div className="nx13-stage-select">
+              <select id="nx13-transfer" value="" disabled={busy} onChange={e=>{if(e.target.value)onStageChange(lead,e.target.value,{transfer:true})}}>
+                <option value="">Escolha o funil e a etapa…</option>
+                {transferTargets.map(t=><optgroup key={t.pipeline.id} label={t.pipeline.name}>
+                  {t.stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                </optgroup>)}
+              </select><ChevronDown size={16}/>
+            </div>
+          </>}
           {[
             ['Origem',lead.source||'Não informada'],['Temperatura',label(lead.temperature)],
             ['Status',label(lead.status)],['Cadastro',date(lead.created_at)]
@@ -92,20 +114,27 @@ function Detail({lead,stages,organizationName,readonly,busy,onStageChange,onOper
           </div>
           <button type="submit" disabled={readonly||saving||!note.trim()} className="nx13-submit">{saving?'Salvando...':'Adicionar tarefa'} <ArrowRight size={16}/></button>
         </form>
-        <p className="nx13-disclosure">A tarefa é salva na empresa atual. O nome do contato é incluído no título; a vinculação direta entre registros ainda não está disponível.</p>
+        <p className="nx13-disclosure">A tarefa fica vinculada a este lead e aparece na aba Atividade. O nome do contato também vai no título para facilitar a leitura na lista de tarefas.</p>
       </div>}
-      {tab==='atividade'&&<div role="tabpanel" className="nx13-eventlog">
-        <h3>Informações registradas</h3>
-        <div className="nx13-event"><span/><div><strong>Etapa atual</strong><small>{selectedStage?.name||label(lead.status)}</small></div></div>
-        <div className="nx13-event"><span/><div><strong>Contato cadastrado</strong><small>{date(lead.created_at)}</small></div></div>
-        <p>Eventos de atendimento, mensagens e mudanças anteriores não são exibidos sem um histórico persistente verificado.</p>
+      {tab==='atividade'&&<div role="tabpanel" className="nx13-eventlog" aria-busy={timeline.status==='loading'}>
+        <h3>Histórico do lead</h3>
+        {timeline.status==='loading'&&<p>Carregando registros vinculados…</p>}
+        {timeline.status==='error'&&<div role="alert" className="nx13-feedback error">{timeline.warnings[0]} <button type="button" className="nx13-inline-retry" onClick={loadTimeline}>Tentar novamente</button></div>}
+        {timeline.status==='ready'&&<>
+          {timeline.events.map(ev=><div className={'nx13-event nx13-event--'+ev.kind} key={ev.id}><span/><div><strong>{ev.title}</strong><small>{dateTime(ev.at)}{ev.detail?' · '+ev.detail:''}</small></div></div>)}
+          {!timeline.events.length&&<p>Nenhum registro vinculado ainda.</p>}
+          {timeline.warnings.length>0&&<p role="status">Parte do histórico não pôde ser carregada: {timeline.warnings.join(' · ')}</p>}
+          {timeline.truncated&&<p>Exibindo os 100 registros mais recentes de cada tipo.</p>}
+          <p>Inclui mudanças de etapa, retornos, agendamentos, vendas e notas vinculados a este lead. Mensagens de WhatsApp ainda não entram neste histórico.</p>
+        </>}
       </div>}
     </div>
     <div className="nx13-detail-foot"><ShieldCheck size={15}/> Dados da empresa selecionada</div>
   </section>;
 }
 export default function NexusOpportunityDesk({
- leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure
+ leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure,
+ onRequestStage,pipelines=[],allStages=[],pipelineBar=null
 }){
   const [search,setSearch]=useState(''),[stageFilter,setStageFilter]=useState('all'),[presence,setPresence]=useState('all'),[order,setOrder]=useState('recent');
   const [selectedId,setSelectedId]=useState(null),[closed,setClosed]=useState(false),[busy,setBusy]=useState(''),[problem,setProblem]=useState(''),[notice,setNotice]=useState('');
@@ -121,14 +150,23 @@ export default function NexusOpportunityDesk({
       (presence==='all'||(presence==='yes'?Boolean(validPhone(l.contact?.whatsapp)):!validPhone(l.contact?.whatsapp)));
   }).sort((a,b)=>sortFn(a,b,order)),[staged,search,stageFilter,presence,order,stages]);
   const selected=filtered.find(l=>l.id===selectedId)||filtered[0]||null;
-  const changeStage=async (lead,next)=>{
+  const changeStage=async (lead,next,opts={})=>{
     if(!next||!onOperation||readonly||busy||lead.pipeline_stage_id===next)return;
     setProblem('');setNotice('');setBusy(lead.id);
-    setLocalStages(p=>({...p,[lead.id]:next}));
-    try{const result=await onOperation({action:'lead_stage',id:lead.id,stage_id:next});await onReload?.();setNotice(result?.message||'Etapa atualizada.')}
-    catch(e){setLocalStages(p=>({...p,[lead.id]:lead.pipeline_stage_id}));setProblem(e.message||'Não foi possível mover o lead.')}
+    const revert=()=>setLocalStages(p=>{const c={...p};delete c[lead.id];return c});
+    if(!opts.transfer)setLocalStages(p=>({...p,[lead.id]:next}));
+    try{
+      // Com onRequestStage, a mudança passa pelos campos obrigatórios da etapa (null = cancelado).
+      const result=onRequestStage?await onRequestStage(lead,next,opts):await onOperation({action:'lead_stage',id:lead.id,stage_id:next});
+      if(!result){revert();return}
+      await onReload?.();revert();setNotice(result?.message||'Etapa atualizada.');
+    }
+    catch(e){revert();setProblem(e.message||'Não foi possível mover o lead.')}
     finally{setBusy('')}
   };
+  const transferTargets=useMemo(()=>pipelines.filter(p=>!stages.some(s=>s.pipeline_id===p.id)).map(p=>({
+    pipeline:p,stages:allStages.filter(s=>s.pipeline_id===p.id)
+  })).filter(x=>x.stages.length),[pipelines,allStages,stages]);
   const exportList=()=>{exportFilteredLeads(filtered,stageOf,organizationName);setNotice('CSV dos registros carregados e filtrados gerado.')};
   const select=id=>{setSelectedId(id);setClosed(false);
     if(window.matchMedia('(max-width: 880px)').matches)window.requestAnimationFrame(()=>document.getElementById('nx13-detail')?.scrollIntoView({behavior:'smooth',block:'start'}));
@@ -150,9 +188,10 @@ export default function NexusOpportunityDesk({
       </div>
       <div className="nx13-header-actions">
         <button type="button" onClick={exportList} disabled={!filtered.length} className="nx13-softbutton"><Download size={16}/> Exportar</button>
-        {!readonly&&<button type="button" onClick={onConfigure} className="nx13-softbutton"><Settings2 size={16}/> Configurar funil</button>}
+        {!readonly&&onConfigure&&<button type="button" onClick={onConfigure} className="nx13-softbutton"><Settings2 size={16}/> Configurar funil</button>}
       </div>
     </header>
+    {pipelineBar}
     <div className="nx13-layout">
       <section className="nx13-collection" aria-label="Lista de leads">
         <div className="nx13-toolbar">
@@ -181,7 +220,7 @@ export default function NexusOpportunityDesk({
         </div>
         <footer className="nx13-collection-foot">{partial?'Até 250 registros recentes carregados.':'Registros carregados na empresa.'} {readonly?'Acesso somente leitura.':'Selecione um contato para atender.'}</footer>
       </section>
-      {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
+      {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}
     </div>
   </div>;

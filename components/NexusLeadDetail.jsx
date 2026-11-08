@@ -65,7 +65,7 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
     const title=(taskTitle.trim()||('Retornar para '+name)).slice(0,180);
     setSubmitting(true);setError('');setMessage('');
     try{
-      const result=await onOperation({action:'task_create',title,priority,due_date:due||null});
+      const result=await onOperation({action:'task_create',lead_id:lead.id,title,priority,due_date:due||null});
       await onReload?.();
       setTaskTitle('');setDue('');setPriority('medium');
       setMessage(result?.message||'Tarefa criada. Consulte a aba Minhas tarefas.');
@@ -125,7 +125,7 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
             <button className="v11-detail-save" disabled={readonly||submitting} type="submit">{submitting?'Salvando...':'Criar tarefa'} <ArrowRight size={17}/></button>
             {readonly&&<p className="v11-detail-help">Seu perfil tem acesso apenas para leitura.</p>}
           </form>
-          <div className="v11-detail-integrity"><ShieldCheck size={16}/><span>Esta tarefa ainda não fica vinculada automaticamente ao lead. O nome do contato aparece no título para facilitar a identificação.</span></div>
+          <div className="v11-detail-integrity"><ShieldCheck size={16}/><span>A tarefa fica vinculada a este lead. O histórico completo aparece na aba Atividade da lista de leads.</span></div>
         </section>}
         {tab==='atividade'&&<section className="v11-detail-section">
           <h3>Eventos disponíveis</h3>

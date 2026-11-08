@@ -1,5 +1,6 @@
 'use client';
 import {useMemo,useState} from 'react';
+import NexusCrmSettings from './NexusCrmSettings';
 import Link from 'next/link';
 import {
   ArrowRight,BarChart3,BriefcaseBusiness,CalendarDays,CheckCircle2,
@@ -89,10 +90,10 @@ export function PremiumSettings({profile,session,role,organization,onTheme,dark}
     {message&&<div className="v4-report-success" role="status"><CheckCircle2 size={17}/>{message}<button type="button" onClick={()=>setMessage('')}>Fechar</button></div>}
     <div className="v4-report-sections">
       <section className="v4-report-panel"><div className="v4-report-panel-title"><div><span className="v4-report-overline">PERSONALIZAÇÃO</span><h2>Aparência da plataforma</h2></div><Tag>Salvo neste navegador</Tag></div>
-      <p className="v4-settings-description">Escolha entre o tema claro do Glassy V4 e sua versão noturna. Sua preferência permanece salva neste navegador.</p>
+      <p className="v4-settings-description">Escolha o tema claro ou escuro. A preferência fica salva neste navegador.</p>
       <div className="v4-theme-buttons">
-        <button type="button" className={!dark?'selected':''} onClick={()=>{if(dark)onTheme();setMessage('Tema claro selecionado.')}}><Sun size={19}/><span><strong>Modo claro</strong><small>Branco, azul-gelo e transparências</small></span>{!dark&&<CheckCircle2 size={17}/>}</button>
-        <button type="button" className={dark?'selected':''} onClick={()=>{if(!dark)onTheme();setMessage('Tema escuro selecionado.')}}><Moon size={19}/><span><strong>Modo escuro</strong><small>Azul-marinho e teal</small></span>{dark&&<CheckCircle2 size={17}/>}</button>
+        <button type="button" className={!dark?'selected':''} onClick={()=>{if(dark)onTheme();setMessage('Tema claro selecionado.')}}><Sun size={19}/><span><strong>Modo claro</strong><small>Fundo branco, texto preto, destaque roxo</small></span>{!dark&&<CheckCircle2 size={17}/>}</button>
+        <button type="button" className={dark?'selected':''} onClick={()=>{if(!dark)onTheme();setMessage('Tema escuro selecionado.')}}><Moon size={19}/><span><strong>Modo escuro</strong><small>Fundo preto, texto branco, destaque roxo</small></span>{dark&&<CheckCircle2 size={17}/>}</button>
       </div>
       </section>
       <section className="v4-report-panel"><div className="v4-report-panel-title"><div><span className="v4-report-overline">CONTROLE DE ACESSO</span><h2>Conta e permissões</h2></div><ShieldCheck size={19}/></div>
@@ -104,5 +105,6 @@ export function PremiumSettings({profile,session,role,organization,onTheme,dark}
         <Link href="/minha-area" className="v4-report-link">Ver meu perfil <ArrowRight size={16}/></Link>
       </section>
     </div>
+    <NexusCrmSettings organizationId={organization?.id}/>
   </div>;
 }

@@ -22,7 +22,8 @@ const errors=[];
 let browser;
 try{
   await ready();
-  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+  // PLAYWRIGHT_EXECUTABLE_PATH permite usar um Chrome já instalado quando o download do Chromium é bloqueado.
+  browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
   const ctx=await browser.newContext({viewport:{width:1440,height:900},locale:'pt-BR'});
   const page=await ctx.newPage();
   page.on('pageerror',e=>errors.push('Page exception: '+e.stack));
@@ -62,11 +63,21 @@ try{
       table==='organizations'?[organization]:[];
     return route.fulfill({status:200,headers,body:JSON.stringify(rows)});
   });
-  let createdTasks=0;let completedTasks=0;
+  let createdTasks=0;let completedTasks=0;let linkedTasks=0;let timelineCalls=0;
   await page.route('**/api/operation**',async route=>{
     if(route.request().method()==='POST'){
       const payload=route.request().postDataJSON();
+      if(payload.action==='lead_timeline'){
+        timelineCalls+=1;
+        if(payload.lead_id!==leadId)return route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:'Lead não encontrado nesta empresa.'})});
+        return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,warnings:[],truncated:false,events:[
+          {id:'task-x',kind:'task',at:'2026-11-02T12:00:00Z',title:'Retorno: Retornar orçamento — Ana Teste',detail:'pendente'},
+          {id:'stage-x',kind:'stage_changed',at:'2026-10-21T12:00:00Z',title:'Etapa alterada',detail:'Definida como Novo Lead'},
+          {id:'lead-x',kind:'lead_created',at:'2026-10-20T12:00:00Z',title:'Lead cadastrado',detail:'Origem: Instagram'}
+        ]})});
+      }
       if(payload.action==='task_create')createdTasks+=1;
+      if(payload.action==='task_create'&&payload.lead_id===leadId)linkedTasks+=1;
       if(payload.action==='task_status'&&payload.status==='completed')completedTasks+=1;
       return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
     }
@@ -79,6 +90,12 @@ try{
   // visual regression results.
   await page.route('**/api/whatsapp/inbox**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connections:[],messages:[],verified_server:false})});
+  });
+  await page.route('**/api/crm-settings**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({can_manage:true,catalogs:{
+      lost_reasons:{kind:'lost_reasons',installed:true,items:[]},lead_origins:{kind:'lead_origins',installed:true,items:[]},
+      contact_categories:{kind:'contact_categories',installed:false,items:[]},company_sectors:{kind:'company_sectors',installed:false,items:[]}},
+      fields:[],pipelines:[],stages:[],requirements:[]})});
   });
   await page.route('**/api/automations**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rules:[],executions:[],can_manage:true})});
@@ -124,8 +141,10 @@ try{
   await page.getByRole('button',{name:'Nova tarefa'}).click();
   await page.locator('.v14-compose input[placeholder="Ex.: Retornar orçamento"]').fill('Confirmar orçamento');
   await page.locator('.v14-compose button[type="submit"]').click();
+  for(let k=0;k<40&&createdTasks!==1;k++)await sleep(100); // aguarda a requisição em vez de checar no mesmo tick
   if(createdTasks!==1)throw new Error('Dashboard did not create the task through the operation API');
   await page.getByRole('button',{name:'Concluir Retornar para Ana'}).click();
+  for(let k=0;k<40&&completedTasks!==1;k++)await sleep(100);
   if(completedTasks!==1)throw new Error('Dashboard did not complete the task through the operation API');
   for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
     await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
@@ -149,6 +168,13 @@ try{
       await detail.getByRole('button',{name:'Adicionar tarefa'}).click();
       await detail.getByText('Tarefa criada com sucesso.').waitFor({timeout:5000});
       if(createdTasks!==2)throw new Error('Lead workspace did not create follow-up');
+      if(linkedTasks!==1)throw new Error('Follow-up from lead desk was not linked by lead_id');
+      await detail.getByRole('tab',{name:'Atividade'}).click();
+      await detail.getByText('Retorno: Retornar orçamento — Ana Teste').waitFor({timeout:5000});
+      await detail.getByText('Definida como Novo Lead',{exact:false}).waitFor({timeout:5000});
+      if(timelineCalls<1)throw new Error('Activity tab did not request persisted timeline');
+      await page.screenshot({path:'test-artifacts/leads-v17-timeline.png',fullPage:true});
+      await detail.getByRole('tab',{name:'Retorno'}).click();
       await page.screenshot({path:'test-artifacts/leads-v13-split-desk.png',fullPage:true});
       await detail.getByRole('button',{name:'Fechar ficha'}).click();
       await page.getByRole('button',{name:/Ana Teste/}).click();
@@ -186,7 +212,7 @@ try{
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
   if(themeAndFonts.dark)throw new Error('Light theme must be the default for a new workspace');
-  if(!themeAndFonts.font.includes('Inter'))throw new Error('Dashboard titles are not using Inter: '+themeAndFonts.font);
+  if(!themeAndFonts.font.includes('Archivo'))throw new Error('Dashboard titles are not using Archivo (tema Fluxo): '+themeAndFonts.font);
   if(!await page.locator('.v14-tasks-panel .v14-rows').count())throw new Error('Operational task list missing');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
   if(!await page.locator('.v14-stats').count())throw new Error('V14 metrics section missing');

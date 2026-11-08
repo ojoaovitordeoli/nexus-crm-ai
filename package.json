@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test": "node --test tests/*.test.mjs",
-    "test:browser": "node tests/browser-experience.mjs"
+    "test:browser": "node tests/browser-experience.mjs",
+    "test:rls": "node tests/rls-policies.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
@@ -20,6 +21,7 @@
     "@xyflow/react": "12.12.0"
   },
   "devDependencies": {
-    "playwright": "^1.56.1"
+    "playwright": "^1.56.1",
+    "@electric-sql/pglite": "^0.5.15"
   }
 }

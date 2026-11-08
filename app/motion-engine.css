@@ -5,7 +5,7 @@
 @keyframes nexus-scene-enter{0%{opacity:.36;transform:translate3d(0,14px,0);filter:blur(3px)}58%{filter:blur(0)}100%{opacity:1;transform:translate3d(0,0,0);filter:blur(0)}}
 .staff-motion-scene--leaving{pointer-events:none;animation:nexus-scene-exit .16s var(--motion-out) both!important}
 @keyframes nexus-scene-exit{to{opacity:0;transform:translate3d(0,-9px,0);filter:blur(2px)}}
-.staff-motion-scene:before{content:'';position:absolute;top:0;left:-1%;width:102%;height:2px;z-index:4;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(82,135,255,.3),rgba(63,213,190,.58),transparent);transform-origin:left;animation:nexus-line-wipe .75s var(--motion-ease) both}
+.staff-motion-scene:before{content:'';position:absolute;top:0;left:-1%;width:102%;height:2px;z-index:4;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(95, 0, 230, .3),rgba(95, 0, 230, .58),transparent);transform-origin:left;animation:nexus-line-wipe .75s var(--motion-ease) both}
 @keyframes nexus-line-wipe{0%{transform:scaleX(.02);opacity:0}35%{opacity:1}100%{transform:scaleX(1);opacity:0}}
 .staff-motion-scene--dashboard .nxp-presentation{
   animation:nexus-hero-arrive .64s var(--motion-ease) .03s both;
@@ -34,7 +34,7 @@
 .staff-motion-scene--dashboard .nxp-metric:nth-child(3):before{animation-delay:.83s}
 .staff-motion-scene--dashboard .nxp-metric:nth-child(4):before{animation-delay:.93s}
 @keyframes nexus-card-glint{0%{left:-95%;opacity:0}25%{opacity:.75}100%{left:150%;opacity:0}}
-.dark .nxp-metric:before{background:linear-gradient(95deg,transparent,rgba(154,202,255,.15),transparent)}
+.dark .nxp-metric:before{background:linear-gradient(95deg,transparent,rgba(95, 0, 230, .15),transparent)}
 .staff-motion-scene--dashboard .nxp-analytics-grid:nth-of-type(2) .nxp-surface:nth-child(1){animation:nexus-panel-reveal .57s var(--motion-ease) .54s both}
 .staff-motion-scene--dashboard .nxp-analytics-grid:nth-of-type(2) .nxp-surface:nth-child(2){animation:nexus-panel-reveal .57s var(--motion-ease) .63s both}
 .staff-motion-scene--dashboard .nxp-analytics-grid--bottom .nxp-surface:nth-child(1){animation:nexus-panel-reveal .55s var(--motion-ease) .69s both}
@@ -71,8 +71,8 @@
 .nxp-column-cards .nxp-lead-card:nth-child(4){animation-delay:.53s}
 .nxp-column-cards .nxp-lead-card:nth-child(n+5){animation-delay:.58s}
 @keyframes nexus-task-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.nxp-lead-card:hover{box-shadow:0 17px 39px rgba(57,105,200,.14)!important;transform:translateY(-3px)!important}
-.nxp-board-column:has(.nxp-lead-card[draggable=true]:active){border-color:rgba(80,125,241,.35)}
+.nxp-lead-card:hover{box-shadow:0 17px 39px rgba(95, 0, 230, .14)!important;transform:translateY(-3px)!important}
+.nxp-board-column:has(.nxp-lead-card[draggable=true]:active){border-color:rgba(95, 0, 230, .35)}
 .nxp-contact-card{animation:nexus-card-build .38s var(--motion-ease) both}
 .nxp-contact-card:nth-child(3n+1){animation-delay:.2s}
 .nxp-contact-card:nth-child(3n+2){animation-delay:.27s}
@@ -86,7 +86,7 @@
 .staff-task-row:nth-child(4){animation-delay:.28s}
 .staff-task-row:nth-child(n+5){animation-delay:.32s}
 .staff-nav-item{overflow:hidden;isolation:isolate}
-.staff-nav-item:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 10%,rgba(69,122,244,.11) 45%,transparent 80%);transform:translateX(-112%);opacity:0}
+.staff-nav-item:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 10%,rgba(95, 0, 230, .11) 45%,transparent 80%);transform:translateX(-112%);opacity:0}
 .staff-nav-item--active:before{animation:nexus-nav-shimmer .55s var(--motion-ease) .12s both}
 @keyframes nexus-nav-shimmer{0%{transform:translateX(-110%);opacity:0}25%{opacity:1}100%{transform:translateX(110%);opacity:0}}
 .staff-nav-item--active>svg{animation:nexus-nav-icon .31s var(--motion-ease) .11s both}
@@ -95,7 +95,7 @@
 .staff-sidebar .staff-logo-icon{transition:transform .24s var(--motion-ease)}
 .staff-sidebar .staff-logo-icon:hover{transform:rotate(-8deg) scale(1.06)}
 .staff-icon-button:active,.nxp-button:active,.staff-btn:active{transform:scale(.96)}
-.nxp-contact-card:hover .nxp-avatar,.nxp-lead-card:hover .nxp-avatar{box-shadow:0 0 0 5px rgba(94,145,255,.09);transform:scale(1.05);transition:transform .22s,box-shadow .22s}
+.nxp-contact-card:hover .nxp-avatar,.nxp-lead-card:hover .nxp-avatar{box-shadow:0 0 0 5px rgba(95, 0, 230, .09);transform:scale(1.05);transition:transform .22s,box-shadow .22s}
 .nxp-graph-line-path{stroke-dasharray:100;stroke-dashoffset:100}
 @media(prefers-reduced-motion:reduce){
   .staff-motion-scene,.staff-motion-scene--leaving,.staff-motion-scene:before,
@@ -109,7 +109,7 @@
 .nxp-donut--svg{background:transparent!important;overflow:visible;animation:none!important}
 .nxp-donut--svg::after{display:none!important}
 .nxp-donut-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform:rotate(-90deg)}
-.nxp-donut-base{fill:none;stroke:rgba(130,161,209,.14);stroke-width:23}
+.nxp-donut-base{fill:none;stroke:rgba(95, 0, 230, .14);stroke-width:23}
 .nxp-donut-segment{fill:none;stroke-width:23;stroke-linecap:butt;stroke-dasharray:var(--segment-dash);animation:nexus-ring-grow .92s var(--motion-ease) both}
 @keyframes nexus-ring-grow{0%{stroke-dasharray:0 100;opacity:.2}100%{stroke-dasharray:var(--segment-dash);opacity:1}}
 .nxp-donut--svg .nxp-donut-inner{position:relative;z-index:1}

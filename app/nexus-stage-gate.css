@@ -1,0 +1,64 @@
+/* NEXUS / Campos obrigatórios de etapa e seletor de funil.
+   Escopo próprio (.nxg-*), mesmos tons da mesa de oportunidades (nx13). */
+.nxg-overlay,.nxg-toast,.nxg-pipebar{
+  --g-raised:#fff;--g-ink:#2a2a2c;--g-secondary:#68686a;--g-line:#e8e8ea;--g-strong:#dadadc;
+  --g-accent:var(--fx-accent-text);--g-accent-ink:#fff;--g-accent-soft:#ececee;--g-danger:#a33a2c;--g-danger-soft:#fbecea
+}
+body.dark .nxg-overlay,body.dark .nxg-toast,body.dark .nxg-pipebar{
+  --g-raised:#212123;--g-ink:#ededef;--g-secondary:#b0b0b2;--g-line:#3c3c3e;--g-strong:#4f4f51;
+  --g-accent:var(--fx-accent-text);--g-accent-ink:#18181a;--g-accent-soft:#2e2e30;--g-danger:#f2a497;--g-danger-soft:#3a2522
+}
+.nxg-overlay{position:fixed;inset:0;z-index:260;background:rgba(19, 19, 21, .5);display:flex;align-items:center;justify-content:center;padding:16px}
+.nxg-dialog{width:min(560px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:var(--g-raised);color:var(--g-ink);border:1px solid var(--g-line);border-radius:12px;box-shadow:0 24px 70px rgba(22, 22, 24, .22);font:13px/1.5 Inter,Manrope,system-ui,sans-serif}
+.nxg-dialog *{box-sizing:border-box}
+.nxg-head{display:flex;justify-content:space-between;gap:16px;padding:20px 22px 14px;border-bottom:1px solid var(--g-line)}
+.nxg-overline{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--g-accent)}
+.nxg-head h2{margin:3px 0 4px!important;font-size:19px!important;font-weight:700!important;line-height:1.3!important;color:var(--g-ink)!important;letter-spacing:-.02em!important}
+.nxg-head p{margin:0;color:var(--g-secondary);font-size:12.5px}
+.nxg-close{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--g-line);border-radius:7px;background:transparent;color:var(--g-secondary);cursor:pointer}
+.nxg-body{padding:16px 22px;overflow:auto;display:grid;gap:14px}
+.nxg-field{display:grid;gap:6px;border:0;margin:0;padding:0;min-width:0}
+.nxg-label{font-size:12px;font-weight:650;color:var(--g-ink);padding:0}
+.nxg-label span,.nxg-check label span{color:var(--g-danger)}
+.nxg-field input:not([type=checkbox]),.nxg-field select{width:100%;min-height:40px;padding:8px 11px;border:1px solid var(--g-strong);border-radius:7px;background:var(--g-raised);color:var(--g-ink);font:inherit}
+.nxg-check{grid-template-columns:auto 1fr;align-items:center;gap:10px;min-height:40px;padding:8px 11px;border:1px solid var(--g-strong);border-radius:7px}
+.nxg-check input,.nxg-option input{width:18px;height:18px;accent-color:var(--g-accent);margin:0}
+.nxg-multi{gap:8px}
+.nxg-option{display:flex;align-items:center;gap:10px;min-height:36px;font-size:13px;cursor:pointer}
+.nxg-option small{color:var(--g-secondary)}
+.nxg-product{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nxg-product input[type=number]{width:88px!important;min-height:34px!important}
+.nxg-help{color:var(--g-secondary);font-size:12px}
+.nxg-missing .nxg-field input:not([type=checkbox]),.nxg-missing .nxg-field select,.nxg-missing .nxg-check{border-color:var(--g-danger)}
+.nxg-alert{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:7px;background:var(--g-danger-soft);color:var(--g-danger);font-size:12.5px;margin:0 22px}
+.nxg-body .nxg-alert{margin:0}
+.nxg-alert svg{flex:none;margin-top:2px}
+.nxg-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 22px 18px;border-top:1px solid var(--g-line);flex-wrap:wrap}
+.nxg-foot>small{display:flex;gap:6px;align-items:center;color:var(--g-secondary);font-size:11.5px}
+.nxg-foot>div{display:flex;gap:8px;margin-left:auto}
+.nxg-primary,.nxg-secondary{min-height:38px;display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:7px;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer}
+.nxg-primary{background:var(--g-accent);color:var(--g-accent-ink);border:1px solid var(--g-accent)}
+.nxg-secondary{background:transparent;color:var(--g-ink);border:1px solid var(--g-strong)}
+.nxg-primary:disabled,.nxg-secondary:disabled,.nxg-close:disabled{opacity:.6;cursor:not-allowed}
+.nxg-dialog button:focus-visible,.nxg-dialog input:focus-visible,.nxg-dialog select:focus-visible,.nxg-pipebar select:focus-visible,.nxg-pipebar button:focus-visible{outline:2px solid var(--g-accent);outline-offset:2px}
+.nxg-toast{position:fixed;right:20px;bottom:20px;z-index:260;display:flex;gap:8px;align-items:center;padding:10px 14px;border-radius:8px;background:var(--g-raised);color:var(--g-ink);border:1px solid var(--g-line);box-shadow:0 12px 34px rgba(22, 22, 24, .14);font:600 12.5px Inter,system-ui,sans-serif}
+.nxg-spin{animation:nxg-spin 1s linear infinite}
+@keyframes nxg-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.nxg-spin{animation:none}}
+
+/* Seletor de funil */
+.nxg-pipebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;color:var(--g-ink);font:13px/1.5 Inter,Manrope,system-ui,sans-serif}
+.nxg-pipebar label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:650;color:var(--g-secondary)}
+.nxg-pipebar select{min-height:36px;min-width:220px;max-width:100%;padding:6px 10px;border:1px solid var(--g-strong);border-radius:7px;background:var(--g-raised);color:var(--g-ink);font:600 13px Inter,system-ui,sans-serif}
+.nxg-pipebar small{color:var(--g-secondary);font-size:12px}
+.nxg-pipebar .nxg-secondary{min-height:36px}
+
+@media (max-width:640px){
+  .nxg-overlay{align-items:flex-end;padding:0}
+  .nxg-dialog{max-height:92vh;border-radius:14px 14px 0 0}
+  .nxg-head,.nxg-body,.nxg-foot{padding-left:16px;padding-right:16px}
+  .nxg-foot>div{width:100%}
+  .nxg-foot>div button{flex:1;justify-content:center}
+  .nxg-pipebar label{width:100%}
+  .nxg-pipebar select{flex:1;min-width:0}
+}

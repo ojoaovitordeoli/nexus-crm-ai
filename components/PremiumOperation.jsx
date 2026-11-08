@@ -12,6 +12,7 @@ import {
 import {db} from '../lib/supabase';
 import NexusLeadDetail from './NexusLeadDetail';
 import NexusOpportunityDesk from './NexusOpportunityDesk';
+import NexusStageGate from './NexusStageGate';
 import {exportFilteredLeads} from '../lib/exportFilteredLeads';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
@@ -275,7 +276,30 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
   </div>;
 }
 
-export function PremiumLeads({leads=[],count=0,organizationId,organizationName,readonly=false,stages=[],pipeline,onOperation,onReload}){
+function PipelineBar({pipelines,active,onChange,readonly,onNew,shown}){
+  if(!pipelines.length)return null;
+  return <div className="nxg-pipebar">
+    <label htmlFor="nxg-pipeline">Funil
+      <select id="nxg-pipeline" value={active?.id||''} onChange={e=>onChange(e.target.value)} disabled={pipelines.length<2}>
+        {pipelines.map(p=><option key={p.id} value={p.id}>{p.name}{p.is_default?' (padrão)':''}</option>)}
+      </select></label>
+    <small>{fmt(shown)} {shown===1?'lead neste funil':'leads neste funil'}{pipelines.length>1?' · '+pipelines.length+' funis na empresa':''}</small>
+    {!readonly&&<button type="button" className="nxg-secondary" onClick={onNew}><Plus size={15}/> Novo funil</button>}
+  </div>;
+}
+export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizationName,readonly=false,canManagePipeline=!readonly,stages:defaultStages=[],pipeline:defaultPipeline,pipelines=[],allStages=[],onOperation,onReload}){
+  const [pipelineId,setPipelineId]=useState('');
+  const pipeline=pipelines.find(p=>p.id===pipelineId)||defaultPipeline||pipelines[0]||null;
+  const stages=useMemo(()=>pipeline&&allStages.length?allStages.filter(s=>s.pipeline_id===pipeline.id):defaultStages,[pipeline,allStages,defaultStages]);
+  // Lead sem funil pertence ao funil padrão até ser movido.
+  const leads=useMemo(()=>pipelines.length>1&&pipeline
+    ?allLeads.filter(l=>l.pipeline_id===pipeline.id||(!l.pipeline_id&&pipeline.id===(defaultPipeline?.id||pipelines[0]?.id)))
+    :allLeads,[allLeads,pipeline,pipelines,defaultPipeline]);
+  const visibleCount=pipelines.length>1?leads.length:count;
+  const [gate,setGate]=useState(null);
+  const requestStage=(lead,stageId,opts={})=>new Promise(resolve=>setGate({lead,stageId,transfer:Boolean(opts.transfer),resolve}));
+  const closeGate=result=>{gate?.resolve(result);setGate(null)};
+  const gateView=gate&&<NexusStageGate key={gate.lead.id+gate.stageId} request={gate} onOperation={onOperation} onDone={closeGate} onCancel={()=>closeGate(null)}/>;
   const [mode,setMode]=useState('list');
   const [query,setQuery]=useState('');
   useEffect(()=>{
@@ -300,12 +324,19 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
     if(!next||readonly||busy||!hasStages||item.pipeline_stage_id===next)return;
     setBusy(item.id);setError('');
     try{
-      await onOperation({action:'lead_stage',id:item.id,stage_id:next});
-      setSelected(v=>v?.id===item.id?{...v,pipeline_stage_id:next}:v);
-      await onReload?.();
+      const result=await requestStage(item,next);
+      if(result){
+        setSelected(v=>v?.id===item.id?{...v,pipeline_stage_id:next}:v);
+        await onReload?.();
+      }
     }catch(e){setError('Não foi possível mover o lead: '+e.message)}
     finally{setBusy('')}
   }
+  const bar=<PipelineBar pipelines={pipelines} active={pipeline} readonly={readonly||!canManagePipeline} shown={leads.length}
+    onChange={id=>{setPipelineId(id);setFilter('all')}} onNew={()=>setEditorOpen('new')}/>;
+  const editor=editorOpen&&<PipelineEditor key={editorOpen==='new'?'new':pipeline?.id||'none'}
+    pipeline={editorOpen==='new'?null:pipeline} stages={editorOpen==='new'?[]:stages}
+    readonly={readonly||!canManagePipeline} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>;
   const Card=({item})=><div className="nxp-lead-card" draggable={!readonly&&hasStages&&stages.length>1} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
     <button type="button" className="nxp-lead-card-main" onClick={()=>setSelected(item)} aria-label={'Abrir lead '+display(item.contact)}>
       <div className="nxp-lead-card-top"><Avatar value={display(item.contact)}/><span className="nxp-lead-date">{date(item.created_at)}</span></div>
@@ -315,12 +346,14 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
   if(mode==='list')return <>
-    <NexusOpportunityDesk leads={leads} count={count} organizationName={organizationName} readonly={readonly}
-      stages={stages} onOperation={onOperation} onReload={onReload}
-      onShowBoard={()=>setMode('board')} onConfigure={()=>setEditorOpen(true)}/>
-    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
+    <NexusOpportunityDesk leads={leads} count={visibleCount} organizationName={organizationName} readonly={readonly}
+      stages={stages} onOperation={onOperation} onReload={onReload} onRequestStage={requestStage}
+      pipelines={pipelines} allStages={allStages} pipelineBar={bar}
+      onShowBoard={()=>setMode('board')} onConfigure={canManagePipeline?()=>setEditorOpen(true):null}/>
+    {editor}{gateView}
   </>;
   return <div className="nxp-premium">
+    {bar}
     <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
     <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'lead na empresa':'leads na empresa'}</span><i/><span><strong>{cols.length}</strong> {cols.length===1?'etapa':'etapas'}</span><i/><span><strong>{filtered.length}</strong> {filtered.length===1?'exibido no filtro':'exibidos no filtro'}</span></div>
     <section className="nxp-surface nxp-leads-workarea">
@@ -328,7 +361,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
       <div className="nxp-mode-switch"><button type="button" className={mode==='board'?'active':''} onClick={()=>setMode('board')} title="Quadro Kanban" aria-label="Quadro Kanban"><Columns3 size={18}/></button><button type="button" className={mode==='list'?'active':''} onClick={()=>setMode('list')} title="Lista" aria-label="Lista"><LayoutList size={18}/></button></div></div></div>
       {error&&<div className="nxp-error" role="alert">{error}</div>}
-      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
+      {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&canManagePipeline&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
       {mode==='board'?<div className="nxp-board" aria-label="Funil Kanban">
       {groups.map(({key,title,rows},idx)=><section key={key} className="nxp-board-column"
         onDragOver={e=>{if(!readonly&&hasStages&&stages.length>1)e.preventDefault()}}
@@ -343,7 +376,7 @@ export function PremiumLeads({leads=[],count=0,organizationId,organizationName,r
       <div className="nxp-footnote">{filtered.length} {filtered.length===1?'lead exibido':'leads exibidos'} · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
     <NexusLeadDetail lead={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} pending={Boolean(busy)}/>
-    {editorOpen&&<PipelineEditor pipeline={pipeline} stages={stages} readonly={readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>}
+    {editor}{gateView}
   </div>;
 }
 
