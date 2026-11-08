@@ -1,10 +1,28 @@
 import {NextResponse} from 'next/server';
-import {verifyWebhookQuery,verifyWebhookSignature,extractWhatsAppEvents} from '../../../../lib/workflow-security.mjs';
+import {verifyWebhookQuery,verifyWebhookSignature,extractWhatsAppEvents,samePhone} from '../../../../lib/workflow-security.mjs';
 import {adminSupabase} from '../../../../lib/tenant-session';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export const maxDuration=20;
+
+// Resolves the sender to a contact of the SAME organization only. Never creates records.
+// Failures here must not block persisting the message: link is best effort and can be redone.
+async function linkSender(db,organizationId,waId){
+  const tail=String(waId||'').replace(/\D/g,'').slice(-4);
+  if(tail.length<4)return {};
+  const {data:contacts,error}=await db.from('contacts')
+    .select('id,whatsapp,phone').eq('organization_id',organizationId)
+    .or(`whatsapp.ilike.%${tail},phone.ilike.%${tail}`).limit(50);
+  if(error||!contacts?.length)return {};
+  const matches=contacts.filter(c=>samePhone(waId,c.whatsapp)||samePhone(waId,c.phone));
+  if(matches.length!==1)return {}; // ambiguous or none: leave for human linking
+  const contactId=matches[0].id;
+  const {data:lead}=await db.from('leads').select('id')
+    .eq('organization_id',organizationId).eq('contact_id',contactId)
+    .order('created_at',{ascending:false}).limit(1).maybeSingle();
+  return {contact_id:contactId,lead_id:lead?.id||null};
+}
 
 export async function GET(request){
   const token=process.env.META_WEBHOOK_VERIFY_TOKEN;
@@ -41,7 +59,8 @@ export async function POST(request){
     if(event.kind==='message'){
       const when=event.timestamp&&event.timestamp>1000000000&&event.timestamp<9999999999
         ?new Date(event.timestamp*1000).toISOString():new Date().toISOString();
-      const {error}=await db.from('whatsapp_messages').upsert({
+      const link=await linkSender(db,conn.organization_id,event.from);
+      const row={
         organization_id:conn.organization_id,
         connection_id:conn.id,
         provider_message_id:event.message_id,
@@ -50,7 +69,12 @@ export async function POST(request){
         message_type:event.type,
         text_body:event.text||null,
         occurred_at:when
-      },{onConflict:'organization_id,provider_message_id',ignoreDuplicates:true});
+      };
+      const opts={onConflict:'organization_id,provider_message_id',ignoreDuplicates:true};
+      let {error}=await db.from('whatsapp_messages').upsert({...row,...link},opts);
+      // Link columns come from 20261107_whatsapp_contact_link.sql; never lose the message if absent.
+      if(error&&link.contact_id&&['42703','PGRST204'].includes(error.code))
+        ({error}=await db.from('whatsapp_messages').upsert(row,opts));
       if(error)return new NextResponse('Persist failed',{status:503});
       if(conn.status==='pending'){
         await db.from('whatsapp_connections').update({
@@ -60,9 +84,11 @@ export async function POST(request){
       }
     }else if(event.kind==='status'){
       // Update status only for known messages of the registered organization.
-      await db.from('whatsapp_messages').update({delivery_status:event.status})
+      const {error}=await db.from('whatsapp_messages').update({delivery_status:event.status})
         .eq('organization_id',conn.organization_id)
         .eq('connection_id',conn.id).eq('provider_message_id',event.message_id);
+      // Status loss is recoverable (Meta resends); log without personal data and keep going.
+      if(error)console.error('[whatsapp-webhook] status update failed',{code:error.code,connection:conn.id});
     }
   }
   return NextResponse.json({ok:true});

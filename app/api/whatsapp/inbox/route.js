@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {adminSupabase,authorizeTenant} from '../../../../lib/tenant-session';
+import {readWhatsAppRole} from '../../../../lib/workflow-security.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -14,17 +15,19 @@ export async function GET(request){
   const organizationId=new URL(request.url).searchParams.get('org_id');
   const ctx=await authRequest(request,organizationId);
   if(ctx.error)return fail(ctx.error,ctx.status);
+  if(!ctx.isSuperAdmin&&!readWhatsAppRole(ctx.role))
+    return fail('Seu perfil não tem acesso às conversas do WhatsApp.',403);
   const [connections,messages]=await Promise.all([
     ctx.admin.from('whatsapp_connections')
       .select('id,phone_number_id,display_name,status,created_at,activated_at')
       .eq('organization_id',organizationId).order('created_at',{ascending:false}).limit(20),
     ctx.admin.from('whatsapp_messages')
-      .select('id,wa_id,direction,message_type,text_body,delivery_status,occurred_at,connection_id')
+      .select('id,wa_id,direction,message_type,text_body,delivery_status,occurred_at,connection_id,contact_id,lead_id')
       .eq('organization_id',organizationId).order('occurred_at',{ascending:false}).limit(250)
   ]);
   if(connections.error||messages.error){
     const err=connections.error||messages.error;
-    const missing=['42P01','PGRST205'].includes(err.code);
+    const missing=['42P01','42703','PGRST205','PGRST204'].includes(err.code);
     return fail(missing?
       'A estrutura do WhatsApp ainda não foi instalada. Execute a migração SQL do NEXUS no Supabase.':
       'Falha ao carregar a caixa de entrada: '+err.message,missing?503:500);
@@ -33,7 +36,7 @@ export async function GET(request){
     connections:connections.data||[],
     messages:messages.data||[],
     verified_server:Boolean(process.env.META_APP_SECRET&&process.env.META_WEBHOOK_VERIFY_TOKEN),
-    can_register:ctx.role==='AGENCY_ADMIN'
+    can_register:ctx.isSuperAdmin===true
   });
 }
 
@@ -44,9 +47,8 @@ export async function POST(request){
   const ctx=await authRequest(request,orgId);
   if(ctx.error)return fail(ctx.error,ctx.status);
   // Only the platform's actual super admin may associate phone IDs with companies.
-  const {data:actor}=await ctx.admin.from('profiles')
-    .select('is_super_admin').eq('id',ctx.user.id).maybeSingle();
-  if(!actor?.is_super_admin)return fail('Somente o Super Admin pode registrar números da Meta.',403);
+  // Same criterion as can_register in GET (profiles.is_super_admin via authorizeTenant).
+  if(ctx.isSuperAdmin!==true)return fail('Somente o Super Admin pode registrar números da Meta.',403);
   const phoneId=String(body.phone_number_id||'').trim();
   const display=String(body.display_name||'WhatsApp Business').trim().slice(0,100);
   if(!/^[0-9]{6,24}$/.test(phoneId))return fail('Informe o Phone Number ID numérico obtido no painel da Meta.');

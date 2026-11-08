@@ -51,3 +51,20 @@ test('followup rule validates names, stage id and timeframe',()=>{
  assert.equal(validateFollowupRule({name:'a',task_title:'Follow up',stage_id,delay_days:2}).error!==undefined,true);
  assert.equal(validateFollowupRule({name:'Follow up',task_title:'Call',stage_id,delay_days:31}).error!==undefined,true);
 });
+
+test('WhatsApp inbox read is denied to viewers and unknown roles',async()=>{
+ const {readWhatsAppRole}=await import('../lib/workflow-security.mjs');
+ for(const r of ['AGENCY_ADMIN','ORGANIZATION_ADMIN','MANAGER','SDR','SELLER'])assert.equal(readWhatsAppRole(r),true,r);
+ for(const r of ['VIEWER','',null,undefined,'admin','SUPER_ADMIN'])assert.equal(readWhatsAppRole(r),false,String(r));
+});
+test('Brazilian phone matching tolerates country code, formatting and 9th digit',async()=>{
+ const {samePhone,phoneMatchKeys}=await import('../lib/workflow-security.mjs');
+ assert.equal(samePhone('5511987654321','(11) 98765-4321'),true);
+ assert.equal(samePhone('551187654321','11 98765-4321'),true);
+ assert.equal(samePhone('5511987654321','+55 11 8765-4321'),true);
+ assert.equal(samePhone('5511987654321','5521987654321'),false,'DDD diferente');
+ assert.equal(samePhone('5511987654321','5511987654320'),false);
+ assert.equal(samePhone('1133334444','11 93333-4444'),false,'fixo não ganha 9º dígito');
+ assert.deepEqual(phoneMatchKeys(''),[]);
+ assert.deepEqual(phoneMatchKeys('123'),[]);
+});
