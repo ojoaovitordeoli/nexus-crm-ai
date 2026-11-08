@@ -417,7 +417,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       onReplay={()=>{if(section==='dashboard')setMotionReplay(v=>v+1);else router.push('/dashboard')}}
     />
     <aside className={'staff-sidebar '+(mobileOpen?'staff-sidebar--open':'')}>
-      <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={23}/></div><div><strong>NEXUS <span>CRM</span></strong><small>Sistema comercial</small></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
+      <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={18}/></div><div><strong>NEXUS <span>CRM</span></strong></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}</div>
       {organizations.length>1&&<label className="staff-company-choice"><span>Alternar empresa</span><select value={organizationId} onChange={e=>onOrganizationChange(e.target.value)}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
       <nav aria-label="Área de trabalho" className="staff-nav">
