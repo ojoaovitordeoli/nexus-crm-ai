@@ -57,7 +57,8 @@ const whatsApp=value=>{
 const localDayKey=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
 const dueKey=t=>{if(!t?.due_date)return '';const raw=String(t.due_date);if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;const d=new Date(raw);return isNaN(d)?'':localDayKey(d)};
 const APPT_TYPES={meeting:'Reunião',call:'Ligação',followup:'Retorno',visit:'Visita',consultation:'Consulta',exam:'Exame'};
-const formatStatus=s=>String(s||'Sem etapa').replace(/[_-]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+const STATUS_PT={pending:'Pendente',in_progress:'Em andamento',completed:'Concluída',done:'Concluída',cancelled:'Cancelado',canceled:'Cancelado',scheduled:'Agendado',confirmed:'Confirmado',no_show:'Não compareceu',low:'Baixa',medium:'Normal',high:'Alta',urgent:'Urgente',new:'Novo',open:'Em aberto',waiting:'Aguardando',overdue:'Vencida'};
+const formatStatus=s=>STATUS_PT[String(s||'').toLowerCase()]||String(s||'Sem etapa').replace(/[_-]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
 const badgeType=s=>['completed','done','won','closed','paid'].includes(String(s||'').toLowerCase())?'success':
   ['pending','new','waiting','open','in_progress'].includes(String(s||'').toLowerCase())?'pending':
   ['lost','cancelled','canceled','overdue'].includes(String(s||'').toLowerCase())?'danger':'neutral';
@@ -292,7 +293,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const recentAppointments=useMemo(()=>data.appointments.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.appointments,since]);
   const recentSales=useMemo(()=>data.sales.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.sales,since]);
   const openTasks=useMemo(()=>data.tasks.filter(t=>!['completed','done','cancelled','canceled'].includes(String(t.status||'').toLowerCase())),[data.tasks]);
-  const overdueTasks=useMemo(()=>openTasks.filter(t=>t.due_date&&new Date(t.due_date).getTime()<Date.now()),[openTasks]);
+  // Vencida = prazo (dia local) anterior a hoje; a tarefa de hoje não conta como vencida.
+  const overdueTasks=useMemo(()=>{const todayKey=localDayKey(new Date());return openTasks.filter(t=>{const k=dueKey(t);return k&&k<todayKey})},[openTasks]);
   const statuses=useMemo(()=>[...new Set(data.leads.map(l=>l.status).filter(Boolean))],[data.leads]);
   const filteredLeads=data.leads.filter(l=>{
     const text=[nameOf(l.contact),l.contact?.whatsapp,l.source,l.status].join(' ').toLowerCase();
