@@ -20,6 +20,7 @@ import NexusAutomations from './NexusAutomations';
 import NexusWhatsAppInbox from './NexusWhatsAppInbox';
 import NexusAIInsights from './NexusAIInsights';
 import PremiumSales from './PremiumSales';
+import {daysLate,lateLabel} from '../lib/sales-attribution.mjs';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -305,6 +306,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     const done=['completed','done'].includes(String(t.status||'').toLowerCase());
     return t.title.toLowerCase().includes(search.toLowerCase())&&(taskFilter==='all'||(taskFilter==='done'?done:!done));
   });
+  const leadsById=useMemo(()=>new Map(data.leads.map(l=>[l.id,l])),[data.leads]);
   const lateTaskCount=useMemo(()=>{const todayKey=localDayKey(new Date());return openTasks.filter(t=>{const k=dueKey(t);return k&&k<todayKey}).length},[openTasks]);
   const taskGroups=useMemo(()=>{
     const todayKey=localDayKey(new Date());const keyOf=dueKey;
@@ -546,8 +548,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <div className="fx-subhead"><h3>{label}</h3><span className="fx-groupcount">{items.length}</span></div>
               {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
                 <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+t.title}><Check size={14}/></button>
-                <div><strong className={done?'fx-done':''}>{t.title}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}</div>
-                <span className={id==='late'?'fx-late':'fx-due'}>{t.due_date?(id==='today'?'Hoje':date(String(t.due_date).length===10?t.due_date+'T12:00:00':t.due_date)):'Sem prazo'}</span>
+                <div><strong className={done?'fx-done':''}>{t.title}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}{(()=>{const lead=t.lead_id&&leadsById.get(t.lead_id);if(!lead)return null;const who=nameOf(lead.contact);return <small className="fx-task-lead">Lead: <Link href={'/leads?q='+encodeURIComponent(who)}>{who}</Link>{lead.source?' · '+lead.source:''}</small>})()}</div>
+                {(()=>{const shown=t.due_date?date(String(t.due_date).length===10?t.due_date+'T12:00:00':t.due_date):'';const late=id==='late'?lateLabel(daysLate(dueKey(t),localDayKey(new Date()))):'';return <span className={id==='late'?'fx-late':'fx-due'} title={shown?'Prazo '+shown:undefined}>{t.due_date?(id==='today'?'Hoje':late||shown):'Sem prazo'}</span>})()}
               </div>})}
             </div>)}
             {!filteredTasks.length&&<div className="fx-empty"><strong>{search?'Nenhuma tarefa encontrada':taskFilter==='done'?'Nenhuma tarefa concluída':'Nada pendente'}</strong><p>{search?'Ajuste a busca ou o filtro.':taskFilter==='open'&&!readonly?'Use “Adicionar tarefa” para registrar a próxima atividade.':'Altere o filtro para ver outras tarefas.'}</p></div>}
