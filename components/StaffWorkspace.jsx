@@ -54,7 +54,11 @@ const whatsApp=value=>{
   const full=phone.length<=11?'55'+phone:phone;
   return 'https://wa.me/'+full;
 };
-const formatStatus=s=>String(s||'Sem etapa').replace(/[_-]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+const localDayKey=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+const dueKey=t=>{if(!t?.due_date)return '';const raw=String(t.due_date);if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;const d=new Date(raw);return isNaN(d)?'':localDayKey(d)};
+const APPT_TYPES={meeting:'Reunião',call:'Ligação',followup:'Retorno',visit:'Visita',consultation:'Consulta',exam:'Exame'};
+const STATUS_PT={pending:'Pendente',in_progress:'Em andamento',completed:'Concluída',done:'Concluída',cancelled:'Cancelado',canceled:'Cancelado',scheduled:'Agendado',confirmed:'Confirmado',no_show:'Não compareceu',low:'Baixa',medium:'Normal',high:'Alta',urgent:'Urgente',new:'Novo',open:'Em aberto',waiting:'Aguardando',overdue:'Vencida'};
+const formatStatus=s=>STATUS_PT[String(s||'').toLowerCase()]||String(s||'Sem etapa').replace(/[_-]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
 const badgeType=s=>['completed','done','won','closed','paid'].includes(String(s||'').toLowerCase())?'success':
   ['pending','new','waiting','open','in_progress'].includes(String(s||'').toLowerCase())?'pending':
   ['lost','cancelled','canceled','overdue'].includes(String(s||'').toLowerCase())?'danger':'neutral';
@@ -86,6 +90,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [allStages,setAllStages]=useState([]);
   const [appointmentFilter,setAppointmentFilter]=useState('upcoming');
   const [taskFilter,setTaskFilter]=useState('open');
+  const [taskFormOpen,setTaskFormOpen]=useState(false);
+  const [appointmentFormOpen,setAppointmentFormOpen]=useState(false);
   const [period,setPeriod]=useState(30);
   const [mobileOpen,setMobileOpen]=useState(false);
   const router=useRouter();
@@ -191,6 +197,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     setSearch(initial);setStatusFilter('all');setMobileOpen(false);
     setSearchOpen(false);setNotificationsOpen(false);
     if(section==='tasks'&&params.has('new')){
+      setTaskFormOpen(true);
       const timeout=setTimeout(()=>{
         document.querySelector('input[aria-label="Título da tarefa"]')?.focus();
       },200);
@@ -286,7 +293,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const recentAppointments=useMemo(()=>data.appointments.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.appointments,since]);
   const recentSales=useMemo(()=>data.sales.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.sales,since]);
   const openTasks=useMemo(()=>data.tasks.filter(t=>!['completed','done','cancelled','canceled'].includes(String(t.status||'').toLowerCase())),[data.tasks]);
-  const overdueTasks=useMemo(()=>openTasks.filter(t=>t.due_date&&new Date(t.due_date).getTime()<Date.now()),[openTasks]);
+  // Vencida = prazo (dia local) anterior a hoje; a tarefa de hoje não conta como vencida.
+  const overdueTasks=useMemo(()=>{const todayKey=localDayKey(new Date());return openTasks.filter(t=>{const k=dueKey(t);return k&&k<todayKey})},[openTasks]);
   const statuses=useMemo(()=>[...new Set(data.leads.map(l=>l.status).filter(Boolean))],[data.leads]);
   const filteredLeads=data.leads.filter(l=>{
     const text=[nameOf(l.contact),l.contact?.whatsapp,l.source,l.status].join(' ').toLowerCase();
@@ -297,6 +305,19 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     const done=['completed','done'].includes(String(t.status||'').toLowerCase());
     return t.title.toLowerCase().includes(search.toLowerCase())&&(taskFilter==='all'||(taskFilter==='done'?done:!done));
   });
+  const lateTaskCount=useMemo(()=>{const todayKey=localDayKey(new Date());return openTasks.filter(t=>{const k=dueKey(t);return k&&k<todayKey}).length},[openTasks]);
+  const taskGroups=useMemo(()=>{
+    const todayKey=localDayKey(new Date());const keyOf=dueKey;
+    const groups={late:[],today:[],next:[],none:[],done:[]};
+    filteredTasks.forEach(t=>{
+      if(['completed','done'].includes(String(t.status||'').toLowerCase()))return groups.done.push(t);
+      const k=keyOf(t);
+      if(!k)groups.none.push(t);else if(k<todayKey)groups.late.push(t);else if(k===todayKey)groups.today.push(t);else groups.next.push(t);
+    });
+    const byDue=(a,b)=>keyOf(a).localeCompare(keyOf(b));
+    groups.late.sort(byDue);groups.next.sort(byDue);
+    return [['late','Vencidas',groups.late],['today','Hoje',groups.today],['next','Próximas',groups.next],['none','Sem prazo',groups.none],['done','Concluídas',groups.done]].filter(g=>g[2].length);
+  },[filteredTasks]);
   const trend=useMemo(()=>{
     const today=new Date();today.setHours(0,0,0,0);
     return Array.from({length:7},(_,i)=>{
@@ -409,7 +430,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
             if(path==='contacts')window.dispatchEvent(new CustomEvent('nexus:contact-filter',{detail:{query}}));
           }
           if(mode==='new'&&path==='contacts')window.dispatchEvent(new Event('nexus:new-contact'));
-          if(mode==='new'&&path==='tasks')document.querySelector('input[aria-label="Título da tarefa"]')?.focus();
+          if(mode==='new'&&path==='tasks'){setTaskFormOpen(true);setTimeout(()=>document.querySelector('input[aria-label="Título da tarefa"]')?.focus(),60)}
         }
         router.push(target);
       }}
@@ -505,60 +526,81 @@ export default function StaffWorkspace({section,session,profile,organizations,me
 
         {section==='reports'&&<PremiumReports data={data} counts={counts} orgName={currentOrganization.name} readonly={readonly}/>}
         {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark}/>}
-        {section==='tasks'&&<>
-          <div className="staff-page-header"><div><span className="staff-kicker">ORGANIZAÇÃO / ROTINA</span><h1>Minhas tarefas</h1><p>Organize as atividades da sua empresa e mantenha tudo em dia.</p></div><span className="staff-page-counter">{openTasks.length} em aberto</span></div>
-          <section className="staff-card staff-task-page">
-            {!readonly&&<form className="staff-new-task" onSubmit={createTask}>
-              <span className="staff-new-task-icon"><ListTodo size={19}/></span>
-              <input placeholder="O que precisa ser feito?" aria-label="Título da tarefa" required minLength={2} maxLength={190} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)}/>
-              <select className="staff-quick-field" value={taskPriority} onChange={e=>setTaskPriority(e.target.value)} aria-label="Prioridade">
-                <option value="low">Baixa</option><option value="medium">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
-              </select>
-              <input className="staff-date-input" type="date" value={taskDueDate} onChange={e=>setTaskDueDate(e.target.value)} aria-label="Prazo da tarefa"/>
-              <button disabled={saving||taskTitle.trim().length<2} type="submit" className="staff-btn staff-btn--primary">
-                <Plus size={18}/>{saving?'Salvando...':'Adicionar tarefa'}
-              </button>
-            </form>}
-            {readonly&&<div className="staff-readonly"><ShieldCheck size={18}/> Seu perfil é somente leitura. Você pode acompanhar tarefas, mas não editá-las.</div>}
-            <div className="staff-data-controls staff-task-controls"><div className="staff-switch">{[['open','Em aberto'],['done','Concluídas'],['all','Todas']].map(([id,label])=><button key={id} onClick={()=>setTaskFilter(id)} className={taskFilter===id?'active':''}>{label}</button>)}</div><label className="staff-search"><Search size={17}/><input placeholder="Buscar tarefa" value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
-            <div className="staff-task-list">{filteredTasks.map(t=><div key={t.id} className="staff-task-row"><button type="button" disabled={readonly||saving} className={'staff-task-check '+(['completed','done'].includes(String(t.status||'').toLowerCase())?'staff-task-check--done':'')} onClick={()=>changeTask(t)} title="Alterar status da tarefa"><Check size={15}/></button><div className="staff-task-copy"><strong className={['completed','done'].includes(String(t.status||'').toLowerCase())?'staff-task-complete':''}>{t.title}</strong><small>{t.due_date?'Prazo: '+date(t.due_date):'Sem prazo definido'}{t.priority?' · Prioridade: '+formatStatus(t.priority):''}</small></div><Chip value={t.status}/></div>)}</div>
-            {!filteredTasks.length&&<Empty icon={CheckCircle2} title="Nenhuma tarefa nesta lista" description="Altere o filtro ou cadastre uma nova tarefa."/>}
+        {section==='tasks'&&<div className="fx-page fx-tasks">
+          <header className="fx-pagehead">
+            <div className="fx-pagehead-title"><h1>Minhas tarefas</h1><span className="fx-count">{openTasks.length} em aberto</span>{lateTaskCount>0&&<span className="fx-count fx-count--alert">{lateTaskCount} {lateTaskCount===1?'vencida':'vencidas'}</span>}</div>
+            {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn fx-btn--primary" aria-expanded={taskFormOpen} onClick={()=>setTaskFormOpen(v=>!v)}>{taskFormOpen?<><X size={16}/> Fechar</>:<><Plus size={16}/> Adicionar tarefa</>}</button></div>}
+          </header>
+          {!readonly&&taskFormOpen&&<form className="fx-panel" onSubmit={createTask} aria-label="Nova tarefa">
+            <label className="fx-panel-grow">Tarefa<input placeholder="O que precisa ser feito?" aria-label="Título da tarefa" required minLength={2} maxLength={190} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)}/></label>
+            <label>Prioridade<select value={taskPriority} onChange={e=>setTaskPriority(e.target.value)} aria-label="Prioridade">
+              <option value="low">Baixa</option><option value="medium">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
+            </select></label>
+            <label>Prazo<input type="date" value={taskDueDate} onChange={e=>setTaskDueDate(e.target.value)} aria-label="Prazo da tarefa"/></label>
+            <button disabled={saving||taskTitle.trim().length<2} type="submit" className="fx-btn fx-btn--primary">{saving?'Salvando...':'Salvar tarefa'}</button>
+          </form>}
+          {readonly&&<div className="fx-alert fx-alert--info"><ShieldCheck size={16}/> Seu perfil é somente leitura. Você pode acompanhar tarefas, mas não editá-las.</div>}
+          <section className="fx-box">
+            <div className="fx-boxhead"><div className="fx-tabs" role="group" aria-label="Filtrar tarefas">{[['open','Em aberto'],['done','Concluídas'],['all','Todas']].map(([id,label])=><button type="button" key={id} aria-pressed={taskFilter===id} onClick={()=>setTaskFilter(id)} className={taskFilter===id?'active':''}>{label}</button>)}</div><label className="fx-search fx-search--end"><Search size={15}/><input placeholder="Buscar tarefa" aria-label="Buscar tarefa" value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
+            {taskGroups.map(([id,label,items])=><div key={id} className={'fx-group fx-group--'+id}>
+              <div className="fx-subhead"><h3>{label}</h3><span className="fx-groupcount">{items.length}</span></div>
+              {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
+                <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+t.title}><Check size={14}/></button>
+                <div><strong className={done?'fx-done':''}>{t.title}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}</div>
+                <span className={id==='late'?'fx-late':'fx-due'}>{t.due_date?(id==='today'?'Hoje':date(String(t.due_date).length===10?t.due_date+'T12:00:00':t.due_date)):'Sem prazo'}</span>
+              </div>})}
+            </div>)}
+            {!filteredTasks.length&&<div className="fx-empty"><strong>{search?'Nenhuma tarefa encontrada':taskFilter==='done'?'Nenhuma tarefa concluída':'Nada pendente'}</strong><p>{search?'Ajuste a busca ou o filtro.':taskFilter==='open'&&!readonly?'Use “Adicionar tarefa” para registrar a próxima atividade.':'Altere o filtro para ver outras tarefas.'}</p></div>}
           </section>
-        </>}
+        </div>}
 
-        {section==='agenda'&&<>
-          <div className="staff-page-header"><div><span className="staff-kicker">COMPROMISSOS</span><h1>Agenda da operação</h1><p>Crie compromissos reais e acompanhe os agendamentos da empresa.</p></div><span className="staff-page-counter">{number(counts.appointments)} agendamentos</span></div>
-          <MotionCalendar appointments={data.appointments} readonly={readonly} onPick={day=>{
-            setAppointmentStart(day+'T09:00');
-            document.getElementById('staff-agenda-form')?.scrollIntoView({behavior:'smooth',block:'center'});
-          }}/>
-          {!readonly&&<section className="staff-card staff-agenda-create" id="staff-agenda-form">
-            <div className="staff-card-heading"><div><h3>Novo agendamento</h3><p>Registre um compromisso no calendário da empresa.</p></div><CalendarDays size={20}/></div>
-            <form className="staff-agenda-form" onSubmit={createAppointment}>
-              <label>Título<input required minLength={2} maxLength={190} placeholder="Ex.: Reunião com cliente" value={appointmentTitle} onChange={e=>setAppointmentTitle(e.target.value)}/></label>
-              <label>Data e horário<input required type="datetime-local" value={appointmentStart} onChange={e=>setAppointmentStart(e.target.value)}/></label>
-              <label>Tipo<select value={appointmentType} onChange={e=>setAppointmentType(e.target.value)}>
-                <option value="meeting">Reunião</option><option value="call">Ligação</option><option value="followup">Retorno</option><option value="visit">Visita</option><option value="consultation">Consulta</option><option value="exam">Exame</option>
-              </select></label>
-              <label>Local (opcional)<input maxLength={220} placeholder="Online ou endereço" value={appointmentLocation} onChange={e=>setAppointmentLocation(e.target.value)}/></label>
-              <button className="staff-btn staff-btn--primary" disabled={saving||!appointmentTitle.trim()||!appointmentStart} type="submit"><Plus size={17}/>{saving?'Salvando...':'Agendar compromisso'}</button>
-            </form>
-          </section>}
-          <section className="staff-card staff-data-card">
-            <div className="staff-card-heading staff-appointment-heading"><div><h3>Agendamentos da empresa</h3><p>Os registros são salvos no Supabase, não no Google Calendar.</p></div>
-              <div className="staff-switch">{[['upcoming','Próximos'],['all','Todos']].map(([id,v])=><button type="button" className={appointmentFilter===id?'active':''} key={id} onClick={()=>setAppointmentFilter(id)}>{v}</button>)}</div>
+        {section==='agenda'&&(()=>{
+          const now=new Date();const pad=v=>String(v).padStart(2,'0');
+          const keyOf=v=>{const d=new Date(v);return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-')};
+          const todayKey=keyOf(now);
+          const todays=data.appointments.filter(a=>a.start_at&&keyOf(a.start_at)===todayKey).sort((a,b)=>new Date(a.start_at)-new Date(b.start_at));
+          const upcoming=data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&keyOf(a.start_at)!==todayKey&&!['cancelled','completed'].includes(a.status))).sort((a,b)=>new Date(a.start_at||0)-new Date(b.start_at||0));
+          const hour=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+          const row=(a,showDay)=><div className="fx-row fx-apptrow" key={a.id}>
+            <span className="fx-appt-when">{showDay&&<small>{a.start_at?new Date(a.start_at).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace(/\./g,''):'Sem data'}</small>}<strong>{hour(a.start_at)}</strong></span>
+            <div><strong>{a.title||'Agendamento'}</strong><small>{[APPT_TYPES[a.type]||'',a.location||''].filter(Boolean).join(' · ')||'Sem local informado'}</small></div>
+            {readonly?<Chip value={a.status}/>:<select className="fx-select" aria-label={'Status de '+a.title} value={a.status||'scheduled'} disabled={saving} onChange={e=>updateAppointment(a,e.target.value)}>
+              <option value="scheduled">Agendado</option><option value="confirmed">Confirmado</option><option value="completed">Concluído</option><option value="cancelled">Cancelado</option><option value="no_show">Não compareceu</option>
+            </select>}
+          </div>;
+          return <div className="fx-page fx-agenda">
+          <header className="fx-pagehead">
+            <div className="fx-pagehead-title"><h1>Agenda</h1><span className="fx-count">{number(counts.appointments)} {counts.appointments===1?'agendamento':'agendamentos'}</span></div>
+            {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn fx-btn--primary" aria-expanded={appointmentFormOpen} onClick={()=>setAppointmentFormOpen(v=>!v)}>{appointmentFormOpen?<><X size={16}/> Fechar</>:<><Plus size={16}/> Novo compromisso</>}</button></div>}
+          </header>
+          {!readonly&&appointmentFormOpen&&<form className="fx-panel" id="staff-agenda-form" onSubmit={createAppointment} aria-label="Novo compromisso">
+            <label className="fx-panel-grow">Título<input required minLength={2} maxLength={190} placeholder="Ex.: Reunião com cliente" value={appointmentTitle} onChange={e=>setAppointmentTitle(e.target.value)} autoFocus/></label>
+            <label>Data e horário<input required type="datetime-local" value={appointmentStart} onChange={e=>setAppointmentStart(e.target.value)}/></label>
+            <label>Tipo<select value={appointmentType} onChange={e=>setAppointmentType(e.target.value)}>
+              <option value="meeting">Reunião</option><option value="call">Ligação</option><option value="followup">Retorno</option><option value="visit">Visita</option><option value="consultation">Consulta</option><option value="exam">Exame</option>
+            </select></label>
+            <label>Local (opcional)<input maxLength={220} placeholder="Online ou endereço" value={appointmentLocation} onChange={e=>setAppointmentLocation(e.target.value)}/></label>
+            <button className="fx-btn fx-btn--primary" disabled={saving||!appointmentTitle.trim()||!appointmentStart} type="submit">{saving?'Salvando...':'Salvar compromisso'}</button>
+          </form>}
+          <div className="fx-agenda-grid">
+            <div className="fx-agenda-main">
+              <section className="fx-box">
+                <div className="fx-boxhead"><h2>Hoje</h2><span className="fx-boxmeta">{now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</span><span className="fx-groupcount">{todays.length}</span></div>
+                {todays.length?todays.map(a=>row(a,false)):<p className="fx-empty-small">Nenhum compromisso hoje.</p>}
+              </section>
+              <section className="fx-box">
+                <div className="fx-boxhead"><h2>{appointmentFilter==='all'?'Todos os compromissos':'Próximos'}</h2><span className="fx-groupcount">{upcoming.length}</span><div className="fx-tabs fx-tabs--end" role="group" aria-label="Filtrar compromissos">{[['upcoming','Próximos'],['all','Todos']].map(([id,v])=><button type="button" aria-pressed={appointmentFilter===id} className={appointmentFilter===id?'active':''} key={id} onClick={()=>setAppointmentFilter(id)}>{v}</button>)}</div></div>
+                {upcoming.map(a=>row(a,true))}
+                {!upcoming.length&&<p className="fx-empty-small">{appointmentFilter==='all'?'Nenhum compromisso registrado.':'Nenhum compromisso a partir de amanhã. Escolha “Todos” para ver o histórico.'}</p>}
+                <div className="fx-boxfoot">Agenda interna do NEXUS CRM. Sincronização externa depende de uma integração autorizada.</div>
+              </section>
             </div>
-            <div className="staff-appointment-list">{data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&!['cancelled','completed'].includes(a.status))).map(a=><div className="staff-appointment-row" key={a.id}>
-              <span className="staff-appointment-icon"><CalendarDays size={21}/></span><div><strong>{a.title||'Agendamento'}</strong><small>{dayTime(a.start_at)}{a.location?' · '+a.location:''}</small></div>
-              <Chip value={a.status}/>
-              {!readonly&&<select className="staff-appt-status" aria-label={'Status de '+a.title} value={a.status||'scheduled'} disabled={saving} onChange={e=>updateAppointment(a,e.target.value)}>
-                <option value="scheduled">Agendado</option><option value="confirmed">Confirmado</option><option value="completed">Concluído</option><option value="cancelled">Cancelado</option><option value="no_show">Não compareceu</option>
-              </select>}
-            </div>)}</div>
-            {!data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&!['cancelled','completed'].includes(a.status))).length&&<Empty icon={CalendarDays} title="Nenhum agendamento neste filtro" description="Crie um agendamento ou escolha a opção Todos."/>}
-            <div className="staff-table-footer">Agenda interna do NEXUS CRM. Sincronização externa depende de uma integração autorizada.</div>
-          </section>
-        </>}
+            <MotionCalendar appointments={data.appointments} readonly={readonly} onPick={day=>{
+              setAppointmentStart(day+'T09:00');setAppointmentFormOpen(true);
+              setTimeout(()=>document.getElementById('staff-agenda-form')?.scrollIntoView({behavior:'smooth',block:'center'}),60);
+            }}/>
+          </div>
+        </div>})()}
 
         {section==='minha-area'&&<>
           <div className="staff-page-header"><div><span className="staff-kicker">MINHA CONTA</span><h1>Meu espaço</h1><p>Seu perfil e as empresas que você pode acessar.</p></div></div>

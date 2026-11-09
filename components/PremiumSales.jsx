@@ -1,17 +1,21 @@
 'use client';
-import {useState} from 'react';
-import {CheckCircle2,Plus,Receipt,TrendingUp,Wallet} from 'lucide-react';
+import {useMemo,useState} from 'react';
+import {CheckCircle2,Plus,X} from 'lucide-react';
 
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n)||0);
 const date=v=>v?new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';
+const PERIODS=[['all','Todas'],[30,'30 dias'],[90,'90 dias']];
 
 export default function PremiumSales({sales=[],count=0,readonly=false,onOperation,onReload}){
   const [value,setValue]=useState('');
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
-  const revenue=sales.reduce((sum,item)=>sum+Number(item.value||0),0);
-  const average=sales.length?revenue/sales.length:0;
+  const [showCreate,setShowCreate]=useState(false);
+  const [period,setPeriod]=useState('all');
+  const shown=useMemo(()=>period==='all'?sales:sales.filter(s=>new Date(s.created_at||0).getTime()>=Date.now()-period*86400000),[sales,period]);
+  const revenue=shown.reduce((sum,item)=>sum+Number(item.value||0),0);
+  const average=shown.length?revenue/shown.length:0;
   const partial=count>sales.length;
   async function create(e){
     e.preventDefault();
@@ -22,11 +26,29 @@ export default function PremiumSales({sales=[],count=0,readonly=false,onOperatio
     catch(e){setError(e.message||'Não foi possível registrar a venda.')}
     finally{setSaving(false)}
   }
-  return <div className="nxp-premium nxp-sales-page">
-    <div className="nxp-page-head"><div><span className="nxp-kicker">Resultados comerciais</span><h1>Vendas</h1><p>Registre as vendas e acompanhe os valores lançados pela equipe.</p></div><span className="nxp-total"><span/>{count} vendas carregadas</span></div>
-    {error&&<div className="nxp-error" role="alert">{error}</div>}{notice&&<div className="nxp-success" role="status"><CheckCircle2 size={16}/>{notice}</div>}
-    <div className="nxp-sales-metrics"><article><span><Receipt size={19}/></span><small>Vendas registradas</small><strong>{count}</strong><em>na empresa</em></article><article><span><Wallet size={19}/></span><small>Receita carregada</small><strong>{money(revenue)}</strong><em>entre as vendas carregadas</em></article><article><span><TrendingUp size={19}/></span><small>Ticket médio</small><strong>{money(average)}</strong><em>entre as vendas carregadas</em></article></div>
-    {!readonly&&<section className="nxp-surface nxp-sale-create"><div><span className="nxp-kicker">Nova venda</span><h2>Registrar venda</h2><p>Informe o valor da venda. O histórico e os indicadores serão atualizados.</p></div><form onSubmit={create}><label>Valor da venda<input inputMode="decimal" required min="0.01" step="0.01" placeholder="R$ 0,00" value={value} onChange={e=>setValue(e.target.value)}/></label><button className="nxp-button nxp-button--primary" disabled={saving||!value}>{saving?'Registrando...':<><Plus size={16}/> Registrar venda</>}</button></form></section>}
-    <section className="nxp-surface nxp-sales-list"><div className="nxp-panel-head"><div><span className="nxp-kicker">Histórico</span><h3>Últimas vendas</h3><p>Registros mais recentes da empresa. {partial?'Os valores acima consideram somente as vendas carregadas, não o histórico integral.':'Os valores acima consideram as vendas carregadas.'}</p></div><Receipt size={21}/></div>{sales.length?<div className="nxp-sales-table"><div className="nxp-sales-row nxp-sales-row--head"><span>Identificador</span><span>Data</span><span>Valor</span></div>{sales.map((sale,index)=><div className="nxp-sales-row" key={sale.id}><span><strong>Venda #{String(sale.id).slice(0,8)}</strong><small>Registro operacional {index+1}</small></span><span>{date(sale.created_at)}</span><strong>{money(sale.value)}</strong></div>)}</div>:<div className="nxp-sales-empty"><Receipt size={28}/><strong>Nenhuma venda registrada ainda</strong><p>Registre a primeira venda para começar a acompanhar receita e ticket médio.</p></div>}</section>
+  return <div className="fx-page fx-sales">
+    <header className="fx-pagehead">
+      <div className="fx-pagehead-title"><h1>Vendas</h1><span className="fx-count">{count} {count===1?'venda':'vendas'}</span></div>
+      {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn fx-btn--primary" aria-expanded={showCreate} onClick={()=>setShowCreate(v=>!v)}>{showCreate?<><X size={16}/> Fechar</>:<><Plus size={16}/> Registrar venda</>}</button></div>}
+    </header>
+    {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
+    {notice&&<div className="fx-alert fx-alert--ok" role="status"><CheckCircle2 size={16}/>{notice}</div>}
+    {!readonly&&showCreate&&<form className="fx-panel fx-panel--narrow" onSubmit={create} aria-label="Registrar venda">
+      <label>Valor da venda<input inputMode="decimal" required min="0.01" step="0.01" placeholder="R$ 0,00" value={value} onChange={e=>setValue(e.target.value)} autoFocus/></label>
+      <button className="fx-btn fx-btn--primary" disabled={saving||!value}>{saving?'Registrando...':'Salvar venda'}</button>
+    </form>}
+    <section className="fx-strip" aria-label="Resumo das vendas">
+      <div><span>Total</span><strong>{money(revenue)}</strong></div>
+      <div><span>Quantidade</span><strong>{shown.length}</strong></div>
+      <div><span>Ticket médio</span><strong>{shown.length?money(average):'—'}</strong></div>
+      <p className="fx-strip-note">{partial?'Calculado sobre as '+sales.length+' vendas carregadas de '+count+' registradas.':'Calculado sobre as vendas registradas.'}</p>
+    </section>
+    <section className="fx-box">
+      <div className="fx-boxhead"><h2>Últimas vendas</h2><div className="fx-tabs" role="group" aria-label="Período">{PERIODS.map(([id,text])=><button type="button" key={id} className={period===id?'active':''} aria-pressed={period===id} onClick={()=>setPeriod(id)}>{text}</button>)}</div></div>
+      {shown.length?<div className="fx-table fx-table--sales" role="table" aria-label="Vendas registradas">
+        <div className="fx-thead" role="row"><span role="columnheader">Venda</span><span role="columnheader">Data</span><span role="columnheader">Valor</span></div>
+        {shown.map(sale=><div className="fx-tr" role="row" key={sale.id}><span role="cell"><strong>Venda #{String(sale.id).slice(0,8)}</strong></span><span role="cell" className="fx-muted">{date(sale.created_at)}</span><strong role="cell" className="fx-num">{money(sale.value)}</strong></div>)}
+      </div>:<div className="fx-empty"><strong>{sales.length?'Nenhuma venda neste período':'Nenhuma venda registrada'}</strong><p>{sales.length?'Escolha outro período.':readonly?'As vendas lançadas pela equipe aparecerão aqui.':'Use “Registrar venda” para lançar a primeira.'}</p></div>}
+    </section>
   </div>;
 }

@@ -1,6 +1,6 @@
 'use client';
 import {useMemo,useState} from 'react';
-import {CalendarDays,ChevronLeft,ChevronRight,Clock3,MapPin,Plus} from 'lucide-react';
+import {ChevronLeft,ChevronRight,Plus} from 'lucide-react';
 
 const pad=v=>String(v).padStart(2,'0');
 const toKey=d=>[d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-');
@@ -41,41 +41,35 @@ export default function MotionCalendar({appointments=[],onPick,readonly=false}){
   const goToday=()=>{
     const now=new Date();setDisplayMonth(startOfMonth(now));setSelected(toKey(now));
   };
-  return <div className="motion-calendar-grid">
-    <section className="motion-calendar" aria-label="Calendário de agendamentos">
-      <div className="motion-calendar-toolbar">
-        <div><span className="motion-calendar-kicker">CALENDÁRIO INTERATIVO</span><h3>{monthName(displayMonth)}</h3></div>
-        <div className="motion-calendar-month-actions">
-          <button type="button" onClick={goToday}>Hoje</button>
-          <button type="button" onClick={()=>changeMonth(-1)} aria-label="Mês anterior"><ChevronLeft size={18}/></button>
-          <button type="button" onClick={()=>changeMonth(1)} aria-label="Próximo mês"><ChevronRight size={18}/></button>
+  const selectedLabel=selected===today?'Hoje':fromKey(selected).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  return <aside className="fx-box fx-cal" aria-label="Navegação da agenda">
+    <section aria-label="Calendário de agendamentos">
+      <div className="fx-cal-head">
+        <h2>{monthName(displayMonth)}</h2>
+        <div className="fx-cal-nav">
+          <button type="button" className="fx-cal-today" onClick={goToday}>Hoje</button>
+          <button type="button" onClick={()=>changeMonth(-1)} aria-label="Mês anterior"><ChevronLeft size={16}/></button>
+          <button type="button" onClick={()=>changeMonth(1)} aria-label="Próximo mês"><ChevronRight size={16}/></button>
         </div>
       </div>
-      <div className="motion-calendar-weekdays">{dayNames.map(x=><span key={x}>{x}</span>)}</div>
-      <div key={displayMonth.toISOString()} className="motion-calendar-days">
-        {days.map(({key,day,other,total},i)=><button type="button" key={key}
-          className={'motion-calendar-day'+(other?' is-outside':'')+(key===selected?' is-selected':'')+(key===today?' is-today':'')}
+      <div className="fx-cal-weekdays" aria-hidden="true">{dayNames.map(x=><span key={x}>{x.slice(0,1)}</span>)}</div>
+      <div className="fx-cal-days">
+        {days.map(({key,day,other,total})=><button type="button" key={key}
+          className={'fx-cal-day'+(other?' is-outside':'')+(key===selected?' is-selected':'')+(key===today?' is-today':'')}
           onClick={()=>{setSelected(key);if(other)setDisplayMonth(startOfMonth(fromKey(key)))}}
-          style={{'--day-index':i}} aria-pressed={selected===key} aria-label={fromKey(key).toLocaleDateString('pt-BR',{day:'numeric',month:'long'})+(total?' — '+total+' compromisso(s)':'')}>
-          <span>{day}</span>{total>0&&<i title={total+' agendamento(s)'}/>}
+          aria-pressed={selected===key} aria-label={fromKey(key).toLocaleDateString('pt-BR',{day:'numeric',month:'long'})+(total?' — '+total+' compromisso(s)':'')}>
+          <span>{day}</span>{total>0&&<i/>}
         </button>)}
       </div>
-      <div className="motion-calendar-legend"><i/> Dias com compromissos <span>Selecione um dia para ver os detalhes</span></div>
     </section>
-    <aside className="motion-calendar-day-panel">
-      <div className="motion-calendar-panel-top">
-        <span className="motion-calendar-kicker">AGENDA DO DIA</span>
-        <h3>{fromKey(selected).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</h3>
-        <p>{matches.length?matches.length+' compromisso(s) registrado(s)':'Nenhum compromisso neste dia'}</p>
-      </div>
-      <div key={selected} className="motion-calendar-day-list">
-        {matches.map((a,i)=><article className="motion-calendar-agenda-item" key={a.id} style={{'--item-index':i}}>
-          <span className="motion-calendar-time">{timeOf(a.start_at)}</span>
-          <div><strong>{a.title||'Compromisso'}</strong><small>{statuses[a.status]||a.status||'Agendado'}</small>{a.location&&<small><MapPin size={12}/>{a.location}</small>}</div>
-        </article>)}
-        {!matches.length&&<div className="motion-calendar-empty"><CalendarDays size={31}/><strong>Dia disponível</strong><p>Selecione outro dia ou cadastre um novo compromisso.</p></div>}
-      </div>
-      {!readonly&&<button type="button" className="motion-calendar-add" onClick={()=>onPick(selected)}><Plus size={16}/> Agendar para este dia</button>}
-    </aside>
-  </div>;
+    <div className="fx-subhead"><h3>{selectedLabel}</h3><span className="fx-groupcount">{matches.length}</span></div>
+    <div className="fx-cal-list">
+      {matches.map(a=><div className="fx-cal-item" key={a.id}>
+        <span className="fx-cal-time">{timeOf(a.start_at)}</span>
+        <div><strong>{a.title||'Compromisso'}</strong><small>{statuses[a.status]||a.status||'Agendado'}{a.location?' · '+a.location:''}</small></div>
+      </div>)}
+      {!matches.length&&<p className="fx-empty-small">Nenhum compromisso neste dia.</p>}
+    </div>
+    {!readonly&&<div className="fx-cal-foot"><button type="button" className="fx-btn" onClick={()=>onPick(selected)}><Plus size={15}/> Agendar neste dia</button></div>}
+  </aside>;
 }

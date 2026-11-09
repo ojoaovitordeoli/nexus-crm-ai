@@ -431,27 +431,35 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
     document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
     setSuccess('CSV gerado com '+list.length+' contato(s) carregados e filtrados.');
   }
-  return <div className="nxp-premium">
-    <PanelHeader eyebrow="Cadastro" title="Contatos" detail="Pessoas cadastradas nesta empresa." right={<div className="nxp-contact-toolbar"><span className="nxp-total"><span/>{fmt(count)} na sua base</span>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={exportContacts} disabled={!list.length} title="Exportar os contatos carregados conforme o filtro atual"><Download size={15}/> Exportar CSV</button>}{!readonly&&<button className="nxp-button nxp-button--primary" type="button" onClick={()=>setShowCreate(v=>!v)}><Plus size={16}/>{showCreate?'Fechar':'Novo contato'}</button>}</div>}/>
-
-    {error&&<div className="nxp-error" role="alert">{error}</div>}
-    {success&&<div className="nxp-success" role="status"><CircleCheck size={16}/>{success}</div>}
-    {showCreate&&<form className="nxp-create-contact" onSubmit={createContact}>
-      <label>Nome<input type="text" placeholder="Nome do contato" minLength={2} maxLength={130} required value={newName} onChange={e=>setNewName(e.target.value)}/></label>
+  return <div className="fx-page fx-contacts">
+    <header className="fx-pagehead">
+      <div className="fx-pagehead-title"><h1>Contatos</h1><span className="fx-count">{fmt(count)} {count===1?'contato':'contatos'}</span></div>
+      {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn" onClick={exportContacts} disabled={!list.length} title="Exportar os contatos carregados conforme o filtro atual"><Download size={15}/> Exportar CSV</button><button className="fx-btn fx-btn--primary" type="button" aria-expanded={showCreate} onClick={()=>setShowCreate(v=>!v)}>{showCreate?<><X size={16}/> Fechar</>:<><Plus size={16}/> Novo contato</>}</button></div>}
+    </header>
+    {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
+    {success&&<div className="fx-alert fx-alert--ok" role="status"><CircleCheck size={16}/>{success}</div>}
+    {showCreate&&<form className="fx-panel" onSubmit={createContact} aria-label="Novo contato">
+      <label>Nome<input type="text" placeholder="Nome do contato" minLength={2} maxLength={130} required value={newName} onChange={e=>setNewName(e.target.value)} autoFocus/></label>
       <label>WhatsApp com DDD<input type="tel" placeholder="(48) 99999-9999" value={newPhone} onChange={e=>setNewPhone(e.target.value)}/></label>
-      <button type="submit" className="nxp-button nxp-button--primary" disabled={saving||newName.trim().length<2}>{saving?'Salvando...':'Salvar contato'}</button>
+      <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||newName.trim().length<2}>{saving?'Salvando...':'Salvar contato'}</button>
     </form>}
-    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'contato cadastrado':'contatos cadastrados'}</span><i/><span><strong>{fmt(withPhone)}</strong> com WhatsApp entre os registros carregados</span></div>
-    <section className="nxp-surface nxp-leads-workarea">
-      <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Buscar nome ou número de WhatsApp..." aria-label="Pesquisar contatos" value={query} onChange={e=>setQuery(e.target.value)}/></label><div className="nxp-mode-switch"><button type="button" className={layout==='grid'?'active':''} title="Cards" aria-label="Cards" onClick={()=>setLayout('grid')}><Columns3 size={18}/></button><button type="button" className={layout==='list'?'active':''} title="Lista" aria-label="Lista" onClick={()=>setLayout('list')}><LayoutList size={18}/></button></div></div>
-      {layout==='grid'?<div className="nxp-contact-grid">{list.map(c=><article className="nxp-contact-card" key={c.id}>
-        <button type="button" className="nxp-contact-card-person" onClick={()=>setSelected(c)}><Avatar value={display(c)} large/><h3>{display(c)}</h3><p>{c.whatsapp||'Telefone não informado'}</p></button>
-        <div className="nxp-contact-card-line"><Clock3 size={14}/> Desde {date(c.created_at)}</div>
-        <div className="nxp-contact-card-actions"><button type="button" onClick={()=>setSelected(c)}><UserRound size={15}/> Detalhes</button><WhatsLink phone={c.whatsapp}>Conversar</WhatsLink></div>
-      </article>)}</div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>WhatsApp</th><th>Cadastrado</th><th>Ações</th></tr></thead><tbody>{list.map(c=><tr key={c.id}><td><button type="button" className="nxp-person-btn" onClick={()=>setSelected(c)}><Avatar value={display(c)}/><strong>{display(c)}</strong></button></td><td>{c.whatsapp||'—'}</td><td>{date(c.created_at)}</td><td><WhatsLink phone={c.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table></div>}
-      {!list.length&&<Empty icon={ContactRound} title="Nenhum contato encontrado" detail="Os contatos cadastrados na empresa aparecerão aqui."/>}<div className="nxp-footnote">{list.length} {list.length===1?'contato exibido':'contatos exibidos'} · Até 250 registros recentes por empresa</div>
+    <section className="fx-box">
+      <div className="fx-searchbar">
+        <label className="fx-bigsearch"><Search size={18}/><input type="search" placeholder="Buscar por nome ou WhatsApp" aria-label="Pesquisar contatos" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button type="button" aria-label="Limpar busca" onClick={()=>setQuery('')}><X size={16}/></button>}</label>
+        <span className="fx-searchcount">{query?list.length+' de '+contacts.length:fmt(contacts.length)+' carregados'}</span>
+        <div className="fx-tabs" role="group" aria-label="Exibição"><button type="button" className={layout==='list'?'active':''} title="Lista" aria-label="Lista" aria-pressed={layout==='list'} onClick={()=>setLayout('list')}><LayoutList size={16}/></button><button type="button" className={layout==='grid'?'active':''} title="Cards" aria-label="Cards" aria-pressed={layout==='grid'} onClick={()=>setLayout('grid')}><Columns3 size={16}/></button></div>
+      </div>
+      {layout==='grid'?<div className="fx-cardgrid">{list.map(c=><article className="fx-pcard" key={c.id}>
+        <button type="button" className="fx-pcard-person" onClick={()=>setSelected(c)}><span className="fx-avatar">{letters(display(c))}</span><span><strong>{display(c)}</strong><small>{c.whatsapp||'Telefone não informado'}</small></span></button>
+        <div className="fx-pcard-foot"><span>Desde {date(c.created_at)}</span><WhatsLink phone={c.whatsapp} className="fx-wa">Conversar</WhatsLink></div>
+      </article>)}</div>:list.length>0&&<div className="fx-table fx-table--contacts" role="table" aria-label="Contatos">
+        <div className="fx-thead" role="row"><span role="columnheader">Contato</span><span role="columnheader">WhatsApp</span><span role="columnheader">Cadastrado</span><span role="columnheader"><span className="fx-sr">Ações</span></span></div>
+        {list.map(c=><div className="fx-tr" role="row" key={c.id}><span role="cell"><button type="button" className="fx-person" onClick={()=>setSelected(c)}><span className="fx-avatar">{letters(display(c))}</span><strong>{display(c)}</strong></button></span><span role="cell" className="fx-muted">{c.whatsapp||'—'}</span><span role="cell" className="fx-muted">{date(c.created_at)}</span><span role="cell" className="fx-cell-end"><WhatsLink phone={c.whatsapp} className="fx-wa">Conversar</WhatsLink></span></div>)}
+      </div>}
+      {!list.length&&<div className="fx-empty"><strong>{query?'Nenhum contato encontrado':'Nenhum contato cadastrado'}</strong><p>{query?'Confira a grafia ou busque pelo número com DDD.':readonly?'Os contatos da empresa aparecerão aqui.':'Use “Novo contato” para cadastrar o primeiro.'}</p>{query&&<button type="button" className="fx-btn" onClick={()=>setQuery('')}>Limpar busca</button>}</div>}
+      <div className="fx-boxfoot">{fmt(withPhone)} com WhatsApp entre os carregados · até 250 registros recentes por empresa</div>
     </section>
-    <Drawer type="contact" data={selected} onClose={()=>setSelected(null)}/>
+    {selected&&<div className="nxp-premium fx-drawer-host"><Drawer type="contact" data={selected} onClose={()=>setSelected(null)}/></div>}
   </div>;
 }
 
