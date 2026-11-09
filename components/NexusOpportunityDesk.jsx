@@ -2,7 +2,7 @@
 
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {
-  ArrowDownUp,ArrowRight,ArrowUpRight,CalendarPlus,Check,ChevronDown,
+  ArrowDownUp,CalendarPlus,Check,ChevronDown,
   ChevronLeft,ChevronRight,Clock3,Download,Filter,Layers3,
   MessageCircle,MoreHorizontal,PanelRightClose,Search,Settings2,ShieldCheck,
   UserRound,Users,X
@@ -54,13 +54,13 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
     }catch(err){setError(err.message||'Falha ao criar tarefa.')}finally{setSaving(false)}
   }
   return <section className="nx13-detail" id="nx13-detail" aria-label={'Ficha de '+person}>
-    <div className="nx13-detail-breadcrumb"><span>Registro do CRM</span><button type="button" onClick={onClose} title="Fechar ficha" aria-label="Fechar ficha"><PanelRightClose size={18}/></button></div>
+    <div className="nx13-detail-breadcrumb"><button type="button" onClick={onClose} title="Fechar ficha" aria-label="Fechar ficha"><PanelRightClose size={18}/></button></div>
     <div className="nx13-person">
       <Avatar person={person} large/>
-      <div><span className="nx13-overline">CONTATO</span><h2>{person}</h2><p>{phone||'Telefone não informado'}</p></div>
+      <div><h2>{person}</h2><p>{phone||'Telefone não informado'}</p></div>
     </div>
     <div className="nx13-actionbar">
-      {whatsapp?<a href={whatsapp} target="_blank" rel="noopener noreferrer" className="nx13-action-primary"><MessageCircle size={17}/> WhatsApp <ArrowUpRight size={14}/></a>:
+      {whatsapp?<a href={whatsapp} target="_blank" rel="noopener noreferrer" className="nx13-action-primary"><MessageCircle size={17}/> WhatsApp</a>:
         <span className="nx13-action-disabled">WhatsApp indisponível</span>}
       <button type="button" onClick={()=>setTab('retorno')} className="nx13-action-muted"><CalendarPlus size={17}/> Criar retorno</button>
     </div>
@@ -93,6 +93,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
             </div>
           </>}
           {[
+            ...(Number(lead.estimated_value)>0?[['Valor estimado',new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(lead.estimated_value))]]:[]),
             ['Origem',lead.source||'Não informada'],['Temperatura',label(lead.temperature)],
             ['Status',label(lead.status)],['Cadastro',date(lead.created_at)]
           ].map(([k,v])=><div className="nx13-keyval" key={k}><span>{k}</span><strong>{v}</strong></div>)}
@@ -112,7 +113,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
             <label>Data<input type="date" value={due} onChange={e=>setDue(e.target.value)}/></label>
             <label>Prioridade<select value={priority} onChange={e=>setPriority(e.target.value)}><option value="low">Baixa</option><option value="medium">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
           </div>
-          <button type="submit" disabled={readonly||saving||!note.trim()} className="nx13-submit">{saving?'Salvando...':'Adicionar tarefa'} <ArrowRight size={16}/></button>
+          <button type="submit" disabled={readonly||saving||!note.trim()} className="nx13-submit">{saving?'Salvando...':'Adicionar tarefa'}</button>
         </form>
         <p className="nx13-disclosure">A tarefa fica vinculada a este lead e aparece na aba Atividade. O nome do contato também vai no título para facilitar a leitura na lista de tarefas.</p>
       </div>}
@@ -184,7 +185,7 @@ export default function NexusOpportunityDesk({
   return <div className="nx13-workspace">
     <header className="nx13-header">
       <div className="nx13-header-title">
-        <div className="nx13-titleline"><h1>Leads</h1><span className="nx13-count">{fmt(total)}</span></div><p>Contatos, oportunidades e próximos passos em uma só tela.</p>
+        <div className="nx13-titleline"><h1>Leads</h1><span className="nx13-count">{fmt(total)}</span></div>
       </div>
       <div className="nx13-header-actions">
         <button type="button" onClick={exportList} disabled={!filtered.length} className="nx13-softbutton"><Download size={16}/> Exportar</button>
@@ -195,8 +196,8 @@ export default function NexusOpportunityDesk({
     <div className="nx13-layout">
       <section className="nx13-collection" aria-label="Lista de leads">
         <div className="nx13-toolbar">
-          <div className="nx13-viewline"><span className="nx13-view-label">Oportunidades</span><span className="nx13-count-small">{fmt(filtered.length)} exibidos</span>
-            <button type="button" className="nx13-viewbutton" onClick={onShowBoard}><Layers3 size={16}/> Quadro <ArrowUpRight size={13}/></button></div>
+          <div className="nx13-viewline"><span className="nx13-count-small">{fmt(filtered.length)} {filtered.length===1?'exibido':'exibidos'}</span>
+            <button type="button" className="nx13-viewbutton" onClick={onShowBoard}><Layers3 size={16}/> Quadro</button></div>
           <label className="nx13-search"><Search size={17}/><input type="search" aria-label="Pesquisar leads" placeholder="Buscar contato, telefone ou origem" value={search} onChange={e=>setSearch(e.target.value)}/>{search&&<button type="button" aria-label="Limpar busca" onClick={()=>setSearch('')}><X size={14}/></button>}</label>
           <div className="nx13-filterline">
             <label><Filter size={14}/><select aria-label="Filtrar por etapa" value={stageFilter} onChange={e=>setStageFilter(e.target.value)}><option value="all">Todas as etapas</option><option value="none">Sem etapa</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select><ChevronDown size={13}/></label>
@@ -206,14 +207,17 @@ export default function NexusOpportunityDesk({
         </div>
         {problem&&<div role="alert" className="nx13-list-feedback error">{problem}</div>}
         {notice&&<div role="status" className="nx13-list-feedback success"><Check size={14}/>{notice}<button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={14}/></button></div>}
+        {filtered.length>0&&<div className="nx13-colhead" aria-hidden="true"><span>Nome</span><span>Etapa</span><span>Origem</span><span>Cadastro</span></div>}
         <div className="nx13-list" ref={listRef} onKeyDown={onKeys}>
           {filtered.length?filtered.map(lead=>{
             const person=nameOf(lead.contact),active=lead.id===selected?.id&&!closed,phone=Boolean(validPhone(lead.contact?.whatsapp));
             return <button key={lead.id} type="button" data-lead-row="true" aria-current={active?'true':undefined}
                 className={'nx13-listrow'+(active?' is-selected':'')} onClick={()=>select(lead.id)}>
               <Avatar person={person}/>
-              <span className="nx13-listrow-info"><strong>{person}</strong><small>{lead.source||'Origem não informada'} <span className="nx13-dot">·</span> {since(lead.created_at)}</small></span>
-              <span className="nx13-listrow-meta"><span className={'nx13-pip'+(!lead.pipeline_stage_id?' nx13-pip-empty':'')}>{stageOf(lead)}</span>{phone&&<MessageCircle size={13}/>}</span>
+              <span className="nx13-listrow-info"><strong>{person}</strong><small>{lead.contact?.whatsapp||'Sem telefone'}{phone&&<MessageCircle size={12} aria-hidden="true"/>}</small></span>
+              <span className="nx13-listrow-meta"><span className={'nx13-pip'+(!lead.pipeline_stage_id?' nx13-pip-empty':'')}>{stageOf(lead)}</span></span>
+              <span className="nx13-col-source">{lead.source||'—'}</span>
+              <span className="nx13-col-date">{since(lead.created_at)}</span>
               <ChevronRight size={16} className="nx13-listrow-chevron"/>
             </button>;
           }):<div className="nx13-empty"><Users size={24}/><strong>Nenhum lead encontrado</strong><p>Altere a busca ou os filtros.</p><button type="button" onClick={()=>{setSearch('');setStageFilter('all');setPresence('all')}}>Limpar filtros</button></div>}
