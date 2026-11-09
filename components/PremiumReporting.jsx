@@ -2,11 +2,7 @@
 import {useMemo,useState} from 'react';
 import NexusCrmSettings from './NexusCrmSettings';
 import Link from 'next/link';
-import {
-  ArrowRight,BarChart3,BriefcaseBusiness,CalendarDays,CheckCircle2,
-  Clock3,ContactRound,Download,FileSpreadsheet,Layers3,LockKeyhole,
-  Moon,ShieldCheck,Sun,TrendingUp,UsersRound,Wallet
-} from 'lucide-react';
+import {CheckCircle2,Download,LockKeyhole,Moon,Sun} from 'lucide-react';
 
 const currency=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(Number(n)||0);
 const integer=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
@@ -26,9 +22,6 @@ function downloadCsv(rows,name){
   document.body.appendChild(anchor);anchor.click();anchor.remove();
   URL.revokeObjectURL(url);
 }
-function Tag({children}){return <span className="v4-report-tag">{children}</span>}
-function InfoTile({title,value,icon:Icon,info}){return <div className="v4-report-tile"><span><Icon size={19}/></span><small>{title}</small><strong>{value}</strong><p>{info}</p></div>}
-function Empty({children}){return <div className="v4-report-empty"><BarChart3 size={23}/><span>{children}</span></div>}
 export function PremiumReports({data,counts,orgName,readonly}){
   const [period,setPeriod]=useState(30);
   const [csvMessage,setCsvMessage]=useState('');
@@ -53,56 +46,59 @@ export function PremiumReports({data,counts,orgName,readonly}){
     setCsvMessage('Relatório CSV exportado com os registros carregados.');
   }
   const most=Math.max(...view.sources.map(x=>x[1]),1);
-  return <div className="v4-report-screen">
-    <header className="v4-report-header"><div><span className="v4-report-overline">Resultados comerciais</span><h1>Relatórios</h1><p>Analise os resultados reais da operação e exporte registros para acompanhamento.</p></div>
-      <div className="v4-report-actions"><div className="nxp-switch">{[7,30,90].map(n=><button type="button" key={n} className={n===period?'active':''} onClick={()=>{setPeriod(n);setCsvMessage('')}}>{n} dias</button>)}</div>
-      {!readonly&&<button type="button" onClick={exportReport} className="v4-export"><Download size={16}/> Exportar CSV</button>}</div>
+  return <div className="fx-page fx-reports">
+    <header className="fx-pagehead">
+      <div className="fx-pagehead-title"><h1>Relatórios</h1><span className="fx-count">últimos {period} dias</span></div>
+      <div className="fx-actions"><div className="fx-tabs" role="group" aria-label="Período">{[7,30,90].map(n=><button type="button" key={n} aria-pressed={n===period} className={n===period?'active':''} onClick={()=>{setPeriod(n);setCsvMessage('')}}>{n} dias</button>)}</div>
+      {!readonly&&<button type="button" onClick={exportReport} className="fx-btn"><Download size={15}/> Exportar CSV</button>}</div>
     </header>
-    {csvMessage&&<div role="status" className="v4-report-success"><CheckCircle2 size={17}/>{csvMessage}<button type="button" onClick={()=>setCsvMessage('')}>Fechar</button></div>}
-    <div className="v4-report-tiles">
-      <InfoTile title="Leads captados" value={integer(view.leads.length)} icon={UsersRound} info="Até 250 registros carregados"/>
-      <InfoTile title="Agendamentos" value={integer(view.appointments.length)} icon={CalendarDays} info="Criados no período"/>
-      <InfoTile title="Vendas" value={integer(view.sales.length)} icon={TrendingUp} info="Vendas registradas"/>
-      <InfoTile title="Faturamento" value={currency(view.revenue)} icon={Wallet} info="Soma das vendas registradas"/>
-    </div>
-    <div className="v4-report-sections">
-      <section className="v4-report-panel"><div className="v4-report-panel-title"><div><span className="v4-report-overline">ORIGEM DE LEADS</span><h2>Canais com mais registros</h2></div><Tag>{period} dias</Tag></div>
-        <div className="v4-source-list">{view.sources.map(([name,value],i)=><div className="v4-source-row" key={name}><span>{i+1}. {name}</span><strong>{value}</strong><div className="v4-source-track"><span style={{width:Math.max(1,100*value/most)+'%'}}/></div></div>)}
-          {!view.sources.length&&<Empty>Os canais serão exibidos quando houver leads no período.</Empty>}</div>
+    {csvMessage&&<div role="status" className="fx-alert fx-alert--ok"><CheckCircle2 size={16}/>{csvMessage}<button type="button" aria-label="Fechar aviso" onClick={()=>setCsvMessage('')}>×</button></div>}
+    <section className="fx-strip fx-strip--4" aria-label="Resumo do período">
+      <div><span>Leads captados</span><strong>{integer(view.leads.length)}</strong></div>
+      <div><span>Agendamentos criados</span><strong>{integer(view.appointments.length)}</strong></div>
+      <div><span>Vendas</span><strong>{integer(view.sales.length)}</strong></div>
+      <div><span>Faturamento</span><strong>{currency(view.revenue)}</strong></div>
+      <p className="fx-strip-note">Baseado nos últimos 250 registros carregados por módulo. Nenhum valor é estimado.</p>
+    </section>
+    <div className="fx-two">
+      <section className="fx-box"><div className="fx-boxhead"><h2>Origem dos leads</h2><span className="fx-groupcount">{view.sources.length}</span></div>
+        {view.sources.length?<ol className="fx-bars">{view.sources.map(([name,value])=><li key={name}><span className="fx-bars-name">{name}</span><strong>{value}</strong><span className="fx-stage-bar"><span style={{width:Math.max(2,100*value/most)+'%'}}/></span></li>)}</ol>
+          :<p className="fx-empty-small">Sem leads no período.</p>}
       </section>
-      <section className="v4-report-panel"><div className="v4-report-panel-title"><div><span className="v4-report-overline">CONTROLE</span><h2>Resumo operacional</h2></div></div>
-        <div className="v4-report-detail"><span>Empresa selecionada</span><strong>{orgName}</strong></div>
-        <div className="v4-report-detail"><span>Total de contatos cadastrados</span><strong>{integer(counts.contacts)}</strong></div>
-        <div className="v4-report-detail"><span>Total de leads no banco</span><strong>{integer(counts.leads)}</strong></div>
-        <div className="v4-report-detail"><span>Total de tarefas no banco</span><strong>{integer(counts.tasks)}</strong></div>
-        <div className="v4-report-detail"><span>Total de agendamentos no banco</span><strong>{integer(counts.appointments)}</strong></div>
-        <Link href="/leads" className="v4-report-link">Abrir funil de leads <ArrowRight size={16}/></Link>
+      <section className="fx-box"><div className="fx-boxhead"><h2>Totais no banco</h2><Link href="/leads" className="fx-link">Abrir leads</Link></div>
+        <dl className="fx-kv">
+          <div><dt>Empresa</dt><dd>{orgName}</dd></div>
+          <div><dt>Contatos</dt><dd>{integer(counts.contacts)}</dd></div>
+          <div><dt>Leads</dt><dd>{integer(counts.leads)}</dd></div>
+          <div><dt>Tarefas</dt><dd>{integer(counts.tasks)}</dd></div>
+          <div><dt>Agendamentos</dt><dd>{integer(counts.appointments)}</dd></div>
+        </dl>
       </section>
     </div>
-    <p className="v4-report-disclaimer">Relatório baseado nos últimos 250 registros carregados por módulo. Para períodos mais longos ou relatórios financeiros completos, será necessária uma consulta paginada no servidor. Nenhum valor foi inventado.</p>
+    <p className="fx-note">Para períodos mais longos ou relatórios financeiros completos, será necessária uma consulta paginada no servidor.</p>
   </div>;
 }
 export function PremiumSettings({profile,session,role,organization,onTheme,dark}){
   const [message,setMessage]=useState('');
   const organizationName=organization?.name||'Empresa não selecionada';
-  return <div className="v4-report-screen">
-    <header className="v4-report-header"><div><span className="v4-report-overline">NEXUS / PREFERÊNCIAS</span><h1>Configurações</h1><p>Controle a aparência do seu espaço de trabalho e confira as permissões da sua conta.</p></div></header>
-    {message&&<div className="v4-report-success" role="status"><CheckCircle2 size={17}/>{message}<button type="button" onClick={()=>setMessage('')}>Fechar</button></div>}
-    <div className="v4-report-sections">
-      <section className="v4-report-panel"><div className="v4-report-panel-title"><div><span className="v4-report-overline">PERSONALIZAÇÃO</span><h2>Aparência da plataforma</h2></div><Tag>Salvo neste navegador</Tag></div>
-      <p className="v4-settings-description">Escolha o tema claro ou escuro. A preferência fica salva neste navegador.</p>
-      <div className="v4-theme-buttons">
-        <button type="button" className={!dark?'selected':''} onClick={()=>{if(dark)onTheme();setMessage('Tema claro selecionado.')}}><Sun size={19}/><span><strong>Modo claro</strong><small>Fundo branco, texto preto, destaque roxo</small></span>{!dark&&<CheckCircle2 size={17}/>}</button>
-        <button type="button" className={dark?'selected':''} onClick={()=>{if(!dark)onTheme();setMessage('Tema escuro selecionado.')}}><Moon size={19}/><span><strong>Modo escuro</strong><small>Fundo preto, texto branco, destaque roxo</small></span>{dark&&<CheckCircle2 size={17}/>}</button>
+  return <div className="fx-page fx-settings">
+    <header className="fx-pagehead"><div className="fx-pagehead-title"><h1>Configurações</h1></div></header>
+    {message&&<div className="fx-alert fx-alert--ok" role="status"><CheckCircle2 size={16}/>{message}<button type="button" aria-label="Fechar aviso" onClick={()=>setMessage('')}>×</button></div>}
+    <div className="fx-two">
+      <section className="fx-box"><div className="fx-boxhead"><h2>Aparência</h2><span className="fx-boxmeta">Salvo neste navegador</span></div>
+      <div className="fx-theme-choice" role="group" aria-label="Tema">
+        <button type="button" aria-pressed={!dark} className={!dark?'selected':''} onClick={()=>{if(dark)onTheme();setMessage('Tema claro selecionado.')}}><Sun size={17}/><span><strong>Claro</strong><small>Fundo branco, destaque roxo</small></span>{!dark&&<CheckCircle2 size={16}/>}</button>
+        <button type="button" aria-pressed={dark} className={dark?'selected':''} onClick={()=>{if(!dark)onTheme();setMessage('Tema escuro selecionado.')}}><Moon size={17}/><span><strong>Escuro</strong><small>Fundo preto, destaque roxo</small></span>{dark&&<CheckCircle2 size={16}/>}</button>
       </div>
       </section>
-      <section className="v4-report-panel"><div className="v4-report-panel-title"><div><span className="v4-report-overline">CONTROLE DE ACESSO</span><h2>Conta e permissões</h2></div><ShieldCheck size={19}/></div>
-        <div className="v4-report-detail"><span>Nome</span><strong>{profile?.full_name||'Não informado'}</strong></div>
-        <div className="v4-report-detail"><span>E-mail</span><strong>{session?.email||'—'}</strong></div>
-        <div className="v4-report-detail"><span>Empresa</span><strong>{organizationName}</strong></div>
-        <div className="v4-report-detail"><span>Perfil</span><strong>{role||'Membro'}</strong></div>
-        <div className="v4-report-note"><LockKeyhole size={18}/><span>Permissões e informações de cadastro são administradas pelo Super Admin. A alteração de senha usa o fluxo de recuperação do login.</span></div>
-        <Link href="/minha-area" className="v4-report-link">Ver meu perfil <ArrowRight size={16}/></Link>
+      <section className="fx-box"><div className="fx-boxhead"><h2>Conta e permissões</h2><Link href="/minha-area" className="fx-link">Ver meu perfil</Link></div>
+        <dl className="fx-kv">
+          <div><dt>Nome</dt><dd>{profile?.full_name||'Não informado'}</dd></div>
+          <div><dt>E-mail</dt><dd>{session?.email||'—'}</dd></div>
+          <div><dt>Empresa</dt><dd>{organizationName}</dd></div>
+          <div><dt>Perfil</dt><dd>{role||'Membro'}</dd></div>
+        </dl>
+        <p className="fx-boxfoot fx-boxfoot--note"><LockKeyhole size={14}/> Permissões e cadastro são administrados pelo Super Admin. A senha é alterada pelo fluxo de recuperação do login.</p>
       </section>
     </div>
     <NexusCrmSettings organizationId={organization?.id}/>
