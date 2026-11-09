@@ -285,9 +285,12 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     };
   },[validOrg,organizationId,load]);
 
-  const dashboardStages=useMemo(()=>pipelines.length>1
-    ?allStages.map(s=>({...s,name:(pipelines.find(p=>p.id===s.pipeline_id)?.name||'Funil')+' · '+s.name}))
-    :allStages,[pipelines,allStages]);
+  // Visão geral mostra UM funil por vez (o padrão, ou o escolhido no seletor), nunca etapas de funis misturadas.
+  const [dashPipelineId,setDashPipelineId]=useState('');
+  const dashPipeline=useMemo(()=>pipelines.find(p=>p.id===dashPipelineId)||pipeline||pipelines.find(p=>p.is_default)||pipelines[0]||null,[pipelines,dashPipelineId,pipeline]);
+  const dashboardStages=useMemo(()=>dashPipeline&&allStages.some(s=>s.pipeline_id)
+    ?allStages.filter(s=>s.pipeline_id===dashPipeline.id)
+    :(allStages.length?allStages:stages),[dashPipeline,allStages,stages]);
   const since=useMemo(()=>Date.now()-period*86400000,[period]);
   const recentLeads=useMemo(()=>data.leads.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.leads,since]);
   const recentAppointments=useMemo(()=>data.appointments.filter(x=>x.created_at&&new Date(x.created_at).getTime()>=since),[data.appointments,since]);
@@ -439,8 +442,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     />
     <aside className={'staff-sidebar '+(mobileOpen?'staff-sidebar--open':'')}>
       <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={18}/></div><div><strong>NEXUS <span>CRM</span></strong></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
-      <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}</div>
-      {organizations.length>1&&<label className="staff-company-choice"><span>Alternar empresa</span><select value={organizationId} onChange={e=>onOrganizationChange(e.target.value)}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
+      <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
+        {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
         {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group"><div className="staff-nav-title">{group.title}</div>{MENU.filter(item=>group.paths.includes(item.path)).map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
@@ -507,7 +510,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='dashboard'&&<NexusExecutiveHome
           data={data} counts={counts} loading={loading}
           organizationName={currentOrganization.name} firstName={firstName}
-          openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages}
+          openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages} pipelines={pipelines} activePipelineId={dashPipeline?.id||''} onPipelineChange={setDashPipelineId}
           onOperation={operation} onReload={load} readonly={readonly}
         />}
         {section==='leads'&&<PremiumLeads
