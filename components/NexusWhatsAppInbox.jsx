@@ -1,6 +1,6 @@
 'use client';
 import {useCallback,useEffect,useMemo,useState} from 'react';
-import {CheckCheck,ChevronRight,ContactRound,ExternalLink,Inbox,MessageCircle,PlugZap,RefreshCw,Search,Send,ShieldCheck,WifiOff} from 'lucide-react';
+import {ExternalLink,Info,Plus,RefreshCw,Search,ShieldCheck,X} from 'lucide-react';
 import {db} from '../lib/supabase';
 
 const localDate=t=>t?new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
@@ -12,6 +12,7 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
   const [loading,setLoading]=useState(true);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const [unavailable,setUnavailable]=useState('');
   const [notice,setNotice]=useState('');
   const [filter,setFilter]=useState('');
   const [selected,setSelected]=useState('');
@@ -30,8 +31,12 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
       const result=await res.json().catch(()=>({}));
       if(!res.ok)throw new Error(result.error||'Não foi possível carregar o WhatsApp.');
       setConnections(result.connections||[]);setMessages(result.messages||[]);
-      setServerReady(Boolean(result.verified_server));setError('');
-    }catch(e){setError(e.message)}
+      setServerReady(Boolean(result.verified_server));setError('');setUnavailable('');
+    }catch(e){
+      // Estrutura do banco ausente: estado neutro "não ativado"; o texto técnico fica só para Super Admin.
+      if(/migra|instalad|supabase/i.test(e.message)){setUnavailable(e.message);setError('')}
+      else setError(e.message);
+    }
     finally{setLoading(false)}
   },[organizationId]);
   useEffect(()=>{load()},[load]);
@@ -68,41 +73,63 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
     }catch(e){setError(e.message)}
     finally{setBusy(false)}
   }
-  return <div className="nx-inbox-page">
-    <header className="nx-inbox-head"><div><span className="nx-inbox-kicker"><MessageCircle size={16}/> NEXUS / ATENDIMENTO</span><h1>WhatsApp Business</h1><p>Recebimento oficial de mensagens, protegido por empresa. As conversas só aparecem depois da conexão com a Meta.</p></div>
-    <button className="nx-inbox-button" disabled={loading} onClick={load} type="button"><RefreshCw size={17}/> Atualizar</button></header>
-    {error&&<div className="nx-inbox-alert nx-inbox-alert--error" role="alert">{error}</div>}
-    {notice&&<div className="nx-inbox-alert nx-inbox-alert--success" role="status">{notice}</div>}
-    <section className="nx-inbox-connections">
-      <div><span className="nx-inbox-kicker">CANAIS DE ATENDIMENTO</span><h2>Conexões da empresa</h2><p>{serverReady?'Servidor pronto para receber webhooks assinados.':'A API da Meta ainda precisa ser configurada no Render.'}</p></div>
-      <div className="nx-inbox-conn-list">{connections.map(c=><div className="nx-inbox-conn" key={c.id}><span className={c.status==='active'?'ready':'waiting'}><PlugZap size={19}/></span><div><strong>{c.display_name}</strong><small>ID: {c.phone_number_id}</small></div><em className={c.status==='active'?'ready':'waiting'}>{c.status==='active'?'Recebendo':'Aguardando Meta'}</em></div>)}
-      {!connections.length&&<span className="nx-inbox-no-connection"><WifiOff size={20}/> Nenhum número vinculado</span>}</div>
-      {isSuperAdmin&&<button type="button" className="nx-inbox-button nx-inbox-button--primary" onClick={()=>setFormOpen(v=>!v)}>{formOpen?'Fechar cadastro':'Registrar número da Meta'} <ChevronRight size={17}/></button>}
+  const nameFor=wa=>contacts.find(c=>String(c.whatsapp||'').replace(/\D/g,'').endsWith(wa.replace(/^55/,'')))?.first_name||wa;
+  return <div className="fx-page fx-int fx-wa-page">
+    <header className="fx-pagehead">
+      <div className="fx-pagehead-title"><h1>WhatsApp</h1>
+        {!unavailable&&!loading&&<span className="fx-count">{people.length} {people.length===1?'conversa':'conversas'}</span>}
+        <span className="fx-count">{unavailable?'Não ativado':'Somente leitura'}</span>
+      </div>
+      <div className="fx-actions"><button className="fx-btn" disabled={loading} onClick={load} type="button"><RefreshCw size={16}/> Atualizar</button></div>
+    </header>
+    {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
+    {notice&&<div className="fx-alert fx-alert--ok" role="status">{notice}</div>}
+
+    {unavailable?<section className="fx-box fx-int-off" aria-labelledby="fx-wa-off">
+      <div className="fx-int-off-body">
+        <Info size={18} aria-hidden="true"/>
+        <div><h2 id="fx-wa-off">WhatsApp ainda não ativado</h2>
+          <p>O administrador da sua empresa precisa ativar a caixa de entrada do WhatsApp. Até lá, nenhuma mensagem é recebida aqui.</p></div>
+      </div>
+      {isSuperAdmin&&<p className="fx-boxfoot fx-int-tech"><strong>Detalhe técnico (Super Admin):</strong> {unavailable} Arquivo: <code>supabase/20261028_automation_whatsapp_foundation.sql</code></p>}
+    </section>:<>
+    <section className="fx-box">
+      <div className="fx-boxhead"><h2>Números conectados</h2><span className="fx-groupcount">{connections.length}</span>
+        {isSuperAdmin&&<button type="button" className="fx-btn fx-int-meta-end" aria-expanded={formOpen} onClick={()=>setFormOpen(v=>!v)}>{formOpen?<><X size={16}/> Fechar cadastro</>:<><Plus size={16}/> Registrar número da Meta</>}</button>}
+      </div>
+      {formOpen&&isSuperAdmin&&<form className="fx-panel fx-wa-setup" onSubmit={register} aria-label="Registrar Phone Number ID">
+        <label>Phone Number ID<input required placeholder="Ex.: 112233445566778" pattern="[0-9]{6,24}" value={phoneId} onChange={e=>setPhoneId(e.target.value)}/></label>
+        <label>Nome de exibição<input placeholder="Ex.: Atendimento principal" maxLength={100} value={displayName} onChange={e=>setDisplayName(e.target.value)}/></label>
+        <button className="fx-btn fx-btn--primary" type="submit" disabled={busy}>{busy?'Registrando...':'Registrar número'}</button>
+        <p className="fx-wa-setup-note"><ShieldCheck size={15}/> Use o identificador numérico do painel Meta Developers; este cadastro não solicita nem armazena token. No Render, configure META_APP_SECRET e META_WEBHOOK_VERIFY_TOKEN. Na Meta, assine os eventos de mensagens para <code>https://nexus-crm-ai.onrender.com/api/webhooks/whatsapp</code>. O status é ativado quando o primeiro evento válido chegar.</p>
+      </form>}
+      {connections.map(c=><div className="fx-row fx-wa-conn" key={c.id}>
+        <div><strong>{c.display_name}</strong><small>ID {c.phone_number_id}</small></div>
+        <span className={'fx-int-status '+(c.status==='active'?'is-on':'is-off')}>{c.status==='active'?'Recebendo':'Aguardando Meta'}</span>
+      </div>)}
+      {!connections.length&&<p className="fx-empty-small">{loading?'Carregando...':'Nenhum número conectado. O administrador conecta o número oficial da empresa para receber as mensagens aqui.'}</p>}
+      {isSuperAdmin&&<p className="fx-boxfoot">{serverReady?'Servidor pronto para receber webhooks assinados.':'A API da Meta ainda precisa ser configurada no Render.'}</p>}
     </section>
-    {formOpen&&isSuperAdmin&&<form className="nx-inbox-setup" onSubmit={register}>
-      <h3>Registrar Phone Number ID</h3><p>Use o identificador numérico obtido no painel Meta Developers. Este cadastro não solicita nem armazena token de acesso.</p>
-      <label>Phone Number ID<input required placeholder="Ex.: 112233445566778" pattern="[0-9]{6,24}" value={phoneId} onChange={e=>setPhoneId(e.target.value)}/></label>
-      <label>Nome de exibição<input placeholder="Ex.: Atendimento principal" maxLength={100} value={displayName} onChange={e=>setDisplayName(e.target.value)}/></label>
-      <button className="nx-inbox-button nx-inbox-button--primary" type="submit" disabled={busy}>{busy?'Registrando...':'Registrar número'}</button>
-      <div className="nx-inbox-setup-notice"><ShieldCheck size={17}/> No Render, configure META_APP_SECRET e META_WEBHOOK_VERIFY_TOKEN. Na Meta, assine os eventos de mensagens para <code>https://nexus-crm-ai.onrender.com/api/webhooks/whatsapp</code>. O status será ativado quando o primeiro evento válido chegar.</div>
-    </form>}
-    <div className="nx-inbox-layout">
-      <aside className="nx-inbox-list">
-        <div className="nx-inbox-title"><Inbox size={19}/><strong>Conversas recebidas</strong><span>{people.length}</span></div>
-        <label className="nx-inbox-search"><Search size={17}/><input placeholder="Pesquisar telefone ou contato" aria-label="Pesquisar conversas" value={filter} onChange={e=>setFilter(e.target.value)}/></label>
-        <div className="nx-inbox-conversations">{people.map(([wa,msg])=><button key={wa} type="button" className={'nx-inbox-conversation '+(activeWa===wa?'selected':'')} onClick={()=>setSelected(wa)}>
-          <span className="nx-inbox-avatar">{initial(wa)}</span><span><strong>{contacts.find(c=>String(c.whatsapp||'').replace(/\D/g,'').endsWith(wa.replace(/^55/,'')))?.first_name||wa}</strong><small>{msg.message_type==='text'?(msg.text_body||'Mensagem sem texto'):'Mensagem de '+msg.message_type}</small></span><time>{localDate(msg.occurred_at)}</time>
-        </button>)}{!people.length&&<div className="nx-inbox-empty"><MessageCircle size={25}/><strong>Sem mensagens sincronizadas</strong><p>Quando um número autorizado receber mensagens pela API oficial, elas aparecerão aqui.</p></div>}</div>
-      </aside>
-      <section className="nx-inbox-thread">
-        {activeWa?<><header><span className="nx-inbox-avatar">{initial(activeWa)}</span><div><strong>{currentName}</strong><small>WhatsApp {activeWa}</small></div>{link&&<a href={link} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp externo"><ExternalLink size={18}/></a>}</header>
-        <div className="nx-inbox-messages">{currentMessages.map(m=><div key={m.id} className={'nx-inbox-bubble '+(m.direction==='outbound'?'outbound':'inbound')}>
-          <p>{m.message_type==='text'?(m.text_body||'Mensagem sem texto'):'Mensagem '+m.message_type+' recebida'}</p>
-          <small>{localDate(m.occurred_at)}{m.delivery_status&&' · '+m.delivery_status}</small>
-        </div>)}</div>
-        <footer><ShieldCheck size={18}/><span>Caixa de entrada somente leitura. O envio integrado será liberado após configurar token seguro, consentimento e política de janela de atendimento.</span>{link&&<a href={link} target="_blank" rel="noopener noreferrer">Responder pelo WhatsApp <Send size={15}/></a>}</footer>
-        </>:<div className="nx-inbox-empty nx-inbox-empty--thread"><Inbox size={35}/><strong>Suas mensagens, em um só lugar</strong><p>Conecte o número da Meta e receba eventos para começar o histórico real.</p></div>}
-      </section>
-    </div>
+
+    <section className="fx-box fx-wa-inbox">
+      <div className="fx-boxhead"><h2>Conversas recebidas</h2><span className="fx-groupcount">{people.length}</span>
+        <label className="fx-search fx-search--end"><Search size={15}/><input placeholder="Pesquisar telefone ou contato" aria-label="Pesquisar conversas" value={filter} onChange={e=>setFilter(e.target.value)}/></label>
+      </div>
+      {people.length?<div className="fx-wa-layout">
+        <div className="fx-wa-list">{people.map(([wa,msg])=><button key={wa} type="button" aria-pressed={activeWa===wa} className={'fx-wa-item'+(activeWa===wa?' is-active':'')} onClick={()=>setSelected(wa)}>
+          <span className="fx-avatar">{initial(wa)}</span><span className="fx-wa-item-text"><strong>{nameFor(wa)}</strong><small>{msg.message_type==='text'?(msg.text_body||'Mensagem sem texto'):'Mensagem de '+msg.message_type}</small></span><time>{localDate(msg.occurred_at)}</time>
+        </button>)}</div>
+        <div className="fx-wa-thread">
+          <div className="fx-wa-threadhead"><span className="fx-avatar">{initial(activeWa)}</span><div><strong>{currentName}</strong><small>WhatsApp {activeWa}</small></div>
+            {link&&<a className="fx-btn" href={link} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp externo"><ExternalLink size={15}/> Abrir no WhatsApp</a>}</div>
+          <div className="fx-wa-messages">{currentMessages.map(m=><div key={m.id} className={'fx-wa-msg '+(m.direction==='outbound'?'is-out':'is-in')}>
+            <p>{m.message_type==='text'?(m.text_body||'Mensagem sem texto'):'Mensagem '+m.message_type+' recebida'}</p>
+            <small>{localDate(m.occurred_at)}{m.delivery_status&&' · '+m.delivery_status}</small>
+          </div>)}</div>
+        </div>
+      </div>:<div className="fx-empty"><strong>{loading?'Carregando conversas...':filter?'Nenhuma conversa encontrada':'Nenhuma mensagem recebida'}</strong>{!loading&&<p>{filter?'Ajuste a busca.':'As mensagens recebidas pelo número oficial da empresa aparecerão aqui.'}</p>}</div>}
+      <p className="fx-boxfoot fx-boxfoot--note"><ShieldCheck size={14}/> Caixa de entrada somente leitura da API oficial da Meta. O NEXUS não envia mensagens; para responder, use o WhatsApp da empresa.</p>
+    </section>
+    </>}
   </div>;
 }
