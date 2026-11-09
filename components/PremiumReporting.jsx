@@ -3,6 +3,7 @@ import {useMemo,useState} from 'react';
 import NexusCrmSettings from './NexusCrmSettings';
 import Link from 'next/link';
 import {CheckCircle2,Download,LockKeyhole,Moon,Sun} from 'lucide-react';
+import {sourceFunnel} from '../lib/sales-attribution.mjs';
 
 const currency=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(Number(n)||0);
 const integer=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
@@ -29,9 +30,7 @@ export function PremiumReports({data,counts,orgName,readonly}){
     const leads=data.leads.filter(l=>daysPeriod(l.created_at,period));
     const appointments=data.appointments.filter(a=>daysPeriod(a.created_at,period));
     const sales=data.sales.filter(s=>daysPeriod(s.created_at,period));
-    const grouped=new Map();
-    leads.forEach(l=>{const key=l.source||'Não informada';grouped.set(key,(grouped.get(key)||0)+1)});
-    return {leads,appointments,sales,sources:[...grouped.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8),
+    return {leads,appointments,sales,funnel:sourceFunnel(data,{days:period}),
       revenue:sales.reduce((total,s)=>total+Number(s.value||0),0)};
   },[data,period]);
   const rows=[
@@ -45,7 +44,8 @@ export function PremiumReports({data,counts,orgName,readonly}){
     downloadCsv(rows,'nexus-relatorio-'+period+'-dias.csv');
     setCsvMessage('Relatório CSV exportado com os registros carregados.');
   }
-  const most=Math.max(...view.sources.map(x=>x[1]),1);
+  const funnel=view.funnel;
+  const pct=v=>v===null?'—':String(v).replace('.',',')+'%';
   return <div className="fx-page fx-reports">
     <header className="fx-pagehead">
       <div className="fx-pagehead-title"><h1>Relatórios</h1><span className="fx-count">últimos {period} dias</span></div>
@@ -60,12 +60,23 @@ export function PremiumReports({data,counts,orgName,readonly}){
       <div><span>Faturamento</span><strong>{currency(view.revenue)}</strong></div>
       <p className="fx-strip-note">Baseado nos últimos 250 registros carregados por módulo. Nenhum valor é estimado.</p>
     </section>
-    <div className="fx-two">
-      <section className="fx-box"><div className="fx-boxhead"><h2>Origem dos leads</h2><span className="fx-groupcount">{view.sources.length}</span></div>
-        {view.sources.length?<ol className="fx-bars">{view.sources.map(([name,value])=><li key={name}><span className="fx-bars-name">{name}</span><strong>{value}</strong><span className="fx-stage-bar"><span style={{width:Math.max(2,100*value/most)+'%'}}/></span></li>)}</ol>
-          :<p className="fx-empty-small">Sem leads no período.</p>}
-      </section>
-      <section className="fx-box"><div className="fx-boxhead"><h2>Totais no banco</h2><Link href="/leads" className="fx-link">Abrir leads</Link></div>
+    <section className="fx-box" aria-labelledby="fx-origem-titulo">
+      <div className="fx-boxhead"><h2 id="fx-origem-titulo">Origem até a venda</h2><span className="fx-groupcount">{funnel.rows.length}</span></div>
+      {funnel.rows.length?<div className="fx-table fx-table--sources" role="table" aria-label="Resultado por origem dos leads">
+        <div className="fx-thead" role="row"><span role="columnheader">Origem</span><span role="columnheader">Leads</span><span role="columnheader">Agendaram</span><span role="columnheader">Compraram</span><span role="columnheader">Conversão</span><span role="columnheader">Faturamento</span></div>
+        {funnel.rows.map(r=><div className="fx-tr" role="row" key={r.source}>
+          <span role="cell"><strong>{r.source}</strong></span>
+          <span role="cell" className="fx-num" data-label="Leads">{integer(r.leads)}</span>
+          <span role="cell" className="fx-num" data-label="Agendaram">{integer(r.withAppointment)} <small className="fx-muted">{pct(r.appointmentRate)}</small></span>
+          <span role="cell" className="fx-num" data-label="Compraram">{integer(r.withSale)}</span>
+          <strong role="cell" className={'fx-num'+(r.saleRate?'':' fx-muted')} data-label="Conversão">{pct(r.saleRate)}</strong>
+          <strong role="cell" className="fx-num" data-label="Faturamento">{currency(r.revenue)}</strong>
+        </div>)}
+      </div>:<div className="fx-empty"><strong>Sem leads no período</strong><p>Quando houver leads com origem registrada, você verá aqui quantos agendaram e compraram.</p></div>}
+      <p className="fx-note">Coorte: leads criados nos últimos {period} dias. Agendamentos e vendas contam só quando estão vinculados ao lead na ficha; volume de leads sozinho não indica a melhor origem.
+        {funnel.unattributedSales>0&&<> <strong>{integer(funnel.unattributedSales)} {funnel.unattributedSales===1?'venda':'vendas'} ({currency(funnel.unattributedRevenue)}) sem lead vinculado</strong> não {funnel.unattributedSales===1?'entra':'entram'} em nenhuma origem — registre a venda a partir do lead para medir.</>}</p>
+    </section>
+    <section className="fx-box"><div className="fx-boxhead"><h2>Totais no banco</h2><Link href="/leads" className="fx-link">Abrir leads</Link></div>
         <dl className="fx-kv">
           <div><dt>Empresa</dt><dd>{orgName}</dd></div>
           <div><dt>Contatos</dt><dd>{integer(counts.contacts)}</dd></div>
@@ -74,7 +85,6 @@ export function PremiumReports({data,counts,orgName,readonly}){
           <div><dt>Agendamentos</dt><dd>{integer(counts.appointments)}</dd></div>
         </dl>
       </section>
-    </div>
     <p className="fx-note">Para períodos mais longos ou relatórios financeiros completos, será necessária uma consulta paginada no servidor.</p>
   </div>;
 }

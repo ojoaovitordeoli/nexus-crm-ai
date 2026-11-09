@@ -45,12 +45,14 @@ try{
   const organization={id:organizationId,name:'Empresa de Teste',status:'active',plan:'test'};
   const contact={id:contactId,first_name:'Ana',last_name:'Teste',whatsapp:'5548999991111',created_at:'2026-10-20T12:00:00Z'};
   const lead={id:leadId,organization_id:organizationId,status:'new',source:'Instagram',
-    temperature:'warm',created_at:'2026-10-20T12:00:00Z',pipeline_stage_id:null,contact};
+    temperature:'warm',created_at:new Date(Date.now()-20*86400000).toISOString(),pipeline_stage_id:null,contact};
   const data={
     leads:[lead],contacts:[contact],tasks:[{
       id:'92618c31-e9af-41a1-8b48-7e7dac9ae0ef',title:'Retornar para Ana',
-      status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z'
-    }],appointments:[],sales:[]
+      status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z',lead_id:leadId
+    }],appointments:[{id:'0b9c6a0e-4d1f-4a37-9f0e-3c2a1d5e7f10',title:'Avaliação Ana',type:'meeting',status:'completed',start_at:new Date(Date.now()-2*86400000).toISOString(),created_at:new Date(Date.now()-2*86400000).toISOString(),lead_id:leadId}],
+    sales:[{id:'5d2e8f41-7a3b-4c6d-9e1f-2a4b6c8d0e12',value:1200,created_at:new Date(Date.now()-2*86400000).toISOString(),sale_date:new Date(Date.now()-2*86400000).toISOString(),lead_id:leadId},
+      {id:'7f4a1c93-2b5d-4e8f-a061-3c5e7a9b1d24',value:300,created_at:new Date(Date.now()-2*86400000).toISOString(),sale_date:new Date(Date.now()-2*86400000).toISOString(),lead_id:null}]
   };
   await page.route('https://qhizuqcdxivdvjtefofz.supabase.co/**',async route=>{
     const url=new URL(route.request().url());
@@ -81,7 +83,7 @@ try{
       if(payload.action==='task_status'&&payload.status==='completed')completedTasks+=1;
       return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
     }
-    const response={data,counts:{leads:1,contacts:1,tasks:1,appointments:0,sales:0},
+    const response={data,counts:{leads:1,contacts:1,tasks:1,appointments:1,sales:2},
       stages:[],warnings:[],read_only:false};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
   });
@@ -201,8 +203,29 @@ try{
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count()){
       throw new Error('Client exception on extended route: '+route);
     }
+    if(route==='reports'){
+      const row=page.locator('.fx-table--sources .fx-tr',{hasText:'Instagram'});
+      await row.waitFor({timeout:5000});
+      const text=(await row.innerText()).replace(/\s+/g,' ');
+      if(!/100%/.test(text)||!/1\.200/.test(text))throw new Error('Source funnel row wrong: '+text);
+      if(!await page.getByText('sem lead vinculado',{exact:false}).count())throw new Error('Unattributed sales notice missing');
+    }
+    if(route==='tasks'){
+      const line=page.locator('.fx-taskline.is-late',{hasText:'Retornar para Ana'});
+      await line.waitFor({timeout:5000});
+      const text=await line.innerText();
+      if(!/Lead: Ana Teste/.test(text))throw new Error('Task does not show linked lead: '+text);
+      if(!/Vencida há \d+ dias?/.test(text))throw new Error('Task does not show days late: '+text);
+    }
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
+  for(const route of ['reports','tasks']){
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(550);
+    await page.screenshot({path:'test-artifacts/'+route+'-mobile.png',fullPage:true});
+  }
+  await page.setViewportSize({width:1440,height:900});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   await page.waitForTimeout(400);
