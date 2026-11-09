@@ -702,3 +702,10 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .fx-settings .nxs{margin:0!important;border-radius:var(--fx-radius)!important;border:1px solid var(--fx-border)!important;background:var(--fx-surface)!important;box-shadow:none!important}
 :root:root:root body .fx-settings .nxs-head h2{font-size:14px!important;font-weight:650!important;letter-spacing:-.005em!important}
 :root:root:root body .fx-settings .nxs-head p{font-size:13px!important;color:var(--fx-muted)!important}
+/* V21 — seletor de empresa único (o select cobre o cartão; sem rótulo sobreposto) e seletor de funil */
+:root:root:root body .staff-sidebar .staff-workspace-picker{position:relative!important}
+:root:root:root body .staff-sidebar .staff-company-select{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;cursor:pointer!important;margin:0!important;border:0!important}
+:root:root:root body .staff-sidebar .staff-workspace-picker:focus-within{outline:2px solid var(--fx-purple)!important;outline-offset:2px!important}
+:root:root:root body .staff-sidebar .staff-workspace-picker strong{display:block!important;max-width:150px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+:root:root:root body .staff-sidebar .staff-company-choice{display:none!important}
+:root:root:root body .fx-funnel-select{height:28px!important;padding:0 26px 0 8px!important;border:1px solid var(--fx-border-strong)!important;border-radius:6px!important;background-color:var(--fx-surface,#fff)!important;color:inherit!important;font:inherit!important;font-size:13px!important;max-width:280px!important}

@@ -22,7 +22,7 @@ const whatsapp=value=>{const n=String(value||'').replace(/\D/g,'');return n.leng
 const taskOpen=t=>!['done','completed','cancelled','canceled'].includes(String(t.status||'').toLowerCase());
 function Initial({name}){return <span className="fx-avatar" aria-hidden="true">{name.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()}</span>}
 function Title({title,link,href,children}){return <div className="fx-boxhead"><h2>{title}</h2>{children}{href&&<Link href={href} className="fx-link">{link||'Ver todos'}</Link>}</div>}
-export default function NexusExecutiveHome({data,counts,organizationName,onOperation,onReload,readonly=false,loading,openTasks=[],overdueTasks=[],pipelineStages=[],lastSync}) {
+export default function NexusExecutiveHome({data,counts,organizationName,onOperation,onReload,readonly=false,loading,openTasks=[],overdueTasks=[],pipelineStages=[],pipelines=[],activePipelineId='',onPipelineChange,lastSync}) {
   const d=data||{},leads=d.leads||[],sales=d.sales||[],tasks=d.tasks||[],appointments=d.appointments||[];
   const pending=Array.isArray(openTasks)?openTasks:tasks.filter(taskOpen);
   const latestMs=Date.now()-30*86400000,leads30=leads.filter(x=>toDate(x.created_at)?.getTime()>=latestMs);
@@ -43,13 +43,16 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
   const funnel=useMemo(()=>{
     const out=new Map();
     for(const st of pipelineStages)out.set(st.id,{id:st.id,name:st.name,count:0,value:0,won:Boolean(st.is_won),lost:Boolean(st.is_lost)});
+    const multi=pipelines.length>1&&activePipelineId;
     for(const l of leads){
+      if(multi&&l.pipeline_id&&l.pipeline_id!==activePipelineId)continue;
       const st=pipelineStages.find(x=>x.id===l.pipeline_stage_id),id=st?.id||'status:'+(l.status||'none');
       if(!out.has(id))out.set(id,{id,name:st?.name||readable(l.status),count:0,value:0,won:false,lost:false});
       const g=out.get(id);g.count++;g.value+=Number(l.estimated_value)||0;
     }
     return [...out.values()];
-  },[leads,pipelineStages]);
+  },[leads,pipelineStages,pipelines,activePipelineId]);
+  const funnelTotal=useMemo(()=>funnel.reduce((n,g)=>n+g.count,0),[funnel]);
   const funnelMax=Math.max(1,...funnel.map(g=>g.count));
   const nextAppointments=useMemo(()=>appointments.filter(x=>x.start_at&&toDate(x.start_at)?.getTime()>=Date.now()&&!['cancelled','completed'].includes(String(x.status||'').toLowerCase()))
     .sort((a,b)=>toDate(a.start_at)-toDate(b.start_at)).slice(0,3),[appointments]);
@@ -89,7 +92,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
       <button type="button" className="fx-btn-text" onClick={()=>setCompose(false)}>Cancelar</button>
     </form>}
     <section className="fx-funnel" aria-label="Funil de vendas">
-      <div className="fx-funnel-head"><h2>Funil</h2><span>{loading?'—':int(leads.length)} {leads.length===1?'lead':'leads'}{coverage.leads?' · amostra carregada':''}</span><Link href="/leads" className="fx-link">Ver quadro</Link></div>
+      <div className="fx-funnel-head"><h2>Funil</h2>{pipelines.length>1&&<select className="fx-funnel-select" aria-label="Escolher funil" value={activePipelineId} onChange={e=>onPipelineChange?.(e.target.value)}>{pipelines.map(p=><option key={p.id} value={p.id}>{p.name}{p.is_default?' (padrão)':''}</option>)}</select>}<span>{loading?'—':int(funnelTotal)} {funnelTotal===1?'lead':'leads'}{coverage.leads?' · amostra carregada':''}</span><Link href="/leads" className="fx-link">Ver quadro</Link></div>
       {funnel.length?<ol className="fx-funnel-track">{funnel.map(g=><li key={g.id} className={'fx-stage'+(g.won?' fx-stage--won':'')+(g.lost?' fx-stage--lost':'')}>
         <Link href="/leads">
           <span className="fx-stage-name">{g.name}</span>
