@@ -59,3 +59,25 @@ test('lead status follows won/lost stages',()=>{
   assert.equal(statusForStage({is_lost:true}),'lost');
   assert.equal(statusForStage({}),'active');
 });
+
+test('valores em formato pt-BR e data vinda de coluna timestamp',async()=>{
+  const {normalizeAnswer,parseDecimal}=await import('../lib/stage-requirements.mjs');
+  const cur={type:'currency',options:[]};
+  assert.deepEqual(normalizeAnswer(cur,'1.234,56'),{ok:true,value:1234.56});
+  assert.deepEqual(normalizeAnswer(cur,'R$ 1.500,00'),{ok:true,value:1500});
+  assert.deepEqual(normalizeAnswer(cur,'1500.5'),{ok:true,value:1500.5});
+  assert.deepEqual(normalizeAnswer(cur,'1,234.5'),{ok:false});
+  assert.ok(Number.isNaN(parseDecimal('abc')));
+  const date={type:'date',options:[]};
+  assert.deepEqual(normalizeAnswer(date,'2026-11-05T00:00:00+00:00'),{ok:true,value:'2026-11-05'});
+  assert.deepEqual(normalizeAnswer(date,'2026-02-30'),{ok:false});
+});
+
+test('campo extra do tipo e-mail é validado',async()=>{
+  const {normalizeAnswer,describeRequirement}=await import('../lib/stage-requirements.mjs');
+  const req=describeRequirement({custom_field_id:'x'},{id:'x',name:'E-mail',type:'email',options:[]});
+  assert.equal(req.type,'email');
+  assert.deepEqual(normalizeAnswer(req,' Ana@Exemplo.com.br '),{ok:true,value:'ana@exemplo.com.br'});
+  assert.deepEqual(normalizeAnswer(req,'ana@'),{ok:false});
+  assert.deepEqual(normalizeAnswer(req,''),{ok:true,value:null});
+});
