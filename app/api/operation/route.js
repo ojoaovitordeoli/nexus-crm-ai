@@ -2,13 +2,16 @@ import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {runLeadStageAutomations} from '../../../lib/automation-runner';
 import {describeRequirement,evaluateRequirements,statusForStage} from '../../../lib/stage-requirements.mjs';
-import {buildLeadTimeline,canManagePipeline,canWriteOperation,READ_ACTIONS} from '../../../lib/operation-rules.mjs';
+import {buildLeadTimeline,canManagePipeline,canWriteOperation,localDateISO,parseDateTime,planPipelineStages,READ_ACTIONS,safeCalendarDate} from '../../../lib/operation-rules.mjs';
+import {logInternal} from '../../../lib/workflow-security.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const fails=(message,status=400)=>NextResponse.json({error:message},{status});
+// Erro de banco: detalhe técnico só no log do servidor; a tela recebe mensagem em português.
+const dbFail=(message,error)=>{logInternal(message,error);return fails(message+' Tente novamente em instantes.',500)};
 const validId=value=>uuid.test(String(value||''));
 const service=()=>process.env.SUPABASE_SERVICE_ROLE_KEY
   ?createClient(process.env.NEXT_PUBLIC_SUPABASE_URL||'https://qhizuqcdxivdvjtefofz.supabase.co',process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}})
@@ -32,13 +35,8 @@ async function authorize(request,admin,orgId){
   if(memberError||!member)return {error:'Você não tem acesso a esta empresa.',status:403};
   return {user:auth.user,role:member.role};
 }
-function validateDateTime(value){
-  const d=new Date(value);
-  return Number.isFinite(d.getTime())?d.toISOString():null;
-}
-function safeDate(value){
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?String(value):null;
-}
+const validateDateTime=parseDateTime;
+const safeDate=safeCalendarDate;
 const val=(value,max=190)=>String(value||'').trim().slice(0,max);
 
 // Carrega lead, etapa de destino e requisitos obrigatórios, sempre restritos à empresa autorizada.
@@ -60,12 +58,12 @@ async function loadStageGate(admin,orgId,payload){
   const {data:reqRows,error:reqError}=await admin.from('pipeline_stage_requirements')
     .select('id,core_field,custom_field_id,question,position')
     .eq('organization_id',orgId).eq('pipeline_id',pipeline.id).eq('stage_id',stage.id).order('position',{ascending:true});
-  if(reqError)return {error:'Não foi possível verificar os campos obrigatórios da etapa: '+reqError.message,status:500};
+  if(reqError){logInternal('stage-gate',reqError);return {error:'Não foi possível verificar os campos obrigatórios da etapa.',status:500}};
   const cfIds=[...new Set((reqRows||[]).map(r=>r.custom_field_id).filter(Boolean))];
   let fields=[];
   if(cfIds.length){
     const cf=await admin.from('custom_fields').select('id,name,type,options').eq('organization_id',orgId).in('id',cfIds);
-    if(cf.error)return {error:'Falha ao carregar campos personalizados: '+cf.error.message,status:500};
+    if(cf.error){logInternal('stage-gate',cf.error);return {error:'Falha ao carregar campos personalizados.',status:500}};
     fields=cf.data||[];
   }
   const byId=new Map(fields.map(f=>[f.id,f]));
@@ -103,7 +101,7 @@ async function loadStageGate(admin,orgId,payload){
   }
   if(cfIds.length){
     const cfv=await admin.from('custom_field_values').select('custom_field_id,value').eq('entity_id',lead.id).in('custom_field_id',cfIds);
-    if(cfv.error)return {error:'Falha ao carregar respostas salvas: '+cfv.error.message,status:500};
+    if(cfv.error){logInternal('stage-gate',cfv.error);return {error:'Falha ao carregar respostas salvas.',status:500}};
     for(const v of cfv.data||[])current['cf:'+v.custom_field_id]=v.value;
   }
   return {lead,stage,pipeline,transfer,requirements,current,ctx};
@@ -134,21 +132,22 @@ export async function GET(request){
       .order('position',{ascending:true}).order('created_at',{ascending:true}).limit(50)
   ]);
   const data={};const total={};const warnings=[];
+  const LABEL={leads:'leads',tasks:'tarefas',contacts:'contatos',appointments:'agenda',sales:'vendas'};
   names.forEach((name,i)=>{
-    if(rows[i].error)warnings.push(name+': '+rows[i].error.message);
+    if(rows[i].error){logInternal('GET '+name,rows[i].error);warnings.push(LABEL[name])}
     data[name]=rows[i].error?[]:(rows[i].data||[]);
     total[name]=counts[i].error?data[name].length:(counts[i].count||0);
-    if(counts[i].error)warnings.push('contagem '+name+': '+counts[i].error.message);
+    if(counts[i].error){logInternal('GET contagem '+name,counts[i].error);warnings.push('total de '+LABEL[name])}
   });
   // Funis múltiplos: todos os funis da empresa, padrão primeiro.
   const pipelineList=pipelines.error?[]:(pipelines.data||[]);
-  if(pipelines.error)warnings.push('funil: '+pipelines.error.message);
+  if(pipelines.error){logInternal('GET funil',pipelines.error);warnings.push('funis')}
   const pipeline=pipelineList.find(p=>p.is_default)||pipelineList[0]||null;
   let allStages=[];
   if(pipelineList.length){
     const st=await admin.from('pipeline_stages').select('id,pipeline_id,name,position,color,is_won,is_lost')
       .in('pipeline_id',pipelineList.map(p=>p.id)).order('position',{ascending:true});
-    if(st.error)warnings.push('etapas: '+st.error.message);
+    if(st.error){logInternal('GET etapas',st.error);warnings.push('etapas do funil')}
     else allStages=st.data||[];
     const req=await admin.from('pipeline_stage_requirements').select('stage_id')
       .eq('organization_id',orgId).in('pipeline_id',pipelineList.map(p=>p.id));
@@ -180,7 +179,7 @@ export async function POST(request){
     if(!validId(payload.lead_id))return {error:'Lead inválido.',status:400};
     const {data,error}=await admin.from('leads').select('id,contact_id')
       .eq('id',payload.lead_id).eq('organization_id',orgId).maybeSingle();
-    if(error)return {error:'Falha ao validar o lead: '+error.message,status:500};
+    if(error){logInternal('stage-gate',error);return {error:'Falha ao validar o lead.',status:500}};
     if(!data)return {error:'Lead não encontrado nesta empresa.',status:404};
     return {lead:data};
   };
@@ -188,7 +187,7 @@ export async function POST(request){
     if(!validId(payload?.lead_id))return fails('Lead inválido.');
     const {data:lead,error:leadError}=await admin.from('leads')
       .select('id,source,created_at,pipeline_id,pipeline_stage_id').eq('id',payload.lead_id).eq('organization_id',orgId).maybeSingle();
-    if(leadError)return fails('Falha ao consultar o lead: '+leadError.message,500);
+    if(leadError)return dbFail('Falha ao consultar o lead.',leadError);
     if(!lead)return fails('Lead não encontrado nesta empresa.',404);
     const limit=100;
     const [history,tasks,appointments,sales,notes]=await Promise.all([
@@ -199,7 +198,7 @@ export async function POST(request){
       admin.from('notes').select('id,content,created_at').eq('organization_id',orgId).eq('lead_id',lead.id).order('created_at',{ascending:false}).limit(limit)
     ]);
     const warnings=[];
-    const pick=(name,res)=>{if(res.error){warnings.push(name+': '+res.error.message);return []}return res.data||[]};
+    const pick=(name,res)=>{if(res.error){logInternal('timeline '+name,res.error);warnings.push(name);return []}return res.data||[]};
     const parts={history:pick('histórico',history),tasks:pick('tarefas',tasks),appointments:pick('agenda',appointments),sales:pick('vendas',sales),notes:pick('notas',notes)};
     // Nomes das etapas citadas no histórico, restritos aos funis desta empresa.
     const stageIds=[...new Set(parts.history.flatMap(h=>[h.from_stage_id,h.to_stage_id]).filter(validId))];
@@ -207,7 +206,7 @@ export async function POST(request){
     if(stageIds.length){
       const st=await admin.from('pipeline_stages').select('id,name,pipeline:pipelines!inner(organization_id)')
         .in('id',stageIds).eq('pipeline.organization_id',orgId);
-      if(st.error)warnings.push('etapas: '+st.error.message);else stages=st.data||[];
+      if(st.error){logInternal('timeline etapas',st.error);warnings.push('nomes das etapas')}else stages=st.data||[];
     }
     const events=buildLeadTimeline({lead,stages,...parts});
     return reply({ok:true,events,warnings,truncated:Object.values(parts).some(x=>x.length>=limit)});
@@ -223,7 +222,7 @@ export async function POST(request){
     const {data,error}=await admin.from('tasks').insert({
       ...base,title,priority,due_date:due,created_by:auth.user.id,status:'pending',lead_id:link.lead?.id||null
     }).select('id,title,status,priority,due_date,lead_id').single();
-    if(error)return fails('Falha ao criar tarefa: '+error.message,500);
+    if(error)return dbFail('Falha ao criar tarefa.',error);
     return reply({ok:true,message:'Tarefa criada com sucesso.',item:data},201);
   }
   if(action==='task_status'){
@@ -233,7 +232,7 @@ export async function POST(request){
     const {data,error}=await admin.from('tasks').update({
       status,completed_at:status==='completed'?new Date().toISOString():null
     }).eq('id',payload.id).eq('organization_id',orgId).select('id,status').maybeSingle();
-    if(error)return fails('Falha ao atualizar tarefa: '+error.message,500);
+    if(error)return dbFail('Falha ao atualizar tarefa.',error);
     if(!data)return fails('Tarefa não encontrada nesta empresa.',404);
     return reply({ok:true,message:'Tarefa atualizada.',item:data});
   }
@@ -245,13 +244,14 @@ export async function POST(request){
     const type=['call','followup','exam','consultation','visit','meeting','return'].includes(payload?.type)?payload.type:'meeting';
     const location=val(payload?.location,220)||null;
     const end=payload?.end_at?validateDateTime(payload.end_at):null;
+    if(payload?.end_at&&!end)return fails('Horário final inválido.');
     if(end&&new Date(end)<=new Date(start))return fails('O horário final deve ser posterior ao início.');
     const link=await linkedLead();
     if(link.error)return fails(link.error,link.status);
     const {data,error}=await admin.from('appointments').insert({
       ...base,title,type,start_at:start,end_at:end,location,created_by:auth.user.id,status:'scheduled',lead_id:link.lead?.id||null
     }).select('id,title,start_at,status,type,lead_id').single();
-    if(error)return fails('Falha ao agendar: '+error.message,500);
+    if(error)return dbFail('Falha ao agendar.',error);
     return reply({ok:true,message:'Agendamento criado e salvo na agenda da empresa.',item:data},201);
   }
   if(action==='appointment_status'){
@@ -260,7 +260,7 @@ export async function POST(request){
     if(!status)return fails('Status inválido.');
     const {data,error}=await admin.from('appointments').update({status})
       .eq('id',payload.id).eq('organization_id',orgId).select('id,status').maybeSingle();
-    if(error)return fails('Falha ao atualizar agendamento: '+error.message,500);
+    if(error)return dbFail('Falha ao atualizar agendamento.',error);
     if(!data)return fails('Agendamento não encontrado.',404);
     return reply({ok:true,message:'Agendamento atualizado.',item:data});
   }
@@ -285,20 +285,20 @@ export async function POST(request){
       if(req.kind==='core'){
         if(req.field==='products'){
           const removed=await admin.from('lead_products').delete().eq('lead_id',lead.id).eq('organization_id',orgId);
-          if(removed.error)return fails('Falha ao salvar produtos: '+removed.error.message,500);
+          if(removed.error)return dbFail('Falha ao salvar produtos.',removed.error);
           if(value?.length){
             const price=new Map(ctx.products.map(p=>[p.id,p.price]));
             const inserted=await admin.from('lead_products').insert(value.map(v=>({
               organization_id:orgId,lead_id:lead.id,product_id:v.product_id,quantity:v.quantity,unit_price:price.get(v.product_id)??null
             })));
-            if(inserted.error)return fails('Falha ao salvar produtos: '+inserted.error.message,500);
+            if(inserted.error)return dbFail('Falha ao salvar produtos.',inserted.error);
           }
         }else leadPatch[req.field]=value;
       }else{
         const saved=value===null
           ?await admin.from('custom_field_values').delete().eq('custom_field_id',req.field).eq('entity_id',lead.id)
           :await admin.from('custom_field_values').upsert({custom_field_id:req.field,entity_id:lead.id,value,updated_at:new Date().toISOString()},{onConflict:'custom_field_id,entity_id'});
-        if(saved.error)return fails('Falha ao salvar "'+req.label+'": '+saved.error.message,500);
+        if(saved.error)return dbFail('Falha ao salvar "'+req.label+'".',saved.error);
       }
     }
     // 2) move o lead
@@ -306,9 +306,11 @@ export async function POST(request){
     const status=statusForStage(stage);
     const {error:updateError}=await admin.from('leads').update({
       ...leadPatch,pipeline_stage_id:stage.id,pipeline_id:pipeline.id,status,stage_changed_at:now,
-      ...(status!=='active'&&!leadPatch.closed_at&&!current['core:closed_at']?{closed_at:now.slice(0,10)}:{})
+      // Data de conclusão no dia local (não UTC). Negócio reaberto volta sem data de conclusão.
+      ...(status!=='active'&&!leadPatch.closed_at&&!current['core:closed_at']?{closed_at:localDateISO()}:{}),
+      ...(status==='active'&&!('closed_at' in leadPatch)&&current['core:closed_at']?{closed_at:null}:{})
     }).eq('id',lead.id).eq('organization_id',orgId);
-    if(updateError)return fails('Falha ao mover lead: '+updateError.message,500);
+    if(updateError)return dbFail('Falha ao mover lead.',updateError);
     // 3) trilha de auditoria da etapa
     const history=await admin.from('lead_stage_history').insert({
       lead_id:lead.id,from_stage_id:lead.pipeline_stage_id||null,to_stage_id:stage.id,changed_by:auth.user.id,
@@ -337,46 +339,55 @@ export async function POST(request){
     }));
     if(cleanStages.some(x=>x.name.length<2))return fails('Todas as etapas precisam ter nome.');
     if(cleanStages.some(x=>x.is_won&&x.is_lost))return fails('Uma etapa não pode ser ganha e perdida ao mesmo tempo.');
+    if(payload?.pipeline_id&&!validId(payload.pipeline_id))return fails('Modelo de funil inválido.');
     let pipelineId=validId(payload?.pipeline_id)?payload.pipeline_id:null;
+    let knownIds=new Set();
     if(pipelineId){
       const {data:owned,error:ownedError}=await admin.from('pipelines').select('id').eq('id',pipelineId).eq('organization_id',orgId).maybeSingle();
       if(ownedError||!owned)return fails('Modelo de funil não encontrado nesta empresa.',404);
+      const current=await admin.from('pipeline_stages').select('id').eq('pipeline_id',pipelineId);
+      if(current.error)return dbFail('Falha ao carregar as etapas do funil.',current.error);
+      knownIds=new Set((current.data||[]).map(x=>x.id));
       const {error:updateError}=await admin.from('pipelines').update({name}).eq('id',pipelineId).eq('organization_id',orgId);
-      if(updateError)return fails('Falha ao atualizar o modelo: '+updateError.message,500);
+      if(updateError)return dbFail('Falha ao atualizar o modelo.',updateError);
     }else{
       const {data:newPipeline,error:newError}=await admin.from('pipelines').insert({organization_id:orgId,name,is_default:false,position:0}).select('id').single();
-      if(newError)return fails('Falha ao criar o modelo: '+newError.message,500);
+      if(newError)return dbFail('Falha ao criar o modelo.',newError);
       pipelineId=newPipeline.id;
     }
-    for(const stage of cleanStages){
+    // Etapa com id de outro funil (ou repetido) era "atualizada" sem efeito e sumia do modelo salvo.
+    const planned=planPipelineStages(cleanStages,knownIds);
+    for(const stage of planned){
       const values={name:stage.name,color:stage.color,position:stage.position,is_won:stage.is_won,is_lost:stage.is_lost};
       const result=stage.id
         ?await admin.from('pipeline_stages').update(values).eq('id',stage.id).eq('pipeline_id',pipelineId)
         :await admin.from('pipeline_stages').insert({pipeline_id:pipelineId,...values});
-      if(result.error)return fails('Falha ao salvar etapa: '+result.error.message,500);
+      if(result.error)return dbFail('Falha ao salvar etapa.',result.error);
     }
+    let kept=0;
     if(payload?.pipeline_id){
       const existing=await admin.from('pipeline_stages').select('id').eq('pipeline_id',pipelineId);
-      if(existing.error)return fails('Falha ao verificar etapas removidas: '+existing.error.message,500);
-      const keep=new Set(cleanStages.filter(x=>x.id).map(x=>x.id));
+      if(existing.error)return dbFail('Falha ao verificar etapas removidas.',existing.error);
+      const keep=new Set(planned.filter(x=>x.id).map(x=>x.id));
       for(const old of (existing.data||[]).filter(x=>!keep.has(x.id))){
         const used=await admin.from('leads').select('id',{count:'exact',head:true}).eq('organization_id',orgId).eq('pipeline_stage_id',old.id);
-        if(used.error)return fails('Falha ao verificar leads da etapa: '+used.error.message,500);
-        if((used.count||0)>0)continue;
+        if(used.error)return dbFail('Falha ao verificar leads da etapa.',used.error);
+        if((used.count||0)>0){kept++;continue}
         // Etapa com histórico de movimentação é preservada para não quebrar a trilha de auditoria.
         const tracked=await admin.from('lead_stage_history').select('id',{count:'exact',head:true}).or('from_stage_id.eq.'+old.id+',to_stage_id.eq.'+old.id);
-        if(tracked.error||(tracked.count||0)>0)continue;
+        if(tracked.error||(tracked.count||0)>0){kept++;continue}
         const removed=await admin.from('pipeline_stages').delete().eq('id',old.id).eq('pipeline_id',pipelineId);
-        if(removed.error)return fails('Falha ao remover etapa: '+removed.error.message,500);
+        if(removed.error)return dbFail('Falha ao remover etapa.',removed.error);
       }
     }
     if(payload?.activate){
       const clear=await admin.from('pipelines').update({is_default:false}).eq('organization_id',orgId);
-      if(clear.error)return fails('Falha ao preparar ativação: '+clear.error.message,500);
+      if(clear.error)return dbFail('Falha ao preparar ativação.',clear.error);
       const activate=await admin.from('pipelines').update({is_default:true}).eq('id',pipelineId).eq('organization_id',orgId);
-      if(activate.error)return fails('Falha ao ativar o modelo: '+activate.error.message,500);
+      if(activate.error)return dbFail('Falha ao ativar o modelo.',activate.error);
     }
-    return reply({ok:true,message:payload?.activate?'Modelo salvo e ativado.':'Modelo salvo como rascunho.',pipeline_id:pipelineId});
+    const keptNote=kept?' '+kept+(kept>1?' etapas removidas foram mantidas':' etapa removida foi mantida')+' porque ainda tem leads ou histórico.':'';
+    return reply({ok:true,message:(payload?.activate?'Modelo salvo e ativado.':'Modelo salvo como rascunho.')+keptNote,pipeline_id:pipelineId,kept_stages:kept});
   }
   if(action==='sale_create'){
     const value=Number(payload?.value);
@@ -387,7 +398,7 @@ export async function POST(request){
       organization_id:orgId,value,seller_id:auth.user.id,sale_date:new Date().toISOString(),
       lead_id:link.lead?.id||null,contact_id:link.lead?.contact_id||null
     }).select('id,value,created_at,lead_id').single();
-    if(error)return fails('Falha ao registrar venda: '+error.message,500);
+    if(error)return dbFail('Falha ao registrar venda.',error);
     return reply({ok:true,message:'Venda registrada e indicadores atualizados.',item:data},201);
   }
   if(action==='contact_create'){
@@ -398,7 +409,7 @@ export async function POST(request){
     const {data,error}=await admin.from('contacts').insert({
       ...base,first_name,whatsapp:whatsapp||null,created_by:auth.user.id
     }).select('id,first_name,whatsapp').single();
-    if(error)return fails('Falha ao salvar contato: '+error.message,500);
+    if(error)return dbFail('Falha ao salvar contato.',error);
     return reply({ok:true,message:'Contato criado com sucesso.',item:data},201);
   }
   return fails('Ação não reconhecida.');

@@ -68,3 +68,12 @@ test('Brazilian phone matching tolerates country code, formatting and 9th digit'
  assert.deepEqual(phoneMatchKeys(''),[]);
  assert.deepEqual(phoneMatchKeys('123'),[]);
 });
+
+test('erro de esquema ausente é reconhecido (RPC/tabela não instalada)',async()=>{
+  const {isMissingSchema}=await import('../lib/workflow-security.mjs');
+  assert.equal(isMissingSchema({code:'PGRST202',message:'Could not find the function'}),true);
+  assert.equal(isMissingSchema({code:'42P01'}),true);
+  assert.equal(isMissingSchema({message:'Could not find the function public.admin_manage_organization in the schema cache'}),true);
+  assert.equal(isMissingSchema({code:'23505',message:'duplicate key'}),false);
+  assert.equal(isMissingSchema(null),false);
+});
