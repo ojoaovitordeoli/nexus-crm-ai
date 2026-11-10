@@ -1,10 +1,10 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Activity, Archive, ArrowRight, BarChart3, Building2, Check, CheckCircle2,
-  ChevronDown, CircleAlert, CircleCheck, Clock3, Fingerprint, Layers3,
+  Activity, Archive, ArrowRight, BarChart3, Building2, CheckCircle2,
+  ChevronDown, CircleAlert, CircleCheck, Layers3,
   LockKeyhole, Plus, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal,
-  Trash2, UserPlus, UsersRound, X, Zap
+  Trash2, UserPlus, UsersRound, X
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -22,7 +22,6 @@ const roleColor = ['#4f72ff','#19b6a4','#b58af5','#f4b95c','#f18c84','#9da9bd'];
 function Pill({status}) {return <span className={'adm-pill adm-pill--'+(status||'neutral')}><i/>{LABELS[status]||status||'Não definido'}</span>}
 function Message({text,kind}) {if(!text)return null;return <div role={kind==='danger'?'alert':'status'} className={'adm-message '+(kind==='danger'?'adm-message--danger':'adm-message--success')}>{kind==='danger'?<CircleAlert size={18}/>:<CheckCircle2 size={18}/>}<span>{text}</span></div>}
 function Empty({icon:Icon=Layers3,title,description}) {return <div className="adm-empty"><span className="adm-empty-icon"><Icon size={24}/></span><strong>{title}</strong><p>{description}</p></div>}
-function Metric({icon:Icon,label,value,help,accent,index}) {return <div className={'adm-metric adm-metric--'+accent} style={{animationDelay:(index*55)+'ms'}}><div className="adm-metric-header"><span>{label}</span><span className="adm-metric-icon"><Icon size={19}/></span></div><div className="adm-metric-number">{value}</div><div className="adm-metric-help">{help}</div><div className="adm-metric-decoration" aria-hidden="true"/></div>}
 
 export default function AdminWorkspace({isAdmin,onRefresh}) {
   const [tab,setTab] = useState('companies');
@@ -204,35 +203,21 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
   if(!isAdmin)return <div className="adm"><Message kind="danger" text="Área exclusiva do Super Admin. Sua conta não possui permissão de acesso."/></div>;
 
   return <div className="adm">
-    <section className="adm-hero">
-      <div className="adm-hero-text">
-        <div className="adm-overline"><span className="adm-spark"/> WORKSPACE / ADMINISTRAÇÃO</div>
-        <h2>Seu negócio. <span>Sob controle.</span></h2>
-        <p>Gerencie empresas, pessoas e permissões em um só lugar, com a visão completa da plataforma.</p>
-        <div className="adm-hero-bottom">
-          <span className="adm-live"><span/> Controle administrativo</span>
-          <span className="adm-separator"/>
-          <span className="adm-updated"><Clock3 size={14}/> {lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Sincronizando dados'}</span>
-        </div>
+    <header className="fx-pagehead">
+      <div className="fx-pagehead-title"><h1>Administração</h1>
+        <span className="fx-count">{lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Carregando dados'}</span></div>
+      <div className="fx-actions">
+        <button type="button" className="fx-btn" onClick={()=>load()} disabled={loading}><RefreshCw size={15}/> Atualizar</button>
       </div>
-      <div className="adm-hero-visual" aria-hidden="true">
-        <div className="adm-orbit adm-orbit-one"/><div className="adm-orbit adm-orbit-two"/>
-        <div className="adm-hero-glyph"><Layers3 size={56} strokeWidth={1.35}/></div>
-        <span className="adm-float adm-float-one"><Check size={15}/></span>
-        <span className="adm-float adm-float-two"><Zap size={15}/></span>
-      </div>
-    </section>
+    </header>
 
-    <div className="adm-metrics">
-      <Metric index={0} icon={Building2} label="Empresas ativas" value={loading?'—':activeCompanies.length}
-        help={archivedCompanies.length+' arquivadas'} accent="blue"/>
-      <Metric index={1} icon={UsersRound} label="Usuários" value={loading?'—':users.length}
-        help={users.filter(u=>u.status==='active').length+' acessos ativos'} accent="teal"/>
-      <Metric index={2} icon={Fingerprint} label="Vínculos ativos" value={loading?'—':activeMemberships.length}
-        help="Pessoas vinculadas às empresas" accent="violet"/>
-      <Metric index={3} icon={Activity} label="Eventos recentes" value={loading?'—':audits.length}
-        help="Últimos registros de auditoria" accent="amber"/>
-    </div>
+    <section className="fx-strip fx-strip--4" aria-label="Resumo da plataforma">
+      <div><span>Empresas ativas</span><strong>{loading?'—':activeCompanies.length}</strong></div>
+      <div><span>Usuários</span><strong>{loading?'—':users.length}</strong></div>
+      <div><span>Vínculos ativos</span><strong>{loading?'—':activeMemberships.length}</strong></div>
+      <div><span>Eventos de auditoria</span><strong>{loading?'—':audits.length}</strong></div>
+      <p className="fx-strip-note">{archivedCompanies.length} empresa(s) arquivada(s) · {users.filter(u=>u.status==='active').length} acesso(s) ativo(s). Nenhum valor é estimado.</p>
+    </section>
 
     <section className="adm-content">
       <div className="adm-content-top">
@@ -248,7 +233,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       {success&&<Message text={success} kind="success"/>}
       {tab==='companies'&&<>
         <div className="adm-section-heading">
-          <div><span className="adm-section-eyebrow">GESTÃO DE ESTRUTURA</span><h3>Suas empresas</h3><p>Organize os ambientes que usam o NEXUS CRM.</p></div>
+          <div><h3>Suas empresas</h3><p>Organize os ambientes que usam o NEXUS CRM.</p></div>
           <button type="button" className="adm-primary" onClick={()=>{setShowArchived(false);document.getElementById('adm-new-company')?.focus()}}><Plus size={17}/> Nova empresa</button>
         </div>
         <div className="adm-columns">
@@ -280,8 +265,8 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             <div className="adm-list-foot"><LockKeyhole size={14}/> Arquivar preserva os dados. Exclusão definitiva exige confirmação e empresa sem registros operacionais.</div>
           </div>
           <aside className="adm-surface adm-creation">
-            <span className="adm-form-icon"><Plus size={21}/></span>
-            <span className="adm-section-eyebrow">CONFIGURAÇÃO RÁPIDA</span>
+            
+            
             <h4>Criar empresa</h4>
             <p>Um espaço independente para cada operação, com funil inicial preparado.</p>
             <form className="adm-form" onSubmit={createCompany}>
@@ -294,7 +279,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       </>}
 
       {tab==='users'&&<>
-        <div className="adm-section-heading"><div><span className="adm-section-eyebrow">GESTÃO DE PESSOAS</span><h3>Usuários da plataforma</h3><p>Convide sua equipe e controle quem pode entrar no CRM.</p></div></div>
+        <div className="adm-section-heading"><div><h3>Usuários da plataforma</h3><p>Convide sua equipe e controle quem pode entrar no CRM.</p></div></div>
         <div className="adm-columns">
           <div className="adm-surface adm-list-surface">
             <div className="adm-list-controls"><div className="adm-count-title"><UsersRound size={18}/> Contas cadastradas <span>{users.length}</span></div><label className="adm-search"><Search size={17}/><input aria-label="Buscar usuário" placeholder="Buscar usuário..." value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
@@ -310,8 +295,8 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             {!filteredUsers.length&&<Empty icon={UsersRound} title="Nenhum usuário encontrado" description="Cadastre um usuário para começar."/>}
           </div>
           <aside className="adm-surface adm-creation">
-            <span className="adm-form-icon"><UserPlus size={21}/></span>
-            <span className="adm-section-eyebrow">NOVO ACESSO</span><h4>Adicionar usuário</h4>
+            
+            <h4>Adicionar usuário</h4>
             <p>Crie uma conta de trabalho e depois defina a qual empresa ela terá acesso.</p>
             <form className="adm-form" onSubmit={createUser}>
               <label>Nome completo<input required minLength={2} maxLength={150} placeholder="Nome e sobrenome" autoComplete="off" value={name} onChange={e=>setName(e.target.value)}/></label>
@@ -325,7 +310,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       </>}
 
       {tab==='permissions'&&<>
-        <div className="adm-section-heading"><div><span className="adm-section-eyebrow">SEGURANÇA & CONTROLE</span><h3>Permissões de acesso</h3><p>Cada pessoa vê apenas as empresas vinculadas à sua conta.</p></div></div>
+        <div className="adm-section-heading"><div><h3>Permissões de acesso</h3><p>Cada pessoa vê apenas as empresas vinculadas à sua conta.</p></div></div>
         <div className="adm-columns">
           <div className="adm-surface adm-list-surface">
             <div className="adm-list-controls"><div className="adm-count-title"><ShieldCheck size={18}/> Acessos cadastrados <span>{members.length}</span></div></div>
@@ -339,7 +324,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             </tbody></table></div>
             {!members.length&&<Empty icon={LockKeyhole} title="Sem acessos atribuídos" description="Vincule um usuário a uma empresa para ativar a operação."/>}
           </div>
-          <aside className="adm-surface adm-creation"><span className="adm-form-icon"><ShieldCheck size={21}/></span><span className="adm-section-eyebrow">NÍVEL DE PERMISSÃO</span><h4>Vincular acesso</h4><p>Defina a empresa e a função do usuário.</p>
+          <aside className="adm-surface adm-creation"><h4>Vincular acesso</h4><p>Defina a empresa e a função do usuário.</p>
             <form className="adm-form" onSubmit={addMember}>
               <label>Usuário<select value={selectedUser} onChange={e=>setSelectedUser(e.target.value)} required><option value="">Selecionar usuário</option>{users.filter(u=>u.status==='active'&&!u.is_super_admin).map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</select></label>
               <label>Empresa<select value={selectedCompany} onChange={e=>setSelectedCompany(e.target.value)} required><option value="">Selecionar empresa</option>{activeCompanies.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
@@ -351,7 +336,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       </>}
 
       {tab==='audits'&&<>
-        <div className="adm-section-heading"><div><span className="adm-section-eyebrow">RASTREABILIDADE</span><h3>Atividade recente</h3><p>Histórico administrativo dos últimos eventos registrados.</p></div></div>
+        <div className="adm-section-heading"><div><h3>Atividade recente</h3><p>Histórico administrativo dos últimos eventos registrados.</p></div></div>
         <div className="adm-columns">
           <div className="adm-surface adm-list-surface">
             <div className="adm-list-controls"><div className="adm-count-title"><Activity size={18}/> Linha do tempo <span>{audits.length}</span></div><span className="adm-updated">Últimos 50 eventos</span></div>
@@ -359,7 +344,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             {!audits.length&&<Empty icon={Activity} title="Nenhuma atividade registrada" description="Os eventos administrativos aparecerão aqui."/>}
           </div>
           <aside className="adm-surface adm-creation adm-security-panel">
-            <span className="adm-form-icon"><ShieldCheck size={21}/></span><span className="adm-section-eyebrow">SEGURANÇA</span><h4>Trilha de auditoria</h4><p>As alterações de empresa são registradas para facilitar o acompanhamento das ações administrativas.</p>
+            <h4>Trilha de auditoria</h4><p>As alterações de empresa são registradas para facilitar o acompanhamento das ações administrativas.</p>
             <div className="adm-security-point"><CheckCircle2 size={17}/> Controle de acesso por usuário</div>
             <div className="adm-security-point"><CheckCircle2 size={17}/> Gestão de empresas reversível</div>
             <div className="adm-security-point"><CheckCircle2 size={17}/> Exclusões com confirmação</div>
