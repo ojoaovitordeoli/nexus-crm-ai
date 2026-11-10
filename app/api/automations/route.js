@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {adminSupabase,authorizeTenant} from '../../../lib/tenant-session';
-import {isUuid,manageAutomationRole,validateFollowupRule} from '../../../lib/workflow-security.mjs';
+import {isMissingSchema,isUuid,logInternal,manageAutomationRole,validateFollowupRule} from '../../../lib/workflow-security.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -26,10 +26,11 @@ export async function GET(request){
       .eq('organization_id',orgId).order('created_at',{ascending:false}).limit(50)
   ]);
   if(rules.error){
-    const migration=rules.error.code==='42P01'||rules.error.code==='PGRST205';
+    const migration=isMissingSchema(rules.error);
+    if(!migration)logInternal('automations GET',rules.error);
     return fail(migration?
       'A migração das automações ainda não foi aplicada no Supabase. Execute o arquivo supabase/20261028_automation_whatsapp_foundation.sql.':
-      rules.error.message,migration?503:500);
+      'Não foi possível carregar as automações. Tente novamente em instantes.',migration?503:500);
   }
   return response({rules:rules.data||[],executions:runs.data||[],can_manage:manageAutomationRole(auth.role)});
 }
@@ -37,18 +38,18 @@ export async function GET(request){
 export async function POST(request){
   let body;
   try{body=await request.json()}catch{return fail('Dados inválidos.')}
-  const orgId=String(body.org_id||'');
+  const orgId=String(body?.org_id||'');
   const auth=await context(request,orgId);
   if(auth.error)return fail(auth.error,auth.status);
   if(!manageAutomationRole(auth.role))return fail('Somente gerente ou administrador pode alterar automações.',403);
-  const action=String(body.action||'');
+  const action=String(body?.action||'');
   if(action==='create'){
     const validated=validateFollowupRule(body);
     if(validated.error)return fail(validated.error);
     const {stage_id}=validated.data;
     const {data:stage,error:stageError}=await auth.admin.from('pipeline_stages')
       .select('id,pipeline_id').eq('id',stage_id).maybeSingle();
-    if(stageError||!stage)return fail('Etapa inválida.',404);
+    if(stageError||!stage)return fail('Etapa não encontrada.',404);
     const {data:pipeline,error:pipelineError}=await auth.admin.from('pipelines')
       .select('id').eq('id',stage.pipeline_id).eq('organization_id',orgId).maybeSingle();
     if(pipelineError||!pipeline)return fail('Essa etapa não pertence à empresa.',403);
@@ -59,7 +60,11 @@ export async function POST(request){
     const {data,error}=await auth.admin.from('automation_rules').insert({
       ...validated.data,organization_id:orgId,created_by:auth.user.id,enabled:false
     }).select('id,name').single();
-    if(error)return fail('Não foi possível criar regra: '+error.message,500);
+    if(error){
+      if(error.code==='23505')return fail('Já existe uma regra com esse nome nesta empresa.',409);
+      logInternal('automations create',error);
+      return fail('Não foi possível criar a regra. Tente novamente em instantes.',500);
+    }
     return response({ok:true,message:'Regra cadastrada. Ative quando estiver pronta.',rule:data});
   }
   if(action==='toggle'){
@@ -68,7 +73,7 @@ export async function POST(request){
       .update({enabled:body.enabled,updated_at:new Date().toISOString()})
       .eq('organization_id',orgId).eq('id',body.rule_id)
       .select('id,enabled').maybeSingle();
-    if(error)return fail('Falha ao alterar regra: '+error.message,500);
+    if(error){logInternal('automations toggle',error);return fail('Falha ao alterar a regra. Tente novamente em instantes.',500)}
     if(!data)return fail('Regra não encontrada.',404);
     return response({ok:true,message:data.enabled?'Automação ativada.':'Automação pausada.',rule:data});
   }
@@ -76,7 +81,7 @@ export async function POST(request){
     if(!isUuid(body.rule_id))return fail('Regra inválida.');
     const {data,error}=await auth.admin.from('automation_rules')
       .delete().eq('organization_id',orgId).eq('id',body.rule_id).select('id').maybeSingle();
-    if(error)return fail('Falha ao excluir regra: '+error.message,500);
+    if(error){logInternal('automations delete',error);return fail('Falha ao excluir a regra. Tente novamente em instantes.',500)}
     if(!data)return fail('Regra não encontrada.',404);
     return response({ok:true,message:'Regra excluída.'});
   }

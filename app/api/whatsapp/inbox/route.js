@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {adminSupabase,authorizeTenant} from '../../../../lib/tenant-session';
-import {readWhatsAppRole} from '../../../../lib/workflow-security.mjs';
+import {isMissingSchema,logInternal,readWhatsAppRole} from '../../../../lib/workflow-security.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -27,10 +27,11 @@ export async function GET(request){
   ]);
   if(connections.error||messages.error){
     const err=connections.error||messages.error;
-    const missing=['42P01','42703','PGRST205','PGRST204'].includes(err.code);
+    const missing=isMissingSchema(err);
+    if(!missing)logInternal('whatsapp inbox GET',err);
     return fail(missing?
       'A estrutura do WhatsApp ainda não foi instalada. Execute a migração SQL do NEXUS no Supabase.':
-      'Falha ao carregar a caixa de entrada: '+err.message,missing?503:500);
+      'Falha ao carregar a caixa de entrada. Tente novamente em instantes.',missing?503:500);
   }
   return NextResponse.json({
     connections:connections.data||[],
@@ -49,8 +50,8 @@ export async function POST(request){
   // Only the platform's actual super admin may associate phone IDs with companies.
   // Same criterion as can_register in GET (profiles.is_super_admin via authorizeTenant).
   if(ctx.isSuperAdmin!==true)return fail('Somente o Super Admin pode registrar números da Meta.',403);
-  const phoneId=String(body.phone_number_id||'').trim();
-  const display=String(body.display_name||'WhatsApp Business').trim().slice(0,100);
+  const phoneId=String(body?.phone_number_id||'').trim();
+  const display=String(body?.display_name||'WhatsApp Business').trim().slice(0,100);
   if(!/^[0-9]{6,24}$/.test(phoneId))return fail('Informe o Phone Number ID numérico obtido no painel da Meta.');
   if(!process.env.META_APP_SECRET||!process.env.META_WEBHOOK_VERIFY_TOKEN)
     return fail('Configure META_APP_SECRET e META_WEBHOOK_VERIFY_TOKEN no Render antes de registrar o número.',503);
@@ -63,6 +64,10 @@ export async function POST(request){
     display_name:display||'WhatsApp Business',
     created_by:ctx.user.id,status:'pending'
   }).select('id,phone_number_id,status').maybeSingle();
-  if(error)return fail(error.code==='23505'?'Esse Phone Number ID já está registrado.':error.message,error.code==='23505'?409:500);
+  if(error){
+    if(error.code==='23505')return fail('Esse Phone Number ID já está registrado.',409);
+    logInternal('whatsapp inbox register',error);
+    return fail('Não foi possível registrar o número. Tente novamente em instantes.',500);
+  }
   return NextResponse.json({ok:true,message:'Número registrado. Aguardando o primeiro evento assinado da Meta.',connection:data});
 }
