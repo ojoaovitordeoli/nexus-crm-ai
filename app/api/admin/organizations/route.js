@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isUuid, logInternal } from '../../../../lib/workflow-security.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +23,7 @@ export async function POST(request) {
   catch { return NextResponse.json({error:'Solicitação inválida.'},{status:400}) }
   const orgId = String(input?.org_id || '');
   const action = String(input?.action || '');
-  if (!/^[a-f0-9-]{36}$/i.test(orgId) || !['archive','restore'].includes(action)) {
+  if (!isUuid(orgId) || !['archive','restore'].includes(action)) {
     return NextResponse.json({error:'Empresa ou ação inválida.'},{status:400});
   }
 
@@ -43,7 +44,8 @@ export async function POST(request) {
 
   const {data:company,error:findError}=await supabase.from('organizations')
     .select('id,name,status').eq('id',orgId).maybeSingle();
-  if(findError||!company)return NextResponse.json({error:'Empresa não encontrada.'},{status:404});
+  if(findError){logInternal('admin/organizations find',findError);return NextResponse.json({error:'Não foi possível consultar a empresa.'},{status:500})}
+  if(!company)return NextResponse.json({error:'Empresa não encontrada.'},{status:404});
 
   const desired=action==='archive'?'archived':'active';
   if(action==='restore'&&company.status!=='archived') {
@@ -53,9 +55,14 @@ export async function POST(request) {
     return NextResponse.json({ok:true,status:'archived',message:'Empresa já arquivada.'});
   }
 
-  const {error:updateError}=await supabase.from('organizations')
-    .update({status:desired}).eq('id',orgId).eq('status',company.status);
-  if(updateError) return NextResponse.json({error:'Falha ao atualizar empresa: '+updateError.message},{status:500});
+  const {data:updated,error:updateError}=await supabase.from('organizations')
+    .update({status:desired}).eq('id',orgId).eq('status',company.status).select('id');
+  if(updateError){
+    logInternal('admin/organizations update',updateError);
+    return NextResponse.json({error:'Falha ao atualizar empresa. Tente novamente em instantes.'},{status:500});
+  }
+  // Outra sessão mudou o status entre a leitura e a escrita: nada foi alterado, não reportar sucesso.
+  if(!updated?.length) return NextResponse.json({error:'A empresa mudou de status enquanto você confirmava. Atualize a lista e tente de novo.'},{status:409});
 
   const {error:auditError}=await supabase.from('audit_logs').insert({
     user_id:auth.user.id,organization_id:orgId,action:'organization_'+action,
