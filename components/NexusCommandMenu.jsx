@@ -2,6 +2,7 @@
 
 import {useEffect,useMemo,useState} from 'react';
 import {Command} from 'cmdk';
+import {contactSearchTerm} from '../lib/shell-rules.mjs';
 import {
   Activity,ArrowRight,BriefcaseBusiness,CalendarDays,CheckCircle2,
   ContactRound,CornerDownLeft,LayoutDashboard,ListTodo,MessageCircle,ReceiptText,
@@ -35,7 +36,7 @@ function Item({id,title,description,Icon,onSelect,accent=false}){
 }
 export default function NexusCommandMenu({
   open,onOpenChange,onNavigate,onRefresh,onTheme,dark,
-  isSuperAdmin=false,onReplay,leads=[],contacts=[],tasks=[]
+  isSuperAdmin=false,readonly=false,onReplay,leads=[],contacts=[],tasks=[]
 }){
   const [term,setTerm]=useState('');
   useEffect(()=>{if(!open)setTerm('')},[open]);
@@ -53,9 +54,9 @@ export default function NexusCommandMenu({
     if(query.length<2)return [];
     return [
       ...leads.filter(l=>simplify([who(l.contact),l.contact?.whatsapp,l.source].join(' ')).includes(query))
-        .slice(0,5).map(l=>({id:'lead-'+l.id,title:who(l.contact),description:'Lead · '+(l.source||'Sem origem'),path:'leads',search:who(l.contact),Icon:UsersRound})),
+        .slice(0,5).map(l=>({id:'lead-'+l.id,title:who(l.contact),description:'Lead · '+(l.source||'Sem origem'),path:'leads',search:contactSearchTerm(l.contact),Icon:UsersRound})),
       ...contacts.filter(c=>simplify([who(c),c.whatsapp].join(' ')).includes(query))
-        .slice(0,5).map(c=>({id:'contact-'+c.id,title:who(c),description:'Contato · '+(c.whatsapp||'Sem telefone'),path:'contacts',search:who(c),Icon:ContactRound})),
+        .slice(0,5).map(c=>({id:'contact-'+c.id,title:who(c),description:'Contato · '+(c.whatsapp||'Sem telefone'),path:'contacts',search:contactSearchTerm(c),Icon:ContactRound})),
       ...tasks.filter(t=>simplify(t.title).includes(query))
         .slice(0,5).map(t=>({id:'task-'+t.id,title:t.title||'Tarefa',description:'Tarefa cadastrada',path:'tasks',search:t.title,Icon:ListTodo}))
     ].slice(0,12);
@@ -63,12 +64,13 @@ export default function NexusCommandMenu({
   const places=destinations.filter(d=>!query||simplify(d.title+' '+d.description+' '+d.keywords).includes(query));
   const adminVisible=isSuperAdmin&&(!query||simplify('super admin administração empresas usuários').includes(query));
   const extras=[
-    {id:'create-task',title:'Criar nova tarefa',description:'Abrir o formulário de tarefas',Icon:Plus,keywords:'criar tarefa adicionar nova atividade',run:()=>{onOpenChange(false);onNavigate('tasks','', 'new')}},
-    {id:'create-contact',title:'Cadastrar contato',description:'Abrir cadastro na base de contatos',Icon:ContactRound,keywords:'novo contato adicionar cadastrar pessoa whatsapp',run:()=>{onOpenChange(false);onNavigate('contacts','','new')}},
+    {id:'create-task',create:true,title:'Criar nova tarefa',description:'Abrir o formulário de tarefas',Icon:Plus,keywords:'criar tarefa adicionar nova atividade',run:()=>{onOpenChange(false);onNavigate('tasks','', 'new')}},
+    {id:'create-contact',create:true,title:'Cadastrar contato',description:'Abrir cadastro na base de contatos',Icon:ContactRound,keywords:'novo contato adicionar cadastrar pessoa whatsapp',run:()=>{onOpenChange(false);onNavigate('contacts','','new')}},
     {id:'refresh',title:'Atualizar dados',description:'Recarregar os registros da empresa',Icon:RefreshCw,keywords:'atualizar sincronizar dados recarregar',run:()=>{onOpenChange(false);onRefresh()}},
     {id:'theme',title:dark?'Ativar modo claro':'Ativar modo escuro',description:'Mudar aparência do CRM',Icon:dark?Sun:Moon,keywords:'tema aparência claro escuro',run:()=>{onOpenChange(false);onTheme()}},
     {id:'motion',title:'Rever apresentação',description:'Reproduzir a entrada animada do Dashboard',Icon:Play,keywords:'animações replay efeitos apresentação',run:()=>{onOpenChange(false);onReplay()}}
-  ].filter(item=>!query||simplify(item.title+' '+item.description+' '+item.keywords).includes(query));
+  ].filter(item=>!(readonly&&item.create))// perfil somente leitura não recebe atalhos de cadastro
+   .filter(item=>!query||simplify(item.title+' '+item.description+' '+item.keywords).includes(query));
   const hasResults=records.length+places.length+extras.length+(adminVisible?1:0)>0;
   const go=(path,search)=>{onOpenChange(false);onNavigate(path,search)};
 
