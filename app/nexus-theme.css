@@ -134,7 +134,7 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .staff-sidebar .staff-workspace-picker strong{color:#f2f2f4!important;font-size:13px!important;font-weight:650!important}
 :root:root:root body .staff-sidebar .staff-nav{display:flex!important;flex-direction:column!important;gap:14px!important;flex:1 1 auto!important}
 :root:root:root body .staff-sidebar .staff-nav-group{display:flex!important;flex-direction:column!important;gap:1px!important;margin:0!important;padding:0!important;border:0!important}
-:root:root:root body .staff-sidebar .staff-nav-title{color:var(--fx-nav-faint)!important;font-size:11.5px!important;font-weight:600!important;letter-spacing:0!important;padding:0 10px 6px!important;margin:0!important}
+:root:root:root body .staff-sidebar .staff-nav-title{color:var(--fx-nav-faint)!important;font-size:11.5px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important;font-family:inherit!important;padding:0 10px 6px!important;margin:0!important}
 :root:root:root body .staff-sidebar .staff-nav-item,:root:root:root body.dark .staff-sidebar .staff-nav-item{display:flex!important;align-items:center!important;gap:10px!important;height:36px!important;min-height:36px!important;padding:0 10px!important;margin:0!important;border:0!important;border-radius:6px!important;background:transparent!important;color:var(--fx-nav-text)!important;font-size:13.5px!important;font-weight:550!important;box-shadow:none!important;transform:none!important}
 :root:root:root body .staff-sidebar .staff-nav-item svg{color:#7f7f89!important;width:17px!important;height:17px!important;flex:none!important}
 :root:root:root body .staff-sidebar .staff-nav-item:hover{background:var(--fx-nav-hover)!important;color:#fff!important}
@@ -854,3 +854,5 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .adm-empty{padding:28px 14px!important;background:transparent!important}
 :root:root:root body .adm-empty-icon{display:none!important}
 :root:root:root body .adm-empty strong{font-size:14px!important;font-weight:600!important}
+
+:root:root:root body .staff-workspace-picker small{letter-spacing:0!important;text-transform:none!important;font-size:11px!important;font-weight:500!important}
