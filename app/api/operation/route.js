@@ -436,7 +436,7 @@ export async function POST(request){
     const source=val(payload?.source,120)||null;
     const {data,error}=await admin.from('leads').insert({
       ...base,contact_id:contactId,pipeline_id:target.id,pipeline_stage_id:first.id,
-      status:'new',source,created_by:auth.user.id,stage_changed_at:new Date().toISOString()
+      status:'active',source,created_by:auth.user.id,stage_changed_at:new Date().toISOString()
     }).select('id,contact_id,pipeline_id,pipeline_stage_id,source,created_at').single();
     if(error)return dbFail('Falha ao criar o lead.',error);
     // Trilha: registra a entrada na primeira etapa; falha aqui não desfaz o lead.
