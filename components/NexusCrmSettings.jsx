@@ -1,5 +1,5 @@
 'use client';
-import {useCallback,useEffect,useMemo,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {Check,ListChecks,Loader2,Pencil,Plus,RotateCcw,Trash2,Wand2,X} from 'lucide-react';
 import {db} from '../lib/supabase';
 
@@ -35,7 +35,7 @@ async function call(organizationId,body){
   return out;
 }
 
-function CatalogList({kind,catalog,canManage,run}){
+function CatalogList({kind,catalog,canManage,run,busy}){
   const [name,setName]=useState('');const [editing,setEditing]=useState(null);const [draft,setDraft]=useState('');
   const [showInactive,setShowInactive]=useState(false);
   if(!catalog?.installed)return <p className="nxs-empty">Este cadastro ainda não está instalado no banco. A migração de categorias e setores precisa ser aplicada.</p>;
@@ -46,22 +46,22 @@ function CatalogList({kind,catalog,canManage,run}){
     {canManage&&<form className="nxs-add" onSubmit={async e=>{e.preventDefault();if(await run({action:'catalog_add',kind,name}))setName('')}}>
       <label className="nxs-sr" htmlFor={'add-'+kind}>Novo item</label>
       <input id={'add-'+kind} value={name} onChange={e=>setName(e.target.value)} placeholder="Novo item" maxLength={120}/>
-      <button type="submit" className="nxs-btn nxs-btn--primary" disabled={!name.trim()}><Plus size={16}/> Adicionar</button>
+      <button type="submit" className="nxs-btn nxs-btn--primary" disabled={busy||!name.trim()}><Plus size={16}/> Adicionar</button>
     </form>}
     {items.length?<ul className="nxs-list">
       {items.map(item=><li key={item.id} className={item.is_active?'':'is-off'}>
         {editing===item.id
           ?<form className="nxs-inline" onSubmit={async e=>{e.preventDefault();if(await run({action:'catalog_update',kind,id:item.id,name:draft}))setEditing(null)}}>
              <input aria-label="Nome" value={draft} onChange={e=>setDraft(e.target.value)} autoFocus maxLength={120}/>
-             <button type="submit" className="nxs-icon" aria-label="Salvar"><Check size={16}/></button>
+             <button type="submit" className="nxs-icon" aria-label="Salvar" disabled={busy||!draft.trim()}><Check size={16}/></button>
              <button type="button" className="nxs-icon" aria-label="Cancelar" onClick={()=>setEditing(null)}><X size={16}/></button>
            </form>
           :<span>{item.name}{!item.is_active&&<small> · desativado</small>}</span>}
         {canManage&&editing!==item.id&&<div className="nxs-row-actions">
           {item.is_active
             ?<><button type="button" className="nxs-icon" aria-label={'Renomear '+item.name} onClick={()=>{setEditing(item.id);setDraft(item.name)}}><Pencil size={15}/></button>
-               <button type="button" className="nxs-icon" aria-label={'Desativar '+item.name} onClick={()=>run({action:'catalog_delete',kind,id:item.id})}><Trash2 size={15}/></button></>
-            :<button type="button" className="nxs-icon" aria-label={'Reativar '+item.name} onClick={()=>run({action:'catalog_update',kind,id:item.id,is_active:true})}><RotateCcw size={15}/></button>}
+               <button type="button" className="nxs-icon" aria-label={'Desativar '+item.name} disabled={busy} onClick={()=>run({action:'catalog_delete',kind,id:item.id})}><Trash2 size={15}/></button></>
+            :<button type="button" className="nxs-icon" aria-label={'Reativar '+item.name} disabled={busy} onClick={()=>run({action:'catalog_update',kind,id:item.id,is_active:true})}><RotateCcw size={15}/></button>}
         </div>}
       </li>)}
     </ul>:<p className="nxs-empty">Nenhum item cadastrado.</p>}
@@ -70,7 +70,7 @@ function CatalogList({kind,catalog,canManage,run}){
   </div>;
 }
 
-function FieldsTab({fields,canManage,run}){
+function FieldsTab({fields,canManage,run,busy}){
   const blank={name:'',type:'text',entity_type:'lead',options:''};
   const [form,setForm]=useState(null);
   const group=e=>fields.filter(f=>f.entity_type===e);
@@ -82,7 +82,7 @@ function FieldsTab({fields,canManage,run}){
       <label>Tipo<select value={form.type} onChange={e=>setForm({...form,type:e.target.value})}>{Object.entries(TYPES).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
       <label>Onde aparece<select value={form.entity_type} disabled={Boolean(form.id)} onChange={e=>setForm({...form,entity_type:e.target.value})}><option value="lead">Negócio</option><option value="contact">Pessoa</option></select></label>
       {(form.type==='select'||form.type==='multiselect')&&<label className="nxs-wide">Opções (uma por linha)<textarea rows={3} value={form.options} onChange={e=>setForm({...form,options:e.target.value})}/></label>}
-      <div className="nxs-wide nxs-form-actions"><button type="button" className="nxs-btn" onClick={()=>setForm(null)}>Cancelar</button><button type="submit" className="nxs-btn nxs-btn--primary">Salvar campo</button></div>
+      <div className="nxs-wide nxs-form-actions"><button type="button" className="nxs-btn" onClick={()=>setForm(null)}>Cancelar</button><button type="submit" className="nxs-btn nxs-btn--primary" disabled={busy}>Salvar campo</button></div>
     </form>}
     {[['lead','Negócio'],['contact','Pessoa']].map(([e,label])=><section key={e} className="nxs-group">
       <h4>{label} <small>{group(e).length}</small></h4>
@@ -94,7 +94,7 @@ function FieldsTab({fields,canManage,run}){
   </div>;
 }
 
-function StagesTab({data,canManage,run}){
+function StagesTab({data,canManage,run,busy}){
   const [pipelineId,setPipelineId]=useState('');
   const [editing,setEditing]=useState(null);const [draft,setDraft]=useState([]);
   const pipeline=data.pipelines.find(p=>p.id===pipelineId)||data.pipelines.find(p=>p.is_default)||data.pipelines[0];
@@ -120,7 +120,7 @@ function StagesTab({data,canManage,run}){
           ?<div className="nxs-req-edit">
              {options.map(o=><label key={o.key} className="nxs-check"><input type="checkbox" checked={draft.includes(o.key)} onChange={e=>setDraft(d=>e.target.checked?[...d,o.key]:d.filter(x=>x!==o.key))}/>{o.label}</label>)}
              <div className="nxs-form-actions"><button type="button" className="nxs-btn" onClick={()=>setEditing(null)}>Cancelar</button>
-               <button type="button" className="nxs-btn nxs-btn--primary" onClick={async()=>{
+               <button type="button" className="nxs-btn nxs-btn--primary" disabled={busy} onClick={async()=>{
                  const items=draft.map(k=>options.find(o=>o.key===k)).filter(Boolean).map(o=>({core_field:o.core_field||null,custom_field_id:o.custom_field_id||null}));
                  if(await run({action:'requirements_save',stage_id:s.id,items}))setEditing(null)}}>Salvar</button></div>
            </div>
@@ -132,7 +132,7 @@ function StagesTab({data,canManage,run}){
 
 export default function NexusCrmSettings({organizationId}){
   const [tab,setTab]=useState('stages');
-  const [data,setData]=useState(null);const [error,setError]=useState('');const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);
+  const [data,setData]=useState(null);const [error,setError]=useState('');const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);const inFlight=useRef(false);
   const load=useCallback(async()=>{
     if(!organizationId)return;
     setError('');
@@ -140,10 +140,12 @@ export default function NexusCrmSettings({organizationId}){
   },[organizationId]);
   useEffect(()=>{load()},[load]);
   const run=useCallback(async body=>{
-    setBusy(true);setNotice('');setError('');
+    // Trava contra duplo envio (Enter duas vezes, clique duplo): o segundo pedido gerava "Já existe".
+    if(inFlight.current)return false;
+    inFlight.current=true;setBusy(true);setNotice('');setError('');
     try{const out=await call(organizationId,body);setNotice(out.message||'Salvo.');await load();return true}
     catch(e){setError(e.message);return false}
-    finally{setBusy(false)}
+    finally{inFlight.current=false;setBusy(false)}
   },[organizationId,load]);
   const counts=useMemo(()=>data?Object.fromEntries(Object.entries(data.catalogs).map(([k,c])=>[k,c.items.filter(i=>i.is_active).length])):{}, [data]);
   if(!organizationId)return null;
@@ -163,9 +165,9 @@ export default function NexusCrmSettings({organizationId}){
           {t.label}{counts[t.id]!==undefined&&<small>{counts[t.id]}</small>}</button>)}
       </div>
       <div role="tabpanel" id={'nxs-panel-'+tab} aria-labelledby={'nxs-tab-'+tab} className="nxs-panel">
-        {tab==='stages'&&<StagesTab data={data} canManage={data.can_manage} run={run}/>}
-        {tab==='fields'&&<FieldsTab fields={data.fields} canManage={data.can_manage} run={run}/>}
-        {data.catalogs[tab]&&<CatalogList key={tab} kind={tab} catalog={data.catalogs[tab]} canManage={data.can_manage} run={run}/>}
+        {tab==='stages'&&<StagesTab data={data} canManage={data.can_manage} run={run} busy={busy}/>}
+        {tab==='fields'&&<FieldsTab fields={data.fields} canManage={data.can_manage} run={run} busy={busy}/>}
+        {data.catalogs[tab]&&<CatalogList key={tab} kind={tab} catalog={data.catalogs[tab]} canManage={data.can_manage} run={run} busy={busy}/>}
       </div>
     </>}
   </section>;

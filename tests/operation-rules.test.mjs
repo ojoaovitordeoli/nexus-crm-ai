@@ -42,3 +42,31 @@ test('registros sem data válida são ignorados em vez de inventar horário',()=
   assert.equal(events.length,1);
   assert.equal(events[0].detail,'Definida como etapa removida');
 });
+
+import {safeCalendarDate,parseDateTime,localDateISO,addDaysISO,planPipelineStages} from '../lib/operation-rules.mjs';
+
+test('data de tarefa só aceita dia de calendário existente',()=>{
+  assert.equal(safeCalendarDate('2026-11-10'),'2026-11-10');
+  assert.equal(safeCalendarDate('2028-02-29'),'2028-02-29');
+  for(const bad of ['2026-02-31','2026-13-01','2026-00-10','10/11/2026','',null,undefined,'0001-01-01'])
+    assert.equal(safeCalendarDate(bad),null,String(bad));
+});
+
+test('agendamento não aceita null/número (new Date(null) seria 1970)',()=>{
+  assert.equal(parseDateTime('2026-11-10T13:00:00.000Z'),'2026-11-10T13:00:00.000Z');
+  for(const bad of [null,0,12345,true,'', 'amanhã','2026-99-99T10:00'])assert.equal(parseDateTime(bad),null,String(bad));
+});
+
+test('data local usa o fuso de Brasília, não UTC',()=>{
+  // 23h30 de 10/11 em Brasília = 02h30 UTC de 11/11.
+  assert.equal(localDateISO(new Date('2026-11-11T02:30:00Z')),'2026-11-10');
+  assert.equal(addDaysISO('2026-11-30',1),'2026-12-01');
+  assert.equal(addDaysISO('2026-11-10',0),'2026-11-10');
+});
+
+test('etapas com id de outro funil ou repetido viram etapas novas',()=>{
+  const known=new Set(['a']);
+  const out=planPipelineStages([{id:'a',name:'A'},{id:'a',name:'A2'},{id:'x',name:'X'},{id:null,name:'N'}],known);
+  assert.deepEqual(out.map(s=>s.id),['a',null,null,null]);
+  assert.deepEqual(planPipelineStages([{id:'z'}],new Set()).map(s=>s.id),[null]);
+});
