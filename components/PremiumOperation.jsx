@@ -290,7 +290,7 @@ function PipelineBar({pipelines,active,onChange,readonly,onNew,shown}){
     {!readonly&&<button type="button" className="nxg-secondary" onClick={onNew}><Plus size={15}/> Novo funil</button>}
   </div>;
 }
-export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizationName,readonly=false,canManagePipeline=!readonly,stages:defaultStages=[],pipeline:defaultPipeline,pipelines=[],allStages=[],onOperation,onReload}){
+export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizationName,readonly=false,canManagePipeline=!readonly,stages:defaultStages=[],pipeline:defaultPipeline,pipelines=[],allStages=[],contacts=[],onOperation,onReload}){
   const [pipelineId,setPipelineId]=useState('');
   const pipeline=pipelines.find(p=>p.id===pipelineId)||defaultPipeline||pipelines[0]||null;
   const stages=useMemo(()=>pipeline&&allStages.length?allStages.filter(s=>s.pipeline_id===pipeline.id):defaultStages,[pipeline,allStages,defaultStages]);
@@ -360,7 +360,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   if(mode==='list')return <>
     <NexusOpportunityDesk leads={leads} count={visibleCount} organizationName={organizationName} readonly={readonly}
       stages={stages} onOperation={onOperation} onReload={onReload} onRequestStage={requestStage}
-      pipelines={pipelines} allStages={allStages} pipelineBar={bar}
+      pipelines={pipelines} allStages={allStages} pipelineBar={bar} contacts={contacts} pipelineId={pipeline?.id||''}
       onShowBoard={()=>setMode('board')} onConfigure={canManagePipeline?()=>setEditorOpen(true):null}/>
     {editor}{gateView}
   </>;

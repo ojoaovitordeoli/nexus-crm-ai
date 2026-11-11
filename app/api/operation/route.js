@@ -401,6 +401,50 @@ export async function POST(request){
     if(error)return dbFail('Falha ao registrar venda.',error);
     return reply({ok:true,message:'Venda registrada e indicadores atualizados.',item:data},201);
   }
+  if(action==='lead_create'){
+    const contactId=String(payload?.contact_id||'');
+    if(!validId(contactId))return fails('Selecione o contato do lead.');
+    const contact=await admin.from('contacts').select('id,first_name,last_name')
+      .eq('id',contactId).eq('organization_id',orgId).maybeSingle();
+    if(contact.error)return dbFail('Falha ao validar o contato.',contact.error);
+    if(!contact.data)return fails('Contato não encontrado nesta empresa.',404);
+    // Funil de destino: o informado ou o padrão da empresa.
+    const pipes=await admin.from('pipelines').select('id,name,is_default,position,created_at')
+      .eq('organization_id',orgId).order('position',{ascending:true}).order('created_at',{ascending:true}).limit(50);
+    if(pipes.error)return dbFail('Falha ao carregar os funis.',pipes.error);
+    const list=pipes.data||[];
+    const fallback=list.find(p=>p.is_default)||list[0]||null;
+    let target=fallback;
+    if(payload?.pipeline_id){
+      if(!validId(payload.pipeline_id))return fails('Funil inválido.');
+      target=list.find(p=>p.id===payload.pipeline_id)||null;
+      if(!target)return fails('Funil não encontrado nesta empresa.',404);
+    }
+    if(!target)return fails('Crie um funil antes de cadastrar leads.',409);
+    const st=await admin.from('pipeline_stages').select('id,name,position,is_won,is_lost')
+      .eq('pipeline_id',target.id).order('position',{ascending:true});
+    if(st.error)return dbFail('Falha ao carregar as etapas do funil.',st.error);
+    const first=(st.data||[]).find(x=>!x.is_won&&!x.is_lost)||null;
+    if(!first)return fails('Configure ao menos uma etapa ativa no funil "'+target.name+'" antes de cadastrar leads.',409);
+    // Um atendimento aberto por contato em cada funil (lead sem funil conta no padrão).
+    const open=await admin.from('leads').select('id,pipeline_id').eq('organization_id',orgId)
+      .eq('contact_id',contactId).is('closed_at',null).limit(50);
+    if(open.error)return dbFail('Falha ao verificar atendimentos abertos.',open.error);
+    const defaultId=fallback?.id||null;
+    const clash=(open.data||[]).some(l=>(l.pipeline_id||defaultId)===target.id);
+    if(clash)return fails('Este contato já tem um atendimento aberto no funil "'+target.name+'". Abra o lead existente em vez de criar outro.',409);
+    const source=val(payload?.source,120)||null;
+    const {data,error}=await admin.from('leads').insert({
+      ...base,contact_id:contactId,pipeline_id:target.id,pipeline_stage_id:first.id,
+      status:'new',source,created_by:auth.user.id,stage_changed_at:new Date().toISOString()
+    }).select('id,contact_id,pipeline_id,pipeline_stage_id,source,created_at').single();
+    if(error)return dbFail('Falha ao criar o lead.',error);
+    // Trilha: registra a entrada na primeira etapa; falha aqui não desfaz o lead.
+    const trail=await admin.from('lead_stage_history').insert({lead_id:data.id,from_stage_id:null,to_stage_id:first.id,changed_by:auth.user.id});
+    if(trail.error)logInternal('Falha ao registrar a trilha do lead criado.',trail.error);
+    const person=[contact.data.first_name,contact.data.last_name].filter(Boolean).join(' ').trim()||'contato';
+    return reply({ok:true,message:'Lead de '+person+' criado na etapa "'+first.name+'" do funil "'+target.name+'".',item:data},201);
+  }
   if(action==='contact_create'){
     const first_name=val(payload?.first_name,130);
     const whatsapp=String(payload?.whatsapp||'').replace(/\D/g,'');
