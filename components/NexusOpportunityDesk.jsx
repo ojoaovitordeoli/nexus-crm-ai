@@ -133,12 +133,31 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
 }
 export default function NexusOpportunityDesk({
  leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure,
- onRequestStage,pipelines=[],allStages=[],pipelineBar=null
+ onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId=''
 }){
   const [search,setSearch]=useState(''),[stageFilter,setStageFilter]=useState('all'),[presence,setPresence]=useState('all'),[order,setOrder]=useState('recent');
   const [selectedId,setSelectedId]=useState(null),[closed,setClosed]=useState(false),[busy,setBusy]=useState(''),[problem,setProblem]=useState(''),[notice,setNotice]=useState('');
   const [localStages,setLocalStages]=useState({});
   const listRef=useRef(null);
+  const [creating,setCreating]=useState(false),[newContactId,setNewContactId]=useState(''),[newSource,setNewSource]=useState(''),[creatingBusy,setCreatingBusy]=useState(false);
+  // Contato já com atendimento aberto neste funil não aparece: a API recusaria o duplicado.
+  const openByContact=useMemo(()=>new Set(leads.map(l=>l.contact?.id||l.contact_id).filter(Boolean)),[leads]);
+  const availableContacts=useMemo(()=>contacts.filter(c=>!openByContact.has(c.id)),[contacts,openByContact]);
+  const createLead=async e=>{
+    e.preventDefault();
+    if(readonly||creatingBusy||!onOperation||!newContactId)return;
+    setCreatingBusy(true);setProblem('');setNotice('');
+    try{
+      const payload={action:'lead_create',contact_id:newContactId};
+      if(pipelineId)payload.pipeline_id=pipelineId;
+      if(newSource.trim())payload.source=newSource.trim().slice(0,120);
+      const result=await onOperation(payload);
+      setCreating(false);setNewContactId('');setNewSource('');
+      setNotice(result?.message||'Lead criado.');
+      await onReload?.();
+    }catch(err){setProblem(err.message||'Não foi possível criar o lead.')}
+    finally{setCreatingBusy(false)}
+  };
   useEffect(()=>{const query=new URLSearchParams(window.location.search).get('q');if(query)setSearch(query)},[]);
   const staged=useMemo(()=>leads.map(l=>({...l,pipeline_stage_id:localStages[l.id]||l.pipeline_stage_id})),[leads,localStages]);
   // Etapa apagada ou de outro funil conta como "Sem etapa" neste funil.
@@ -191,9 +210,21 @@ export default function NexusOpportunityDesk({
       <div className="nx13-header-actions">
         <button type="button" onClick={exportList} disabled={!filtered.length} className="nx13-softbutton"><Download size={16}/> Exportar</button>
         {!readonly&&onConfigure&&<button type="button" onClick={onConfigure} className="nx13-softbutton"><Settings2 size={16}/> Configurar funil</button>}
+        {!readonly&&<button type="button" className="fx-btn fx-btn--primary" aria-expanded={creating} onClick={()=>{setCreating(v=>!v);setProblem('')}}>{creating?<><X size={16}/> Fechar</>:<><UserRound size={16}/> Novo lead</>}</button>}
       </div>
     </header>
     {pipelineBar}
+    {!readonly&&creating&&<form className="fx-panel" onSubmit={createLead} aria-label="Novo lead">
+      <label className="fx-panel-grow">Contato
+        <select required value={newContactId} onChange={e=>setNewContactId(e.target.value)} aria-label="Contato do lead">
+          <option value="">Selecione o contato...</option>
+          {availableContacts.map(c=><option key={c.id} value={c.id}>{nameOf(c)}{c.whatsapp?' · '+c.whatsapp:''}</option>)}
+        </select>
+      </label>
+      <label>Origem (opcional)<input maxLength={120} placeholder="Instagram, indicação..." value={newSource} onChange={e=>setNewSource(e.target.value)} aria-label="Origem do lead"/></label>
+      <button type="submit" className="fx-btn fx-btn--primary" disabled={creatingBusy||!newContactId}>{creatingBusy?'Criando...':'Criar lead'}</button>
+      {!availableContacts.length&&<span className="fx-form-hint">{contacts.length?'Todos os contatos carregados já têm atendimento aberto neste funil.':'Cadastre um contato na tela Contatos para criar o lead.'}</span>}
+    </form>}
     <div className="nx13-layout">
       <section className="nx13-collection" aria-label="Lista de leads">
         <div className="nx13-toolbar">

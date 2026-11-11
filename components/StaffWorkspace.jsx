@@ -533,7 +533,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         />}
         {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={orgName}
-          readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} onOperation={operation} onReload={load}
+          readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} contacts={data.contacts} onOperation={operation} onReload={load}
         />}
         {section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
