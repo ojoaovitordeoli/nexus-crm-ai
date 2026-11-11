@@ -9,7 +9,11 @@ const date=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleString('pt-BR'
 const saleWhen=s=>s?.sale_date||s?.created_at;
 const PERIODS=[['all','Todas'],[30,'30 dias'],[90,'90 dias']];
 
-export default function PremiumSales({sales=[],count=0,readonly=false,onOperation,onReload}){
+const personOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim();
+export default function PremiumSales({sales=[],count=0,leads=[],readonly=false,onOperation,onReload}){
+  const [leadId,setLeadId]=useState('');
+  // Leads abertos com contato, para vincular a venda ao cliente.
+  const openLeads=useMemo(()=>leads.filter(l=>!l.closed_at&&l.status!=='won'&&l.status!=='lost'&&l.contact).map(l=>({id:l.id,person:personOf(l.contact)||'Contato sem nome'})),[leads]);
   const [value,setValue]=useState('');
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState('');
@@ -27,7 +31,12 @@ export default function PremiumSales({sales=[],count=0,readonly=false,onOperatio
     const amount=parseBRL(value);
     if(!Number.isFinite(amount)||amount<=0||amount>100000000){setNotice('');setError('Valor inválido. Use o formato 1.500,00 (até R$ 100.000.000,00).');return}
     setSaving(true);setError('');setNotice('');
-    try{const result=await onOperation({action:'sale_create',value:amount});setValue('');setNotice(result.message||'Venda registrada.');await onReload?.()}
+    try{
+      const payload={action:'sale_create',value:amount};
+      if(leadId)payload.lead_id=leadId;
+      const result=await onOperation(payload);
+      setValue('');setLeadId('');setNotice(result.message||'Venda registrada.');await onReload?.()
+    }
     catch(e){setError(e.message||'Não foi possível registrar a venda.')}
     finally{setSaving(false)}
   }
@@ -40,6 +49,10 @@ export default function PremiumSales({sales=[],count=0,readonly=false,onOperatio
     {notice&&<div className="fx-alert fx-alert--ok" role="status"><CheckCircle2 size={16}/>{notice}</div>}
     {!readonly&&showCreate&&<form className="fx-panel fx-panel--narrow" onSubmit={create} aria-label="Registrar venda">
       <label>Valor da venda<input inputMode="decimal" required placeholder="Ex.: 1.500,00" aria-describedby="sale-value-hint" value={value} onChange={e=>{setValue(e.target.value);if(error)setError('')}} autoFocus/><small id="sale-value-hint" className="fx-muted">{value&&Number.isFinite(parseBRL(value))&&parseBRL(value)>0?'Será registrado: '+money(parseBRL(value)):'Use vírgula para os centavos.'}</small></label>
+      <label>Cliente (opcional)<select value={leadId} onChange={e=>setLeadId(e.target.value)} aria-label="Lead da venda">
+        <option value="">Sem vínculo com lead</option>
+        {openLeads.map(l=><option key={l.id} value={l.id}>{l.person}</option>)}
+      </select><small className="fx-muted">A venda entra na linha do tempo do lead.</small></label>
       <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||!value.trim()}>{saving?'Registrando...':'Salvar venda'}</button>
     </form>}
     <section className="fx-strip" aria-label="Resumo das vendas">
@@ -51,8 +64,8 @@ export default function PremiumSales({sales=[],count=0,readonly=false,onOperatio
     <section className="fx-box">
       <div className="fx-boxhead"><h2>Últimas vendas</h2><div className="fx-tabs" role="group" aria-label="Período">{PERIODS.map(([id,text])=><button type="button" key={id} className={period===id?'active':''} aria-pressed={period===id} onClick={()=>setPeriod(id)}>{text}</button>)}</div></div>
       {shown.length?<div className="fx-table fx-table--sales" role="table" aria-label="Vendas registradas">
-        <div className="fx-thead" role="row"><span role="columnheader">Venda</span><span role="columnheader">Data</span><span role="columnheader">Valor</span></div>
-        {shown.map(sale=><div className="fx-tr" role="row" key={sale.id}><span role="cell"><strong>Venda #{String(sale.id).slice(0,8)}</strong></span><span role="cell" className="fx-muted">{date(saleWhen(sale))}</span><strong role="cell" className="fx-num">{money(sale.value)}</strong></div>)}
+        <div className="fx-thead" role="row"><span role="columnheader">Cliente</span><span role="columnheader">Data</span><span role="columnheader">Valor</span></div>
+        {shown.map(sale=><div className="fx-tr" role="row" key={sale.id}><span role="cell"><strong>{personOf(sale.contact)||'Venda #'+String(sale.id).slice(0,8)}</strong></span><span role="cell" className="fx-muted">{date(saleWhen(sale))}</span><strong role="cell" className="fx-num">{money(sale.value)}</strong></div>)}
       </div>:<div className="fx-empty"><strong>{sales.length?'Nenhuma venda neste período':'Nenhuma venda registrada'}</strong><p>{sales.length?'Escolha outro período.':readonly?'As vendas lançadas pela equipe aparecerão aqui.':'Use “Registrar venda” para lançar a primeira.'}</p></div>}
     </section>
   </div>;
