@@ -11,6 +11,7 @@ import {
   ReceiptText,UserRound,UsersRound,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
+import {dueDayKey,dueDate,contactSearchTerm} from '../lib/shell-rules.mjs';
 import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
 import NexusExecutiveHome from './NexusExecutiveHome';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
@@ -55,7 +56,7 @@ const whatsApp=value=>{
   return 'https://wa.me/'+full;
 };
 const localDayKey=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
-const dueKey=t=>{if(!t?.due_date)return '';const raw=String(t.due_date);if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;const d=new Date(raw);return isNaN(d)?'':localDayKey(d)};
+const dueKey=t=>dueDayKey(t?.due_date);
 const APPT_TYPES={meeting:'Reunião',call:'Ligação',followup:'Retorno',visit:'Visita',consultation:'Consulta',exam:'Exame'};
 const STATUS_PT={pending:'Pendente',in_progress:'Em andamento',completed:'Concluída',done:'Concluída',cancelled:'Cancelado',canceled:'Cancelado',scheduled:'Agendado',confirmed:'Confirmado',no_show:'Não compareceu',low:'Baixa',medium:'Normal',high:'Alta',urgent:'Urgente',new:'Novo',open:'Em aberto',waiting:'Aguardando',overdue:'Vencida'};
 const formatStatus=s=>STATUS_PT[String(s||'').toLowerCase()]||String(s||'Sem etapa').replace(/[_-]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
@@ -190,6 +191,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const validOrg=Boolean(currentOrganization&&currentOrganization.status==='active'&&(isSuperAdmin||activeMember)&&session?.id&&profile?.status==='active');
   const roleLabel=ROLES[role]||'Colaborador';
   const page=PAGES[section]||'Visão geral';
+  const orgName=currentOrganization?.name||'Sem empresa';
+  // A lista nativa herdava o texto branco do menu escuro (ilegível no tema claro): cores explícitas por tema.
+  const companySelectStyle=dark?{colorScheme:'dark',backgroundColor:'#17171c',color:'#f4f4f6'}:{colorScheme:'light',backgroundColor:'#ffffff',color:'#15151a'};
 
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search);
@@ -236,13 +240,14 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     }
     return result;
   },[organizationId]);
-  const load=useCallback(async()=>{
+  const load=useCallback(async(options)=>{
+    const silent=options?.silent===true;
     if(!validOrg){
       setData({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
       setCounts({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages([]);setPipeline(null);setPipelines([]);setAllStages([]);setLoading(false);return;
     }
-    setLoading(true);setError('');
+    if(!silent){setLoading(true);setError('')}
     try{
       const result=await operation();
       setData(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
@@ -253,8 +258,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       setAllStages(result.all_stages||result.stages||[]);
       if(result.warnings?.length)setError('Algumas informações não puderam ser carregadas: '+result.warnings.join(' · '));
       setLastSync(new Date());
-    }catch(e){setError('Não foi possível carregar a empresa: '+e.message)}
-    finally{setLoading(false)}
+    }catch(e){if(!silent)setError('Não foi possível carregar a empresa: '+e.message)}
+    finally{if(!silent)setLoading(false)}
   },[validOrg,operation]);
   useEffect(()=>{load()},[load]);
   useEffect(()=>{
@@ -262,7 +267,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     let refreshTimer=null;
     const refresh=()=>{
       if(refreshTimer)clearTimeout(refreshTimer);
-      refreshTimer=setTimeout(()=>load(),250);
+      refreshTimer=setTimeout(()=>load({silent:true}),250);
     };
     const channel=db.channel('nexus-live-'+organizationId)
       .on('postgres_changes',{event:'*',schema:'public',table:'leads',filter:'organization_id=eq.'+organizationId},refresh)
@@ -305,22 +310,26 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   });
   const filteredContacts=data.contacts.filter(c=>[nameOf(c),c.whatsapp].join(' ').toLowerCase().includes(search.toLowerCase()));
   const filteredTasks=data.tasks.filter(t=>{
-    const done=['completed','done'].includes(String(t.status||'').toLowerCase());
-    return t.title.toLowerCase().includes(search.toLowerCase())&&(taskFilter==='all'||(taskFilter==='done'?done:!done));
+    const status=String(t.status||'').toLowerCase();
+    const done=['completed','done'].includes(status);
+    const cancelled=['cancelled','canceled'].includes(status);
+    const matches=String(t.title||'').toLocaleLowerCase('pt-BR').includes(search.trim().toLocaleLowerCase('pt-BR'));
+    // "Em aberto" segue a mesma regra do contador (openTasks): canceladas não são pendências.
+    return matches&&(taskFilter==='all'||(taskFilter==='done'?done:!done&&!cancelled));
   });
   const lateTaskCount=useMemo(()=>{const todayKey=localDayKey(new Date());return openTasks.filter(t=>{const k=dueKey(t);return k&&k<todayKey}).length},[openTasks]);
   const taskGroups=useMemo(()=>{
     const todayKey=localDayKey(new Date());const keyOf=dueKey;
     const groups={late:[],today:[],next:[],none:[],done:[]};
     filteredTasks.forEach(t=>{
-      if(['completed','done'].includes(String(t.status||'').toLowerCase()))return groups.done.push(t);
+      if(['completed','done','cancelled','canceled'].includes(String(t.status||'').toLowerCase()))return groups.done.push(t);
       const k=keyOf(t);
       if(!k)groups.none.push(t);else if(k<todayKey)groups.late.push(t);else if(k===todayKey)groups.today.push(t);else groups.next.push(t);
     });
     const byDue=(a,b)=>keyOf(a).localeCompare(keyOf(b));
     groups.late.sort(byDue);groups.next.sort(byDue);
-    return [['late','Vencidas',groups.late],['today','Hoje',groups.today],['next','Próximas',groups.next],['none','Sem prazo',groups.none],['done','Concluídas',groups.done]].filter(g=>g[2].length);
-  },[filteredTasks]);
+    return [['late','Vencidas',groups.late],['today','Hoje',groups.today],['next','Próximas',groups.next],['none','Sem prazo',groups.none],['done',taskFilter==='done'?'Concluídas':'Concluídas e canceladas',groups.done]].filter(g=>g[2].length);
+  },[filteredTasks,taskFilter]);
   const trend=useMemo(()=>{
     const today=new Date();today.setHours(0,0,0,0);
     return Array.from({length:7},(_,i)=>{
@@ -360,10 +369,14 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   }
   async function createAppointment(e){
     e.preventDefault();
-    if(!validOrg||readonly||saving||!appointmentStart||!appointmentTitle.trim())return;
-    setSaving(true);setError('');setNotice('');
+    if(!validOrg||readonly||saving)return;
+    setError('');setNotice('');
+    if(appointmentTitle.trim().length<2){setError('Informe o título do compromisso (mínimo de 2 caracteres).');return}
+    const startDate=new Date(appointmentStart);
+    if(!appointmentStart||Number.isNaN(startDate.getTime())){setError('Informe data e horário válidos para o compromisso.');return}
+    setSaving(true);
     try{
-      const start=new Date(appointmentStart).toISOString();
+      const start=startDate.toISOString();
       const res=await operation({action:'appointment_create',title:appointmentTitle.trim(),start_at:start,type:appointmentType,location:appointmentLocation.trim()});
       setAppointmentTitle('');setAppointmentStart('');setAppointmentLocation('');
       await load();setNotice(res.message||'Agendamento criado.');
@@ -384,18 +397,18 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     if(q.length<2)return [];
     const leadMatches=data.leads.filter(l=>
       [nameOf(l.contact),l.contact?.whatsapp,l.source,l.status].join(' ').toLocaleLowerCase('pt-BR').includes(q))
-      .slice(0,4).map(l=>({key:'lead-'+l.id,label:nameOf(l.contact),detail:'Lead · '+(l.source||'Sem origem'),href:'/leads?q='+encodeURIComponent(nameOf(l.contact))}));
+      .slice(0,4).map(l=>({key:'lead-'+l.id,label:nameOf(l.contact),detail:'Lead · '+(l.source||'Sem origem'),path:'leads',query:contactSearchTerm(l.contact)}));
     const contactMatches=data.contacts.filter(c=>
       [nameOf(c),c.whatsapp].join(' ').toLocaleLowerCase('pt-BR').includes(q))
-      .slice(0,4).map(c=>({key:'contact-'+c.id,label:nameOf(c),detail:'Contato · '+(c.whatsapp||'Sem telefone'),href:'/contacts?q='+encodeURIComponent(nameOf(c))}));
+      .slice(0,4).map(c=>({key:'contact-'+c.id,label:nameOf(c),detail:'Contato · '+(c.whatsapp||'Sem telefone'),path:'contacts',query:contactSearchTerm(c)}));
     const taskMatches=data.tasks.filter(t=>t.title?.toLocaleLowerCase('pt-BR').includes(q))
-      .slice(0,4).map(t=>({key:'task-'+t.id,label:t.title,detail:'Tarefa',href:'/tasks?q='+encodeURIComponent(t.title)}));
+      .slice(0,4).map(t=>({key:'task-'+t.id,label:t.title,detail:'Tarefa',path:'tasks',query:t.title}));
     return [...leadMatches,...contactMatches,...taskMatches].slice(0,9);
   },[globalSearch,data.leads,data.contacts,data.tasks]);
   const alerts=useMemo(()=>{
     const upcoming=data.appointments.filter(a=>a.start_at&&
       new Date(a.start_at).getTime()>Date.now()&&new Date(a.start_at).getTime()<Date.now()+86400000&&
-      !['completed','cancelled'].includes(a.status));
+      !['completed','cancelled','canceled','no_show'].includes(String(a.status||'').toLowerCase()));
     return [
       ...(overdueTasks.length?[{key:'tasks',text:overdueTasks.length+' tarefa(s) com prazo vencido',href:'/tasks'}]:[]),
       ...(upcoming.length?[{key:'agenda',text:upcoming.length+' compromisso(s) nas próximas 24 horas',href:'/agenda'}]:[])
@@ -408,6 +421,21 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const greetingHour=new Date().getHours();
   const greeting=greetingHour<12?'Bom dia':greetingHour<18?'Boa tarde':'Boa noite';
 
+  // Abre uma seção com filtro. Na mesma seção o Next não remonta a página, então o filtro
+  // precisa ser aplicado aqui (antes, escolher um resultado da busca na própria tela não fazia nada).
+  const openSection=(path,query,mode)=>{
+    const target='/'+path+(query?'?q='+encodeURIComponent(query):mode==='new'?'?new=1':'');
+    setSearchOpen(false);setNotificationsOpen(false);setMobileOpen(false);
+    if(path!==section){router.push(target);return}
+    window.history.pushState(null,'',target);
+    if(query){
+      setSearch(query);
+      if(path==='contacts')window.dispatchEvent(new CustomEvent('nexus:contact-filter',{detail:{query}}));
+      if(path==='leads')setMotionReplay(v=>v+1); // remonta a lista de leads, que lê ?q= ao montar
+    }
+    if(mode==='new'&&path==='contacts')window.dispatchEvent(new Event('nexus:new-contact'));
+    if(mode==='new'&&path==='tasks'){setTaskFormOpen(true);setTimeout(()=>document.querySelector('input[aria-label="Título da tarefa"]')?.focus(),60)}
+  };
   const leadRows=(list,limit=false)=><div className="staff-tablewrap"><table className="staff-table">
     <thead><tr><th>Contato</th><th>Origem</th><th>Etapa</th><th>Data</th><th>Ação</th></tr></thead>
     <tbody>{(limit?list.slice(0,6):list).map(l=><tr key={l.id}>
@@ -425,25 +453,15 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       dark={dark} onTheme={onToggleTheme}
       isSuperAdmin={isSuperAdmin}
       leads={data.leads} contacts={data.contacts} tasks={data.tasks}
-      onNavigate={(path,query,mode)=>{
-        const target='/'+path+(query?'?q='+encodeURIComponent(query):mode==='new'?'?new=1':'');
-        if(path===section){
-          if(query){
-            setSearch(query);
-            if(path==='contacts')window.dispatchEvent(new CustomEvent('nexus:contact-filter',{detail:{query}}));
-          }
-          if(mode==='new'&&path==='contacts')window.dispatchEvent(new Event('nexus:new-contact'));
-          if(mode==='new'&&path==='tasks'){setTaskFormOpen(true);setTimeout(()=>document.querySelector('input[aria-label="Título da tarefa"]')?.focus(),60)}
-        }
-        router.push(target);
-      }}
+      readonly={readonly}
+      onNavigate={openSection}
       onRefresh={()=>{load()}}
       onReplay={()=>{if(section==='dashboard')setMotionReplay(v=>v+1);else router.push('/dashboard')}}
     />
     <aside className={'staff-sidebar '+(mobileOpen?'staff-sidebar--open':'')}>
       <div className="staff-logo"><div className="staff-logo-icon"><Layers3 size={18}/></div><div><strong>NEXUS <span>CRM</span></strong></div><button className="staff-hide-menu" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X size={18}/></button></div>
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
-        {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>}</div>
+        {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)} style={companySelectStyle}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id} style={companySelectStyle}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
         {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group"><div className="staff-nav-title">{group.title}</div>{MENU.filter(item=>group.paths.includes(item.path)).map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
@@ -455,7 +473,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <header className="staff-topbar">
         <div className="staff-topbar-left">
           <IconButton icon={Menu} title="Abrir menu" onClick={()=>setMobileOpen(true)}/>
-          <div className="staff-breadcrumb"><span>{currentOrganization.name}</span><ChevronRight size={15}/><strong>{page}</strong></div>
+          <div className="staff-breadcrumb"><span>{orgName}</span><ChevronRight size={15}/><strong>{page}</strong></div>
         </div>
         <div className="staff-topbar-right">
           <button type="button" className="staff-tour-button" onClick={startTour} disabled={tourLoading}
@@ -474,7 +492,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
             <span className="staff-search-hint">Busca rápida</span>
             {searchOpen&&globalSearch.trim().length>=2&&<div className="staff-search-results" role="region" aria-label="Resultados da busca">
               <div className="staff-popover-title">RESULTADOS DA EMPRESA</div>
-              {globalResults.map(item=><Link href={item.href} key={item.key} onClick={()=>{setSearchOpen(false);setGlobalSearch('')}}>
+              {globalResults.map(item=><Link href={'/'+item.path+(item.query?'?q='+encodeURIComponent(item.query):'')} key={item.key} onClick={e=>{if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();setGlobalSearch('');openSection(item.path,item.query)}}>
                 <span><strong>{item.label}</strong><small>{item.detail}</small></span><ChevronRight size={15}/>
               </Link>)}
               {!globalResults.length&&<p>Nenhum resultado entre os registros carregados.</p>}
@@ -496,7 +514,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
             </div>}
           </div>
           
-          <IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={load}/>
+          <IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={()=>load()}/>
           <IconButton icon={dark?Sun:Moon} title="Alternar tema" onClick={onToggleTheme}/>
           <div className="staff-top-avatar" title={displayName}><Initials name={displayName}/></div>
         </div>
@@ -509,12 +527,12 @@ export default function StaffWorkspace({section,session,profile,organizations,me
 
         {section==='dashboard'&&<NexusExecutiveHome
           data={data} counts={counts} loading={loading}
-          organizationName={currentOrganization.name} firstName={firstName}
+          organizationName={orgName} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages} pipelines={pipelines} activePipelineId={dashPipeline?.id||''} onPipelineChange={setDashPipelineId}
           onOperation={operation} onReload={load} readonly={readonly}
         />}
         {section==='leads'&&<PremiumLeads
-          leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={currentOrganization.name}
+          leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={orgName}
           readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} onOperation={operation} onReload={load}
         />}
         {section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} readonly={readonly} onOperation={operation} onReload={load}/>}
@@ -527,7 +545,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         />}
         {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
 
-        {section==='reports'&&<PremiumReports data={data} counts={counts} orgName={currentOrganization.name} readonly={readonly}/>}
+        {section==='reports'&&<PremiumReports data={data} counts={counts} orgName={orgName} readonly={readonly}/>}
         {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark}/>}
         {section==='tasks'&&<div className="fx-page fx-tasks">
           <header className="fx-pagehead">
@@ -548,9 +566,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
             {taskGroups.map(([id,label,items])=><div key={id} className={'fx-group fx-group--'+id}>
               <div className="fx-subhead"><h3>{label}</h3><span className="fx-groupcount">{items.length}</span></div>
               {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
-                <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+t.title}><Check size={14}/></button>
-                <div><strong className={done?'fx-done':''}>{t.title}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}</div>
-                <span className={id==='late'?'fx-late':'fx-due'}>{t.due_date?(id==='today'?'Hoje':date(String(t.due_date).length===10?t.due_date+'T12:00:00':t.due_date)):'Sem prazo'}</span>
+                <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+(t.title||'tarefa')}><Check size={14}/></button>
+                <div><strong className={done?'fx-done':''}>{t.title||'Tarefa sem título'}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}</div>
+                <span className={id==='late'?'fx-late':'fx-due'}>{dueKey(t)?(id==='today'?'Hoje':dueDate(t.due_date).toLocaleDateString('pt-BR')):'Sem prazo'}</span>
               </div>})}
             </div>)}
             {!filteredTasks.length&&<div className="fx-empty"><strong>{search?'Nenhuma tarefa encontrada':taskFilter==='done'?'Nenhuma tarefa concluída':'Nada pendente'}</strong><p>{search?'Ajuste a busca ou o filtro.':taskFilter==='open'&&!readonly?'Use “Adicionar tarefa” para registrar a próxima atividade.':'Altere o filtro para ver outras tarefas.'}</p></div>}
@@ -567,7 +585,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           const row=(a,showDay)=><div className="fx-row fx-apptrow" key={a.id}>
             <span className="fx-appt-when">{showDay&&<small>{a.start_at?new Date(a.start_at).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace(/\./g,''):'Sem data'}</small>}<strong>{hour(a.start_at)}</strong></span>
             <div><strong>{a.title||'Agendamento'}</strong><small>{[APPT_TYPES[a.type]||'',a.location||''].filter(Boolean).join(' · ')||'Sem local informado'}</small></div>
-            {readonly?<Chip value={a.status}/>:<select className="fx-select" aria-label={'Status de '+a.title} value={a.status||'scheduled'} disabled={saving} onChange={e=>updateAppointment(a,e.target.value)}>
+            {readonly?<Chip value={a.status}/>:<select className="fx-select" aria-label={'Status de '+(a.title||'agendamento')} value={a.status||'scheduled'} disabled={saving} onChange={e=>updateAppointment(a,e.target.value)}>
               <option value="scheduled">Agendado</option><option value="confirmed">Confirmado</option><option value="completed">Concluído</option><option value="cancelled">Cancelado</option><option value="no_show">Não compareceu</option>
             </select>}
           </div>;
@@ -607,7 +625,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
 
         {section==='minha-area'&&<>
           <div className="staff-page-header"><div><span className="staff-kicker">MINHA CONTA</span><h1>Meu espaço</h1><p>Seu perfil e as empresas que você pode acessar.</p></div></div>
-          <div className="staff-profile-grid"><section className="staff-card staff-profile-card"><span className="staff-profile-avatar"><Initials name={displayName}/></span><h2>{displayName}</h2><p>{session.email}</p><span className="staff-profile-role"><ShieldCheck size={16}/>{roleLabel}</span><div className="staff-profile-info"><div><span>Conta</span><strong>Ativa</strong></div><div><span>Empresa selecionada</span><strong>{currentOrganization.name}</strong></div><div><span>Nível de acesso</span><strong>{roleLabel}</strong></div></div></section>
+          <div className="staff-profile-grid"><section className="staff-card staff-profile-card"><span className="staff-profile-avatar"><Initials name={displayName}/></span><h2>{displayName}</h2><p>{session.email}</p><span className="staff-profile-role"><ShieldCheck size={16}/>{roleLabel}</span><div className="staff-profile-info"><div><span>Conta</span><strong>Ativa</strong></div><div><span>Empresa selecionada</span><strong>{orgName}</strong></div><div><span>Nível de acesso</span><strong>{roleLabel}</strong></div></div></section>
           <section className="staff-card staff-profile-card"><h3>Empresas vinculadas</h3><p>Você só acessa operações autorizadas.</p>{organizations.filter(x=>x.status==='active').map(o=><div key={o.id} className="staff-linked-org"><span className="staff-linked-icon"><BriefcaseBusiness size={20}/></span><span><strong>{o.name}</strong><small>{ROLES[members.find(m=>m.organization_id===o.id)?.role]||'Colaborador'}</small></span>{o.id===organizationId&&<CheckCircle2 size={18}/>}</div>)}</section></div>
         </>}
         </>}

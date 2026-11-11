@@ -10,7 +10,10 @@ const initialValue=req=>{
   const v=req.value;
   if(req.type==='checkbox')return v===true||v==='true';
   if(req.type==='multiselect'||req.type==='products')return Array.isArray(v)?v:[];
-  return v===null||v===undefined?'':String(v);
+  if(v===null||v===undefined)return '';
+  // closed_at vem como timestamp; o campo de data só aceita AAAA-MM-DD (senão aparecia vazio e era recusado).
+  if(req.type==='date')return String(v).slice(0,10);
+  return String(v);
 };
 
 function Field({req,value,onChange,ctx,first}){
@@ -28,11 +31,13 @@ function Field({req,value,onChange,ctx,first}){
         <option value="">Selecione...</option>{options.map(o=><option key={o} value={o}>{o}</option>)}
       </select>
       {req.type==='lost_reason'&&!options.length&&<small className="nxg-help">Nenhum motivo de perda ativo cadastrado para a empresa.</small>}
+      {req.type==='select'&&!options.length&&<small className="nxg-help">Este campo não tem opções cadastradas. Peça ao gestor para revisar o campo em Configurações.</small>}
     </div>;
   }
   if(req.type==='multiselect')return <fieldset className="nxg-field nxg-multi"><legend className="nxg-label">{req.label}<span aria-hidden="true"> *</span></legend>
     {req.options.map((o,i)=><label key={o} className="nxg-option"><input type="checkbox" ref={i===0?first:undefined} checked={value.includes(o)}
       onChange={e=>onChange(e.target.checked?[...value,o]:value.filter(x=>x!==o))}/>{o}</label>)}
+    {!req.options.length&&<small className="nxg-help">Este campo não tem opções cadastradas. Peça ao gestor para revisar o campo em Configurações.</small>}
   </fieldset>;
   if(req.type==='products'){
     const qty=pid=>value.find(x=>x.product_id===pid)?.quantity;
@@ -45,7 +50,7 @@ function Field({req,value,onChange,ctx,first}){
       </div>):<small className="nxg-help">Nenhum produto ativo cadastrado para a empresa.</small>}
     </fieldset>;
   }
-  const type=req.type==='date'?'date':req.type==='number'||req.type==='currency'?'number':req.type==='phone'?'tel':'text';
+  const type=req.type==='date'?'date':req.type==='number'||req.type==='currency'?'number':req.type==='phone'?'tel':req.type==='email'?'email':'text';
   return <div className="nxg-field">{labelEl}
     <input {...common} type={type} inputMode={type==='number'?'decimal':undefined} min={type==='number'?'0':undefined}
       step={req.type==='currency'?'0.01':undefined} maxLength={type==='text'?500:undefined}
@@ -70,7 +75,7 @@ export default function NexusStageGate({request,onOperation,onDone,onCancel}){
       onDone(result);
     }catch(e){
       setError(e.message||'Não foi possível mover o lead.');
-      setMissing(Array.isArray(e.missing)?e.missing:[]);
+      setMissing([...(Array.isArray(e.missing)?e.missing:[]),...(Array.isArray(e.invalid)?e.invalid:[])]);
       setPhase(info?.requirements?.length?'form':'error');
     }
   };
@@ -91,8 +96,9 @@ export default function NexusStageGate({request,onOperation,onDone,onCancel}){
   },[lead.id,stageId,transfer]);
   useEffect(()=>{if(phase==='form')first.current?.focus()},[phase]);
   useEffect(()=>{
-    const onKey=e=>{if(e.key==='Escape'&&phase!=='saving')onCancel()};
-    window.addEventListener('keydown',onKey);return ()=>window.removeEventListener('keydown',onKey);
+    // Captura no window e interrompe: sem isso o Esc também fechava a ficha do lead aberta por baixo.
+    const onKey=e=>{if(e.key!=='Escape')return;e.stopPropagation();e.preventDefault();if(phase!=='saving')onCancel()};
+    window.addEventListener('keydown',onKey,true);return ()=>window.removeEventListener('keydown',onKey,true);
   },[phase,onCancel]);
 
   // Sem formulário (etapa sem requisitos): só um aviso discreto de progresso/erro.

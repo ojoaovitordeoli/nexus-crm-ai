@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {logInternal} from '../../../../lib/workflow-security.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -9,6 +10,7 @@ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 const error=(message,status)=>NextResponse.json({error:message},{status});
 const ok=(message,warning=null)=>NextResponse.json({ok:true,message,warning});
 const good=id=>uuid.test(String(id||''));
+const dbError=(message,err)=>{logInternal('admin/access: '+message,err);return error(message+' Tente novamente em instantes.',500)};
 
 export async function POST(request){
   const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -44,14 +46,14 @@ export async function POST(request){
 
     const {data:existing,error:existingError}=await supabase.from('organization_members')
       .select('id,role,status').eq('organization_id',orgId).eq('user_id',userId).maybeSingle();
-    if(existingError)return error('Falha ao consultar vínculos: '+existingError.message,500);
+    if(existingError)return dbError('Falha ao consultar vínculos.',existingError);
     const values={role:input.role,status:'active'};
     const result=existing
       ?await supabase.from('organization_members').update(values).eq('id',existing.id).select('id').single()
       :await supabase.from('organization_members').insert({
         organization_id:orgId,user_id:userId,...values
       }).select('id').single();
-    if(result.error)return error('Não foi possível atribuir acesso: '+result.error.message,500);
+    if(result.error)return dbError('Não foi possível atribuir acesso.',result.error);
 
     const {error:auditError}=await supabase.from('audit_logs').insert({
       user_id:auth.user.id,organization_id:orgId,
@@ -83,7 +85,7 @@ export async function POST(request){
     }
     const {error:updateError}=await supabase.from('organization_members')
       .update({status}).eq('id',memberId);
-    if(updateError)return error('Não foi possível atualizar acesso: '+updateError.message,500);
+    if(updateError)return dbError('Não foi possível atualizar acesso.',updateError);
     const {error:auditError}=await supabase.from('audit_logs').insert({
       user_id:auth.user.id,organization_id:member.organization_id,
       action:'membership_status',entity_type:'organization_member',entity_id:memberId,
@@ -101,7 +103,7 @@ export async function POST(request){
     if(userError||!user)return error('Usuário não encontrado.',404);
     if(user.is_super_admin)return error('Contas Super Admin não podem ser alteradas por esta ação.',403);
     const {error:updateError}=await supabase.from('profiles').update({status}).eq('id',userId);
-    if(updateError)return error('Não foi possível atualizar usuário: '+updateError.message,500);
+    if(updateError)return dbError('Não foi possível atualizar usuário.',updateError);
     const {error:auditError}=await supabase.from('audit_logs').insert({
       user_id:auth.user.id,action:'profile_status',entity_type:'profile',entity_id:userId,
       before:{status:user.status},after:{status}

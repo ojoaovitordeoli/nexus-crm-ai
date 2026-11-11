@@ -2,6 +2,7 @@
 import { useState,useEffect,useCallback,useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { db, ready, configStatus } from '../lib/supabase';
+import { authErrorMessage } from '../lib/shell-rules.mjs';
 import AdminWorkspace from './AdminWorkspace';
 import StaffWorkspace from './StaffWorkspace';
 import Link from 'next/link';
@@ -95,9 +96,9 @@ export default function CRM({section}){
   }catch(ex){setError(ex.message||'Não foi possível carregar os dados. Confira o Supabase e as permissões.')}finally{setLoadingData(false)}
  },[session,org,isAdmin,period,orgs.length,users.length]);
  useEffect(()=>{if(!isAuthScreen&&session&&!isLoading)fetchData()},[fetchData,isAuthScreen,session,isLoading]);
- async function signIn(e){e.preventDefault();setError('');setNotice('');if(!db)return;setSubmitting(true);const {error:e2}=await db.auth.signInWithPassword({email,password:pass});if(e2)setError(e2.message);setSubmitting(false)}
- async function recover(e){e.preventDefault();if(!db)return;setSubmitting(true);setError('');const {error:e2}=await db.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/reset-password'});if(e2)setError(e2.message);else setNotice('Se este e-mail estiver cadastrado, você receberá um link de recuperação. Verifique também o spam.');setSubmitting(false)}
- async function changePassword(e){e.preventDefault();setError('');setNotice('');const {error:e2}=await db.auth.updateUser({password:pass});if(e2)setError(e2.message);else{setNotice('Senha atualizada. Entre usando sua nova senha.');await db.auth.signOut();setTimeout(()=>router.push('/login'),400)}}
+ async function signIn(e){e.preventDefault();if(!db||submitting)return;setError('');setNotice('');setSubmitting(true);try{const {error:e2}=await db.auth.signInWithPassword({email:email.trim(),password:pass});if(e2)setError(authErrorMessage(e2))}catch(ex){setError(authErrorMessage(ex))}finally{setSubmitting(false)}}
+ async function recover(e){e.preventDefault();if(!db||submitting)return;setSubmitting(true);setError('');setNotice('');try{const {error:e2}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:window.location.origin+'/reset-password'});if(e2)setError(authErrorMessage(e2));else setNotice('Se este e-mail estiver cadastrado, você receberá um link de recuperação. Verifique também o spam.')}catch(ex){setError(authErrorMessage(ex))}finally{setSubmitting(false)}}
+ async function changePassword(e){e.preventDefault();if(!db||submitting)return;setError('');setNotice('');if(pass.length<6){setError('A nova senha precisa ter pelo menos 6 caracteres.');return}setSubmitting(true);try{const {error:e2}=await db.auth.updateUser({password:pass});if(e2){setError(authErrorMessage(e2));return}setPass('');setNotice('Senha atualizada. Entre usando sua nova senha.');await db.auth.signOut();authTimer.current=setTimeout(()=>router.push('/login'),400)}catch(ex){setError(authErrorMessage(ex))}finally{setSubmitting(false)}}
  async function signOut(){if(db)await db.auth.signOut();setSession(null);setProfile(null);router.replace('/login')}
  async function createOrg(e){e.preventDefault();if(!isAdmin||!orgName.trim())return;setError('');setNotice('');setSubmitting(true);const name=orgName.trim();const slug=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Math.floor(Date.now()/1000);const {error:e2}=await db.rpc('admin_create_organization',{p_name:name,p_slug:slug});if(e2)setError('Falha ao criar empresa: '+e2.message+'. Verifique se a migração de administração foi aplicada no Supabase.');else{setNotice('Empresa criada com funil padrão.');setOrgName('');await initialize()}setSubmitting(false)}
  async function createTask(e){e.preventDefault();if(!taskName.trim()||!org)return;setSubmitting(true);setError('');const {error:e2}=await db.from('tasks').insert({organization_id:org,title:taskName.trim(),created_by:session.id});if(e2)setError(e2.message);else{setTaskName('');await fetchData()}setSubmitting(false)}

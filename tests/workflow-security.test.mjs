@@ -68,3 +68,21 @@ test('Brazilian phone matching tolerates country code, formatting and 9th digit'
  assert.deepEqual(phoneMatchKeys(''),[]);
  assert.deepEqual(phoneMatchKeys('123'),[]);
 });
+
+test('erro de esquema ausente é reconhecido (RPC/tabela não instalada)',async()=>{
+  const {isMissingSchema}=await import('../lib/workflow-security.mjs');
+  assert.equal(isMissingSchema({code:'PGRST202',message:'Could not find the function'}),true);
+  assert.equal(isMissingSchema({code:'42P01'}),true);
+  assert.equal(isMissingSchema({message:'Could not find the function public.admin_manage_organization in the schema cache'}),true);
+  assert.equal(isMissingSchema({code:'23505',message:'duplicate key'}),false);
+  assert.equal(isMissingSchema(null),false);
+});
+
+test('erros do Supabase Auth ao criar usuário viram português com status certo',async()=>{
+  const {authCreateUserError}=await import('../lib/workflow-security.mjs');
+  assert.deepEqual(authCreateUserError({code:'email_exists',message:'A user with this email address has already been registered'}).status,409);
+  assert.match(authCreateUserError({message:'A user with this email address has already been registered'}).message,/Já existe/);
+  assert.equal(authCreateUserError({code:'weak_password',message:'Password should be stronger'}).status,400);
+  const other=authCreateUserError({code:'unexpected_failure',message:'Database error saving new user'});
+  assert.equal(other.status,500);assert.doesNotMatch(other.message,/Database/);
+});

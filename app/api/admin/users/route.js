@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { authCreateUserError } from '../../../../lib/workflow-security.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,7 @@ export async function POST(request) {
   const email = String(input?.email || '').trim().toLowerCase();
   const fullName = String(input?.full_name || '').trim();
   const password = input?.password;
-  if (!isEmail(email) || fullName.length < 2 || fullName.length > 150 ||
+  if (!isEmail(email) || email.length > 254 || fullName.length < 2 || fullName.length > 150 ||
       typeof password !== 'string' || password.length < 12 || password.length > 128) {
     return NextResponse.json(
       { error: 'Informe nome, e-mail válido e senha com 12 a 128 caracteres.' },
@@ -55,7 +56,8 @@ export async function POST(request) {
     user_metadata: { full_name: fullName },
   });
   if (createError || !created?.user) {
-    return NextResponse.json({ error: createError?.message || 'Não foi possível cadastrar o usuário.' }, { status: 400 });
+    const mapped = authCreateUserError(createError);
+    return NextResponse.json({ error: mapped.message }, { status: mapped.status });
   }
 
   const newId = created.user.id;

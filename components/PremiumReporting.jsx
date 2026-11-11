@@ -5,6 +5,8 @@ import Link from 'next/link';
 import {CheckCircle2,Download,LockKeyhole,Moon,Sun} from 'lucide-react';
 
 const currency=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(Number(n)||0);
+const decimal=n=>new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:false}).format(Number(n)||0);
+const APPT_STATUS={scheduled:'Agendado',confirmed:'Confirmado',completed:'Concluído',cancelled:'Cancelado',canceled:'Cancelado',no_show:'Não compareceu'};
 const integer=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const when=s=>s?new Date(s).toLocaleDateString('pt-BR'):'';
 const daysPeriod=(v,days)=>new Date(v||0).getTime()>=Date.now()-days*86400000;
@@ -28,20 +30,22 @@ export function PremiumReports({data,counts,orgName,readonly}){
   const view=useMemo(()=>{
     const leads=data.leads.filter(l=>daysPeriod(l.created_at,period));
     const appointments=data.appointments.filter(a=>daysPeriod(a.created_at,period));
-    const sales=data.sales.filter(s=>daysPeriod(s.created_at,period));
+    const sales=data.sales.filter(s=>daysPeriod(s.sale_date||s.created_at,period));
     const grouped=new Map();
     leads.forEach(l=>{const key=l.source||'Não informada';grouped.set(key,(grouped.get(key)||0)+1)});
     return {leads,appointments,sales,sources:[...grouped.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8),
       revenue:sales.reduce((total,s)=>total+Number(s.value||0),0)};
   },[data,period]);
   const rows=[
-    ['Tipo','Registro','Status','Valor','Data'],
-    ...view.sales.map(s=>['Venda',s.id,'Registrada',s.value,when(s.created_at)]),
-    ...view.leads.map(l=>['Lead',l.contact?.first_name||l.id,l.status||'',l.source||'',when(l.created_at)]),
-    ...view.appointments.map(a=>['Agendamento',a.title||a.id,a.status||'',a.type||'',when(a.created_at)])
+    // Antes a coluna "Valor" recebia a origem do lead e o tipo do agendamento; valor saía com ponto (1500.5).
+    ['Tipo','Registro','Status','Origem/Tipo','Valor (R$)','Data'],
+    ...view.sales.map(s=>['Venda',s.id,'Registrada','',decimal(s.value),when(s.sale_date||s.created_at)]),
+    ...view.leads.map(l=>['Lead',[l.contact?.first_name,l.contact?.last_name].filter(Boolean).join(' ')||l.id,l.status||'',l.source||'Não informada','',when(l.created_at)]),
+    ...view.appointments.map(a=>['Agendamento',a.title||a.id,APPT_STATUS[a.status]||stageName(a.status),a.type||'','',when(a.start_at||a.created_at)])
   ];
   function exportReport(){
     if(readonly)return;
+    if(rows.length<2){setCsvMessage('Nenhum registro no período para exportar.');return}
     downloadCsv(rows,'nexus-relatorio-'+period+'-dias.csv');
     setCsvMessage('Relatório CSV exportado com os registros carregados.');
   }

@@ -13,7 +13,8 @@ import {db} from '../lib/supabase';
 import NexusLeadDetail from './NexusLeadDetail';
 import NexusOpportunityDesk from './NexusOpportunityDesk';
 import NexusStageGate from './NexusStageGate';
-import {exportFilteredLeads} from '../lib/exportFilteredLeads';
+import {exportContacts as downloadContactsCsv,exportFilteredLeads} from '../lib/exportFilteredLeads';
+import {matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -28,16 +29,11 @@ const date=v=>{
 const display=(c)=>[c?.first_name,c?.last_name].filter(Boolean).join(' ')||'Contato sem nome';
 const label=v=>{
   const source=String(v||'Sem etapa').replace(/[_-]/g,' ').trim();
-  const translations={new:'Novo',open:'Aberto',pending:'Pendente',won:'Ganho',lost:'Perdido',completed:'Concluído',cancelled:'Cancelado',qualified:'Qualificado',negotiation:'Negociação',contacted:'Contatado',followup:'Retorno',in_progress:'Em andamento'};
+  const translations={active:'Ativo',hot:'Quente',warm:'Morno',cold:'Frio',new:'Novo',open:'Aberto',pending:'Pendente',won:'Ganho',lost:'Perdido',completed:'Concluído',cancelled:'Cancelado',qualified:'Qualificado',negotiation:'Negociação',contacted:'Contatado',followup:'Retorno',in_progress:'Em andamento'};
   return translations[source.toLowerCase()]||source.replace(/\b\w/g,ch=>ch.toUpperCase());
 };
 const letters=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join('');
-const wa=v=>{
-  const phone=String(v||'').replace(/\D/g,'');
-  if(phone.length<10||phone.length>13)return null;
-  return 'https://wa.me/'+(phone.length<=11?'55'+phone:phone);
-};
-const keyword=(...items)=>items.map(s=>String(s||'')).join(' ').toLocaleLowerCase('pt-BR');
+const wa=v=>whatsappUrl(v)||null;
 const statusColor=s=>{
   const v=String(s||'').toLowerCase();
   if(['won','completed','closed','sold','converted','fechado'].includes(v))return 'good';
@@ -254,16 +250,23 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
   const [name,setName]=useState(pipeline?.name||'Modelo comercial');
   const [rows,setRows]=useState(()=>stages.length?stages.map(x=>({...x})):standard.map(([n,c,w,l],position)=>({name:n,color:c,is_won:w,is_lost:l,position})));
   const [busy,setBusy]=useState(false);const [error,setError]=useState('');
+  // Sem efeito de "reset" por props: a atualização automática (30 s, foco da janela) recria
+  // stages/pipeline e apagava o que o usuário estava editando. O key do editor já reinicia o estado.
+  const closeRef=useRef(onClose);closeRef.current=onClose;
   useEffect(()=>{
-    setName(pipeline?.name||'Modelo comercial');
-    setRows(stages.length?stages.map(x=>({...x})):standard.map(([n,c,w,l],position)=>({name:n,color:c,is_won:w,is_lost:l,position})));
-  },[pipeline,stages]);
+    const onKey=e=>{if(e.key==='Escape'){e.preventDefault();closeRef.current?.()}};
+    document.addEventListener('keydown',onKey);return ()=>document.removeEventListener('keydown',onKey);
+  },[]);
   const reset=source=>setRows(source.map(([n,c,w,l],position)=>({name:n,color:c,is_won:w,is_lost:l,position})));
   function update(index,key,value){setRows(old=>old.map((row,i)=>i===index?{...row,[key]:value}:row))}
   function move(index,delta){setRows(old=>{const next=[...old],to=index+delta;if(to<0||to>=next.length)return old;[next[index],next[to]]=[next[to],next[index]];return next})}
   async function save(activate){
-    if(readonly||busy)return;setBusy(true);setError('');
-    try{await onOperation({action:'pipeline_model_save',pipeline_id:pipeline?.id||null,name:name.trim(),activate,stages:rows.map((row,position)=>({...row,position}))});await onReload?.();onClose?.()}
+    if(readonly||busy)return;
+    const unnamed=rows.findIndex(r=>String(r.name||'').trim().length<2);
+    if(unnamed>=0){setError('Dê um nome (mínimo 2 letras) para a etapa '+(unnamed+1)+'.');return}
+    if(rows.length<2){setError('O funil precisa ter pelo menos 2 etapas.');return}
+    setBusy(true);setError('');
+    try{await onOperation({action:'pipeline_model_save',pipeline_id:pipeline?.id||null,name:name.trim(),activate,stages:rows.map((row,position)=>({...row,name:String(row.name||'').trim(),position}))});await onReload?.();onClose?.()}
     catch(e){setError(e.message||'Não foi possível salvar o modelo.')}finally{setBusy(false)}
   }
   return <div className="nxp-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose?.()}}>
@@ -314,14 +317,20 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   const [editorOpen,setEditorOpen]=useState(false);
   const hasStages=stages.length>0;
   const fallback=useMemo(()=>[...new Set(leads.map(l=>l.status).filter(Boolean))],[leads]);
-  const cols=hasStages?stages.map(x=>({id:x.id,name:x.name})):fallback.map(x=>({id:x,name:label(x)}));
+  // Coluna de cada lead: etapa conhecida deste funil; senão "Sem etapa" (etapa apagada, de outro funil
+  // ou lead sem status). Antes esses leads sumiam do quadro, embora contassem no total.
+  const NONE='__sem_etapa';
+  const colOf=l=>hasStages?(stages.some(s=>s.id===l.pipeline_stage_id)?l.pipeline_stage_id:NONE):(l.status||NONE);
+  const baseCols=hasStages?stages.map(x=>({id:x.id,name:x.name})):fallback.map(x=>({id:x,name:label(x)}));
+  const cols=leads.some(l=>colOf(l)===NONE)?[{id:NONE,name:'Sem etapa'},...baseCols]:baseCols;
   const stageLabel=l=>hasStages?(stages.find(s=>s.id===l.pipeline_stage_id)?.name||'Sem etapa'):label(l.status);
+  const activeFilter=filter==='all'||cols.some(c=>c.id===filter)?filter:'all';
   const filtered=leads.filter(l=>
-    (filter==='all'||(hasStages?l.pipeline_stage_id===filter:l.status===filter))&&
-    keyword(display(l.contact),l.source,l.contact?.whatsapp,stageLabel(l)).includes(query.toLocaleLowerCase('pt-BR')));
-  const groups=cols.map(c=>({key:c.id,title:c.name,rows:filtered.filter(l=>(hasStages?l.pipeline_stage_id:l.status)===c.id)}));
+    (activeFilter==='all'||colOf(l)===activeFilter)&&
+    matchesSearch(query,[display(l.contact),l.source,stageLabel(l)],[l.contact?.whatsapp]));
+  const groups=cols.map(c=>({key:c.id,title:c.name,rows:filtered.filter(l=>colOf(l)===c.id)}));
   async function changeStage(item,next){
-    if(!next||readonly||busy||!hasStages||item.pipeline_stage_id===next)return;
+    if(!next||next===NONE||readonly||busy||!hasStages||item.pipeline_stage_id===next||!stages.some(s=>s.id===next))return;
     setBusy(item.id);setError('');
     try{
       const result=await requestStage(item,next);
@@ -337,7 +346,10 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   const editor=editorOpen&&<PipelineEditor key={editorOpen==='new'?'new':pipeline?.id||'none'}
     pipeline={editorOpen==='new'?null:pipeline} stages={editorOpen==='new'?[]:stages}
     readonly={readonly||!canManagePipeline} onOperation={onOperation} onReload={onReload} onClose={()=>setEditorOpen(false)}/>;
-  const Card=({item})=><div className="nxp-lead-card" draggable={!readonly&&hasStages&&stages.length>1} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
+  const canDrag=!readonly&&hasStages&&stages.length>1&&!busy;
+  // Função de renderização (não componente): um componente criado dentro do render era recriado
+  // a cada renderização, remontando o card arrastado no meio do drag.
+  const renderCard=item=><div key={item.id} className={'nxp-lead-card'+(busy===item.id?' is-busy':'')} aria-busy={busy===item.id||undefined} draggable={canDrag} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
     <button type="button" className="nxp-lead-card-main" onClick={()=>setSelected(item)} aria-label={'Abrir lead '+display(item.contact)}>
       <div className="nxp-lead-card-top"><Avatar value={display(item.contact)}/><span className="nxp-lead-date">{date(item.created_at)}</span></div>
       <strong>{display(item.contact)}</strong><small>{item.contact?.whatsapp||'Telefone não informado'}</small>
@@ -354,21 +366,21 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   </>;
   return <div className="nxp-premium">
     {bar}
-    <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
-    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'lead na empresa':'leads na empresa'}</span><i/><span><strong>{cols.length}</strong> {cols.length===1?'etapa':'etapas'}</span><i/><span><strong>{filtered.length}</strong> {filtered.length===1?'exibido no filtro':'exibidos no filtro'}</span></div>
+    <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&canManagePipeline&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
+    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'lead na empresa':'leads na empresa'}</span><i/><span><strong>{baseCols.length}</strong> {baseCols.length===1?'etapa':'etapas'}</span><i/><span><strong>{filtered.length}</strong> {filtered.length===1?'exibido no filtro':'exibidos no filtro'}</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
-      <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={filter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+      <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={activeFilter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
       <div className="nxp-mode-switch"><button type="button" className={mode==='board'?'active':''} onClick={()=>setMode('board')} title="Quadro Kanban" aria-label="Quadro Kanban"><Columns3 size={18}/></button><button type="button" className={mode==='list'?'active':''} onClick={()=>setMode('list')} title="Lista" aria-label="Lista"><LayoutList size={18}/></button></div></div></div>
       {error&&<div className="nxp-error" role="alert">{error}</div>}
       {!hasStages&&<div className="w10-kanban-notice"><span><strong>Etapas ainda não configuradas.</strong> Você pode visualizar os leads; configure o funil para movimentá-los pelo quadro.</span>{!readonly&&canManagePipeline&&<button type="button" onClick={()=>setEditorOpen(true)}>Configurar funil <ArrowRight size={15}/></button>}</div>}
       {mode==='board'?<div className="nxp-board" aria-label="Funil Kanban">
       {groups.map(({key,title,rows},idx)=><section key={key} className="nxp-board-column"
-        onDragOver={e=>{if(!readonly&&hasStages&&stages.length>1)e.preventDefault()}}
+        onDragOver={e=>{if(canDrag&&key!==NONE)e.preventDefault()}}
         onDrop={e=>{e.preventDefault();const lead=leads.find(l=>l.id===(e.dataTransfer.getData('text/plain')||dragging));if(lead)changeStage(lead,key);setDragging('')}}>
         <div className="nxp-column-title"><span className={'nxp-column-dot nxp-column-dot--'+(idx%5)}/><strong>{title}</strong><span>{rows.length}</span></div>
-        <div className="nxp-column-cards">{rows.map(item=><Card key={item.id} item={item}/>)}
-          {!rows.length&&<div className="nxp-column-empty">{dragging?'Solte aqui para mover':'Sem leads nesta etapa'}</div>}</div>
+        <div className="nxp-column-cards">{rows.map(renderCard)}
+          {!rows.length&&<div className="nxp-column-empty">{dragging&&key!==NONE?'Solte aqui para mover':'Sem leads nesta etapa'}</div>}</div>
       </section>)}
       {!cols.length&&<Empty icon={UsersRound} title="Seu funil começa aqui" detail="Quando sua empresa receber leads, as etapas aparecerão automaticamente."/>}
        
@@ -404,32 +416,26 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
   async function createContact(e){
     e.preventDefault();
     if(readonly||saving||newName.trim().length<2)return;
+    // Mesma regra da API (10 a 13 dígitos): avisa antes de enviar e mantém o que foi digitado.
+    const digits=newPhone.replace(/\D/g,'');
+    if(digits&&(digits.length<10||digits.length>13)){setError('WhatsApp inválido. Informe DDD e número, por exemplo (48) 99999-9999.');setSuccess('');return}
     setSaving(true);setError('');setSuccess('');
     try{
       const res=await onOperation({action:'contact_create',first_name:newName.trim(),whatsapp:newPhone.trim()});
       setNewName('');setNewPhone('');setShowCreate(false);
       await onReload?.();
-      setSuccess(res.message||'Contato cadastrado.');
+      setSuccess(res?.message||'Contato cadastrado.');
     }catch(e){setError('Não foi possível cadastrar o contato: '+e.message)}
     finally{setSaving(false)}
   }
   const [layout,setLayout]=useState('list');
   const [selected,setSelected]=useState(null);
-  const list=contacts.filter(c=>keyword(display(c),c.whatsapp).includes(query.toLocaleLowerCase('pt-BR')));
+  const list=contacts.filter(c=>matchesSearch(query,[display(c),c.email],[c.whatsapp]));
   const withPhone=contacts.filter(c=>wa(c.whatsapp)).length;
   function exportContacts(){
     if(readonly||!list.length)return;
-    const csvCell=value=>{
-      let str=String(value??'').replace(/\r?\n/g,' ');
-      if(/^[\s]*[=+@-]/.test(str))str="'"+str;
-      return '"'+str.replace(/"/g,'""')+'"';
-    };
-    const rows=[['Nome','WhatsApp','Cadastrado'],...list.map(c=>[display(c),c.whatsapp||'',date(c.created_at)])];
-    const blob=new Blob(['\ufeff'+rows.map(row=>row.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download='nexus-contatos-'+new Date().toISOString().slice(0,10)+'.csv';
-    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
-    setSuccess('CSV gerado com '+list.length+' contato(s) carregados e filtrados.');
+    downloadContactsCsv(list);
+    setError('');setSuccess('CSV gerado com '+list.length+(list.length===1?' contato carregado e filtrado.':' contatos carregados e filtrados.'));
   }
   return <div className="fx-page fx-contacts">
     <header className="fx-pagehead">
@@ -438,7 +444,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
     </header>
     {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
     {success&&<div className="fx-alert fx-alert--ok" role="status"><CircleCheck size={16}/>{success}</div>}
-    {showCreate&&<form className="fx-panel" onSubmit={createContact} aria-label="Novo contato">
+    {showCreate&&!readonly&&<form className="fx-panel" onSubmit={createContact} aria-label="Novo contato">
       <label>Nome<input type="text" placeholder="Nome do contato" minLength={2} maxLength={130} required value={newName} onChange={e=>setNewName(e.target.value)} autoFocus/></label>
       <label>WhatsApp com DDD<input type="tel" placeholder="(48) 99999-9999" value={newPhone} onChange={e=>setNewPhone(e.target.value)}/></label>
       <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||newName.trim().length<2}>{saving?'Salvando...':'Salvar contato'}</button>

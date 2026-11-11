@@ -1,10 +1,10 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Activity, Archive, ArrowRight, BarChart3, Building2, Check, CheckCircle2,
-  ChevronDown, CircleAlert, CircleCheck, Clock3, Fingerprint, Layers3,
+  Activity, Archive, ArrowRight, BarChart3, Building2, CheckCircle2,
+  ChevronDown, CircleAlert, CircleCheck, Layers3,
   LockKeyhole, Plus, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal,
-  Trash2, UserPlus, UsersRound, X, Zap
+  Trash2, UserPlus, UsersRound, X
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -19,10 +19,29 @@ const clean = value => String(value ?? '').toLocaleLowerCase('pt-BR');
 const initials = value => String(value || '?').trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()).join('');
 const percent = (count,total) => Math.min(100,Math.round(count / Math.max(total,1) * 100));
 const roleColor = ['#4f72ff','#19b6a4','#b58af5','#f4b95c','#f18c84','#9da9bd'];
+const AUDIT_LABEL = {
+  membership_create:'Acesso vinculado',membership_update:'Acesso alterado',membership_status:'Status de acesso alterado',
+  profile_status:'Status de usuário alterado',user_create:'Usuário criado',organization_archive:'Empresa arquivada',
+  organization_restore:'Empresa restaurada',organization_delete:'Empresa excluída',organization_create:'Empresa criada'
+};
+const auditLabel = action => AUDIT_LABEL[action] || (action ? String(action).replace(/_/g,' ') : 'Evento');
+const ENTITY_LABEL = {organization:'empresa',organization_member:'acesso',profile:'usuário'};
+// Erros do Supabase/RPC chegam em inglês e às vezes com detalhe técnico: a tela recebe português.
+const MISSING_RPC = /schema cache|could not find the function|does not exist|PGRST202|42883/i;
+function rpcMessage(err,fallback){
+  const text=String(err?.message||'');const code=String(err?.code||'');
+  if(MISSING_RPC.test(text)||MISSING_RPC.test(code))return null;
+  // RAISE EXCEPTION das funções do NEXUS (código P0001) já vem em português.
+  if(code==='P0001'&&text)return text;
+  if(code==='23505')return 'Já existe uma empresa com esse identificador. Tente novamente.';
+  return fallback;
+}
+async function readJson(response){
+  try{return await response.json()}catch{return {error:response.ok?null:'O servidor respondeu de forma inesperada (código '+response.status+'). Tente novamente.'}}
+}
 function Pill({status}) {return <span className={'adm-pill adm-pill--'+(status||'neutral')}><i/>{LABELS[status]||status||'Não definido'}</span>}
 function Message({text,kind}) {if(!text)return null;return <div role={kind==='danger'?'alert':'status'} className={'adm-message '+(kind==='danger'?'adm-message--danger':'adm-message--success')}>{kind==='danger'?<CircleAlert size={18}/>:<CheckCircle2 size={18}/>}<span>{text}</span></div>}
 function Empty({icon:Icon=Layers3,title,description}) {return <div className="adm-empty"><span className="adm-empty-icon"><Icon size={24}/></span><strong>{title}</strong><p>{description}</p></div>}
-function Metric({icon:Icon,label,value,help,accent,index}) {return <div className={'adm-metric adm-metric--'+accent} style={{animationDelay:(index*55)+'ms'}}><div className="adm-metric-header"><span>{label}</span><span className="adm-metric-icon"><Icon size={19}/></span></div><div className="adm-metric-number">{value}</div><div className="adm-metric-help">{help}</div><div className="adm-metric-decoration" aria-hidden="true"/></div>}
 
 export default function AdminWorkspace({isAdmin,onRefresh}) {
   const [tab,setTab] = useState('companies');
@@ -57,13 +76,14 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       body:JSON.stringify(input)
     });
     let result;
-    try{result=await response.json()}catch{throw new Error('Não foi possível ler a resposta do servidor.')}
+    result=await readJson(response);
     if(!response.ok)throw new Error(result?.error||'Falha ao atualizar o acesso.');
     return result;
   }
   const load = useCallback(async()=>{
     if(!db||!isAdmin)return;
     setLoading(true);
+    try{
     const [p,o,m,a]=await Promise.all([
       db.from('profiles').select('id,full_name,is_super_admin,status').order('full_name').limit(500),
       db.from('organizations').select('id,name,plan,status,created_at,slug').order('name').limit(500),
@@ -71,13 +91,14 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       db.from('audit_logs').select('id,user_id,action,entity_type,created_at').order('created_at',{ascending:false}).limit(50)
     ]);
     const failed=[p,o,m,a].find(x=>x.error);
-    if(failed)setError('Não foi possível carregar todos os dados: '+failed.error.message);
+    if(failed)setError('Não foi possível carregar todos os dados do painel. Clique em Atualizar para tentar de novo.');
     if(!p.error)setUsers(p.data||[]);
     if(!o.error)setCompanies(o.data||[]);
     if(!m.error)setMembers(m.data||[]);
     if(!a.error)setAudits(a.data||[]);
     setLastSync(new Date());
-    setLoading(false);
+    }catch{setError('Sem conexão com o servidor. Verifique a internet e clique em Atualizar.')}
+    finally{setLoading(false)}
   },[isAdmin]);
   useEffect(()=>{load()},[load]);
   useEffect(()=>{
@@ -99,13 +120,15 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
     const text=companyName.trim();
     if(text.length<2){setError('Informe o nome da empresa.');return}
     setSaving(true);
-    const slug=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now().toString(36);
+    const base=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+    // Nome só com símbolos/emoji gerava identificador começando com "-".
+    const slug=(base||'empresa')+'-'+Date.now().toString(36);
     try{
       const {error:e2}=await db.rpc('admin_create_organization',{p_name:text,p_slug:slug,p_plan:'free'});
       if(e2)throw e2;
       setCompanyName('');setShowArchived(false);setSuccess('Empresa criada e pronta para configurar.');
       await load();if(onRefresh)await onRefresh();
-    }catch(ex){setError('Não foi possível criar empresa: '+ex.message)}
+    }catch(ex){setError(rpcMessage(ex,'Não foi possível criar a empresa. Tente novamente.')??'A criação de empresas ainda não está habilitada no banco (função admin_create_organization ausente). Peça para aplicar supabase/fix_admin_create_organization.sql.')}
     finally{setSaving(false)}
   }
   async function manageCompany(){
@@ -113,12 +136,16 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
     const {company,action}=confirm;
     if(action==='delete'&&confirmationName!==company.name)return;
     clearMessage();setSaving(true);
+    let warning='';
     try{
       if(action==='delete'){
         const {error:e2}=await db.rpc('admin_manage_organization',{
           p_org_id:company.id,p_action:action,p_confirm_name:confirmationName
         });
-        if(e2)throw e2;
+        if(e2){
+          const text=rpcMessage(e2,'Não foi possível excluir a empresa. Tente novamente.');
+          throw new Error(text??'A exclusão definitiva ainda não está habilitada neste ambiente: a função de banco admin_manage_organization não foi instalada. A empresa continua arquivada e com os dados preservados.');
+        }
       } else {
         const {data:{session}}=await db.auth.getSession();
         if(!session?.access_token)throw new Error('Faça login novamente.');
@@ -129,17 +156,18 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
           },
           body:JSON.stringify({org_id:company.id,action})
         });
-        const data=await response.json();
+        const data=await readJson(response);
         if(!response.ok)throw new Error(data.error||'Falha ao atualizar empresa.');
-        if(data.warning)setSuccess(data.warning);
+        warning=data.warning||'';
       }
-      setSuccess(action==='archive'?'Empresa arquivada. Ela saiu da operação, mas os dados foram preservados.':
-        action==='restore'?'Empresa restaurada e disponível novamente.':'Empresa vazia excluída definitivamente.');
+      // O aviso de auditoria era sobrescrito pela mensagem de sucesso logo abaixo.
+      setSuccess((action==='archive'?'Empresa arquivada. Ela saiu da operação, mas os dados foram preservados.':
+        action==='restore'?'Empresa restaurada e disponível novamente.':'Empresa vazia excluída definitivamente.')+(warning?' '+warning:''));
       setConfirm(null);setConfirmationName('');
       await load();if(onRefresh)await onRefresh();
     }catch(ex){
       setConfirm(null);setConfirmationName('');
-      setError(ex.message+(action==='delete'&&ex.message?.includes('schema cache')?' Execute o SQL de exclusão protegida no Supabase.':''));
+      setError(ex.message||'Não foi possível concluir a ação.');
     }finally{setSaving(false)}
   }
   function askCompany(company,action){clearMessage();setConfirmationName('');setConfirm({company,action})}
@@ -153,7 +181,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
         headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},
         body:JSON.stringify({full_name:name,email,password})
       });
-      const data=await r.json();
+      const data=await readJson(r);
       if(!r.ok)throw Error(data.error||'Erro ao cadastrar.');
       setName('');setEmail('');setPassword('');
       setSuccess('Usuário criado. Abra a aba Acessos para vinculá-lo a uma empresa.'+(data.warning?' '+data.warning:''));
@@ -204,35 +232,21 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
   if(!isAdmin)return <div className="adm"><Message kind="danger" text="Área exclusiva do Super Admin. Sua conta não possui permissão de acesso."/></div>;
 
   return <div className="adm">
-    <section className="adm-hero">
-      <div className="adm-hero-text">
-        <div className="adm-overline"><span className="adm-spark"/> WORKSPACE / ADMINISTRAÇÃO</div>
-        <h2>Seu negócio. <span>Sob controle.</span></h2>
-        <p>Gerencie empresas, pessoas e permissões em um só lugar, com a visão completa da plataforma.</p>
-        <div className="adm-hero-bottom">
-          <span className="adm-live"><span/> Controle administrativo</span>
-          <span className="adm-separator"/>
-          <span className="adm-updated"><Clock3 size={14}/> {lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Sincronizando dados'}</span>
-        </div>
+    <header className="fx-pagehead">
+      <div className="fx-pagehead-title"><h1>Administração</h1>
+        <span className="fx-count">{lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Carregando dados'}</span></div>
+      <div className="fx-actions">
+        <button type="button" className="fx-btn" onClick={()=>load()} disabled={loading}><RefreshCw size={15}/> Atualizar</button>
       </div>
-      <div className="adm-hero-visual" aria-hidden="true">
-        <div className="adm-orbit adm-orbit-one"/><div className="adm-orbit adm-orbit-two"/>
-        <div className="adm-hero-glyph"><Layers3 size={56} strokeWidth={1.35}/></div>
-        <span className="adm-float adm-float-one"><Check size={15}/></span>
-        <span className="adm-float adm-float-two"><Zap size={15}/></span>
-      </div>
-    </section>
+    </header>
 
-    <div className="adm-metrics">
-      <Metric index={0} icon={Building2} label="Empresas ativas" value={loading?'—':activeCompanies.length}
-        help={archivedCompanies.length+' arquivadas'} accent="blue"/>
-      <Metric index={1} icon={UsersRound} label="Usuários" value={loading?'—':users.length}
-        help={users.filter(u=>u.status==='active').length+' acessos ativos'} accent="teal"/>
-      <Metric index={2} icon={Fingerprint} label="Vínculos ativos" value={loading?'—':activeMemberships.length}
-        help="Pessoas vinculadas às empresas" accent="violet"/>
-      <Metric index={3} icon={Activity} label="Eventos recentes" value={loading?'—':audits.length}
-        help="Últimos registros de auditoria" accent="amber"/>
-    </div>
+    <section className="fx-strip fx-strip--4" aria-label="Resumo da plataforma">
+      <div><span>Empresas ativas</span><strong>{loading?'—':activeCompanies.length}</strong></div>
+      <div><span>Usuários</span><strong>{loading?'—':users.length}</strong></div>
+      <div><span>Vínculos ativos</span><strong>{loading?'—':activeMemberships.length}</strong></div>
+      <div><span>Eventos de auditoria</span><strong>{loading?'—':audits.length}</strong></div>
+      <p className="fx-strip-note">{archivedCompanies.length} empresa(s) arquivada(s) · {users.filter(u=>u.status==='active').length} conta(s) ativa(s). Nenhum valor é estimado.</p>
+    </section>
 
     <section className="adm-content">
       <div className="adm-content-top">
@@ -248,7 +262,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       {success&&<Message text={success} kind="success"/>}
       {tab==='companies'&&<>
         <div className="adm-section-heading">
-          <div><span className="adm-section-eyebrow">GESTÃO DE ESTRUTURA</span><h3>Suas empresas</h3><p>Organize os ambientes que usam o NEXUS CRM.</p></div>
+          <div><h3>Suas empresas</h3><p>Organize os ambientes que usam o NEXUS CRM.</p></div>
           <button type="button" className="adm-primary" onClick={()=>{setShowArchived(false);document.getElementById('adm-new-company')?.focus()}}><Plus size={17}/> Nova empresa</button>
         </div>
         <div className="adm-columns">
@@ -280,8 +294,8 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             <div className="adm-list-foot"><LockKeyhole size={14}/> Arquivar preserva os dados. Exclusão definitiva exige confirmação e empresa sem registros operacionais.</div>
           </div>
           <aside className="adm-surface adm-creation">
-            <span className="adm-form-icon"><Plus size={21}/></span>
-            <span className="adm-section-eyebrow">CONFIGURAÇÃO RÁPIDA</span>
+            
+            
             <h4>Criar empresa</h4>
             <p>Um espaço independente para cada operação, com funil inicial preparado.</p>
             <form className="adm-form" onSubmit={createCompany}>
@@ -294,7 +308,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       </>}
 
       {tab==='users'&&<>
-        <div className="adm-section-heading"><div><span className="adm-section-eyebrow">GESTÃO DE PESSOAS</span><h3>Usuários da plataforma</h3><p>Convide sua equipe e controle quem pode entrar no CRM.</p></div></div>
+        <div className="adm-section-heading"><div><h3>Usuários da plataforma</h3><p>Convide sua equipe e controle quem pode entrar no CRM.</p></div></div>
         <div className="adm-columns">
           <div className="adm-surface adm-list-surface">
             <div className="adm-list-controls"><div className="adm-count-title"><UsersRound size={18}/> Contas cadastradas <span>{users.length}</span></div><label className="adm-search"><Search size={17}/><input aria-label="Buscar usuário" placeholder="Buscar usuário..." value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
@@ -310,8 +324,8 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             {!filteredUsers.length&&<Empty icon={UsersRound} title="Nenhum usuário encontrado" description="Cadastre um usuário para começar."/>}
           </div>
           <aside className="adm-surface adm-creation">
-            <span className="adm-form-icon"><UserPlus size={21}/></span>
-            <span className="adm-section-eyebrow">NOVO ACESSO</span><h4>Adicionar usuário</h4>
+            
+            <h4>Adicionar usuário</h4>
             <p>Crie uma conta de trabalho e depois defina a qual empresa ela terá acesso.</p>
             <form className="adm-form" onSubmit={createUser}>
               <label>Nome completo<input required minLength={2} maxLength={150} placeholder="Nome e sobrenome" autoComplete="off" value={name} onChange={e=>setName(e.target.value)}/></label>
@@ -325,7 +339,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       </>}
 
       {tab==='permissions'&&<>
-        <div className="adm-section-heading"><div><span className="adm-section-eyebrow">SEGURANÇA & CONTROLE</span><h3>Permissões de acesso</h3><p>Cada pessoa vê apenas as empresas vinculadas à sua conta.</p></div></div>
+        <div className="adm-section-heading"><div><h3>Permissões de acesso</h3><p>Cada pessoa vê apenas as empresas vinculadas à sua conta.</p></div></div>
         <div className="adm-columns">
           <div className="adm-surface adm-list-surface">
             <div className="adm-list-controls"><div className="adm-count-title"><ShieldCheck size={18}/> Acessos cadastrados <span>{members.length}</span></div></div>
@@ -339,7 +353,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             </tbody></table></div>
             {!members.length&&<Empty icon={LockKeyhole} title="Sem acessos atribuídos" description="Vincule um usuário a uma empresa para ativar a operação."/>}
           </div>
-          <aside className="adm-surface adm-creation"><span className="adm-form-icon"><ShieldCheck size={21}/></span><span className="adm-section-eyebrow">NÍVEL DE PERMISSÃO</span><h4>Vincular acesso</h4><p>Defina a empresa e a função do usuário.</p>
+          <aside className="adm-surface adm-creation"><h4>Vincular acesso</h4><p>Defina a empresa e a função do usuário.</p>
             <form className="adm-form" onSubmit={addMember}>
               <label>Usuário<select value={selectedUser} onChange={e=>setSelectedUser(e.target.value)} required><option value="">Selecionar usuário</option>{users.filter(u=>u.status==='active'&&!u.is_super_admin).map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</select></label>
               <label>Empresa<select value={selectedCompany} onChange={e=>setSelectedCompany(e.target.value)} required><option value="">Selecionar empresa</option>{activeCompanies.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
@@ -351,15 +365,15 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
       </>}
 
       {tab==='audits'&&<>
-        <div className="adm-section-heading"><div><span className="adm-section-eyebrow">RASTREABILIDADE</span><h3>Atividade recente</h3><p>Histórico administrativo dos últimos eventos registrados.</p></div></div>
+        <div className="adm-section-heading"><div><h3>Atividade recente</h3><p>Histórico administrativo dos últimos eventos registrados.</p></div></div>
         <div className="adm-columns">
           <div className="adm-surface adm-list-surface">
             <div className="adm-list-controls"><div className="adm-count-title"><Activity size={18}/> Linha do tempo <span>{audits.length}</span></div><span className="adm-updated">Últimos 50 eventos</span></div>
-            <div className="adm-audit-list">{audits.map(a=><div key={a.id} className="adm-audit-item"><span className="adm-audit-icon"><Activity size={17}/></span><div><strong>{a.action.replace(/_/g,' ')}</strong><span>Por {userNameById(a.user_id)} · {a.entity_type||'sistema'}</span></div><time>{stamp(a.created_at)}</time></div>)}</div>
+            <div className="adm-audit-list">{audits.map(a=><div key={a.id} className="adm-audit-item"><span className="adm-audit-icon"><Activity size={17}/></span><div><strong>{auditLabel(a.action)}</strong><span>Por {userNameById(a.user_id)} · {ENTITY_LABEL[a.entity_type]||a.entity_type||'sistema'}</span></div><time>{stamp(a.created_at)}</time></div>)}</div>
             {!audits.length&&<Empty icon={Activity} title="Nenhuma atividade registrada" description="Os eventos administrativos aparecerão aqui."/>}
           </div>
           <aside className="adm-surface adm-creation adm-security-panel">
-            <span className="adm-form-icon"><ShieldCheck size={21}/></span><span className="adm-section-eyebrow">SEGURANÇA</span><h4>Trilha de auditoria</h4><p>As alterações de empresa são registradas para facilitar o acompanhamento das ações administrativas.</p>
+            <h4>Trilha de auditoria</h4><p>As alterações de empresa são registradas para facilitar o acompanhamento das ações administrativas.</p>
             <div className="adm-security-point"><CheckCircle2 size={17}/> Controle de acesso por usuário</div>
             <div className="adm-security-point"><CheckCircle2 size={17}/> Gestão de empresas reversível</div>
             <div className="adm-security-point"><CheckCircle2 size={17}/> Exclusões com confirmação</div>
@@ -374,7 +388,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
         <h3 id="adm-dialog-title">{confirm.action==='archive'?'Arquivar empresa?':confirm.action==='restore'?'Restaurar empresa?':'Excluir definitivamente?'}</h3>
         <p>{confirm.action==='archive'?<>A empresa <strong>{confirm.company.name}</strong> sairá das operações ativas. Os dados serão preservados e você poderá restaurá-la depois.</>:confirm.action==='restore'?<>A empresa <strong>{confirm.company.name}</strong> voltará a aparecer na operação.</>:<>Esta ação é irreversível. Só funciona para uma empresa <strong>arquivada e sem dados operacionais</strong>. Se houver registros, o sistema bloqueará a exclusão.</>}</p>
         {confirm.action==='delete'&&<label className="adm-confirm-label">Digite <strong>{confirm.company.name}</strong> para confirmar<input autoFocus value={confirmationName} onChange={e=>setConfirmationName(e.target.value)} placeholder="Nome exato da empresa"/></label>}
-        <div className="adm-dialog-actions"><button className="adm-secondary" disabled={saving} onClick={()=>{setConfirm(null);setConfirmationName('')}}>Cancelar</button><button className={'adm-primary '+(confirm.action==='delete'?'adm-primary--danger':'')} disabled={saving||(confirm.action==='delete'&&confirmationName!==confirm.company.name)} onClick={manageCompany}>{saving?'Processando...':confirm.action==='archive'?'Sim, arquivar':confirm.action==='restore'?'Restaurar empresa':'Excluir definitivamente'}</button></div>
+        <div className="adm-dialog-actions"><button type="button" className="adm-secondary" autoFocus={confirm.action!=='delete'} disabled={saving} onClick={()=>{setConfirm(null);setConfirmationName('')}}>Cancelar</button><button className={'adm-primary '+(confirm.action==='delete'?'adm-primary--danger':'')} disabled={saving||(confirm.action==='delete'&&confirmationName!==confirm.company.name)} onClick={manageCompany}>{saving?'Processando...':confirm.action==='archive'?'Sim, arquivar':confirm.action==='restore'?'Restaurar empresa':'Excluir definitivamente'}</button></div>
       </div>
     </div>}
   </div>;

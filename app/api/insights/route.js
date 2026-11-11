@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {adminSupabase,authorizeTenant} from '../../../lib/tenant-session';
+import {localDateISO} from '../../../lib/operation-rules.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -28,12 +29,12 @@ export async function GET(request){
 export async function POST(request){
   let body;
   try{body=await request.json()}catch{return fail('Dados inválidos.')}
-  const org=String(body.org_id||'');
+  const org=String(body?.org_id||'');
   const ctx=await auth(request,org);
   if(ctx.error)return fail(ctx.error,ctx.status);
-  const question=String(body.question||'').trim();
+  const question=String(body?.question||'').trim();
   if(question.length<8||question.length>900)return fail('A pergunta deve ter entre 8 e 900 caracteres.');
-  if(body.consent!==true)return fail('Confirme o envio da pergunta e dos indicadores agregados.',403);
+  if(body?.consent!==true)return fail('Confirme o envio da pergunta e dos indicadores agregados.',403);
   const apiKey=process.env.OPENAI_API_KEY;
   if(!apiKey)return fail('A integração de IA ainda não foi configurada no Render. Falta OPENAI_API_KEY.',503);
 
@@ -74,8 +75,10 @@ export async function POST(request){
   const taskItems=tasks.data||[];
   const apptItems=appointments.data||[];
   const saleItems=sales.data||[];
+  // "Hoje" no fuso da operação: em UTC, tarefas de hoje viravam vencidas após as 21h.
+  const today=localDateISO(now);
   const openTasks=taskItems.filter(t=>!['done','completed','cancelled'].includes(String(t.status||'').toLowerCase()));
-  const overdue=openTasks.filter(t=>t.due_date&&String(t.due_date).slice(0,10)<now.toISOString().slice(0,10)).length;
+  const overdue=openTasks.filter(t=>t.due_date&&String(t.due_date).slice(0,10)<today).length;
   const pendingAppts=apptItems.filter(a=>a.start_at&&new Date(a.start_at).getTime()>=now.getTime()&&!['cancelled','completed'].includes(a.status)).length;
   const recentSales=saleItems.filter(s=>s.created_at>=oldest);
   const metrics={
@@ -104,10 +107,10 @@ export async function POST(request){
         input:'Indicadores agregados da operação: '+JSON.stringify(metrics)+'\nPergunta do usuário: '+question
       })
     });
-    if(!response.ok)throw new Error('O provedor de IA não respondeu. Verifique o modelo e os créditos da API.');
+    if(!response.ok)throw Object.assign(new Error('O provedor de IA não respondeu. Verifique o modelo e os créditos da API.'),{expose:true});
     const result=await response.json();
     const answer=(result.output||[]).flatMap(o=>o.content||[]).filter(x=>x.type==='output_text').map(x=>x.text||'').join('\n').trim();
-    if(!answer)throw new Error('A resposta do modelo veio vazia.');
+    if(!answer)throw Object.assign(new Error('A resposta do modelo veio vazia.'),{expose:true});
     await ctx.admin.from('ai_insight_requests').update({
       status:'success',input_tokens:result.usage?.input_tokens||null,
       output_tokens:result.usage?.output_tokens||null,finished_at:new Date().toISOString()
@@ -116,6 +119,7 @@ export async function POST(request){
   }catch(e){
     await ctx.admin.from('ai_insight_requests').update({status:'failed',finished_at:new Date().toISOString()})
       .eq('id',ledger.id).eq('organization_id',org);
-    return fail(e.name==='TimeoutError'?'A consulta atingiu o limite de tempo.':e.message||'Falha no serviço de IA.',502);
+    // Erros de rede/parsing ("fetch failed", JSON inválido) não vão crus para a tela.
+    return fail(e.name==='TimeoutError'?'A consulta atingiu o limite de tempo.':e.expose?e.message:'Falha no serviço de IA. Tente novamente em instantes.',502);
   }
 }
