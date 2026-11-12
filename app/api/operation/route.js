@@ -586,22 +586,48 @@ export async function POST(request){
       (data||[]).forEach(r=>{const d=String(r.whatsapp||'').replace(/\D/g,'');existing.add(d.length>11&&d.startsWith('55')?d.slice(2):d)});
     }
     const fresh=parsed.contacts.filter(c=>!c.whatsapp||!existing.has(c.whatsapp));
-    let created=0;
+    // Opcional: cada contato novo vira um lead na primeira etapa do funil padrão, com as colunas extras anotadas.
+    const withLeads=payload?.create_leads===true;
+    let stage=null;
+    if(withLeads){
+      const {data:pipe,error:pe}=await admin.from('pipelines').select('id,pipeline_stages(id,position,is_won,is_lost)').eq('organization_id',orgId).order('is_default',{ascending:false}).order('position',{ascending:true}).limit(1).maybeSingle();
+      if(pe)return dbFail('Falha ao localizar o funil.',pe);
+      const first=(pipe?.pipeline_stages||[]).filter(x=>!x.is_won&&!x.is_lost).sort((a,b)=>a.position-b.position)[0];
+      if(!pipe||!first)return fails('Esta empresa ainda não tem funil com etapas. Configure o funil antes de importar como leads.');
+      stage={pipeline_id:pipe.id,pipeline_stage_id:first.id};
+    }
+    const sourceName=val(payload?.source,120)||'Importação';
+    let created=0,leadsCreated=0;
     for(let i=0;i<fresh.length;i+=500){
-      const rows=fresh.slice(i,i+500).map(c=>({...base,...c,created_by:auth.user.id}));
-      const {error}=await admin.from('contacts').insert(rows);
+      const chunk=fresh.slice(i,i+500);
+      const rows=chunk.map(({priority,segment,note,...c})=>({...base,...c,source:c.source||(withLeads?sourceName:null),created_by:auth.user.id}));
+      const {data:ins,error}=await admin.from('contacts').insert(rows).select('id');
       if(error){
         logInternal('contacts_import',error);
-        return reply({ok:false,error:'A importação parou no meio: '+created+' contato(s) foram criados antes do erro. Tente de novo com o restante.',created},500);
+        return reply({ok:false,error:'A importação parou no meio: '+created+' contato(s) foram criados antes do erro. Tente de novo com o restante.',created,leads:leadsCreated},500);
       }
       created+=rows.length;
+      if(withLeads&&ins?.length===chunk.length){
+        const leads=chunk.map((c,k)=>({...base,contact_id:ins[k].id,...stage,assigned_to:auth.user.id,created_by:auth.user.id,
+          source:c.source||sourceName,campaign_name:sourceName,adset_name:c.priority?'Prioridade '+c.priority:null,ad_name:c.segment||null,
+          temperature:'cold',score:c.priority==='A'?60:c.priority==='B'?40:c.priority==='C'?20:0,status:'active'}));
+        const {data:li,error:le}=await admin.from('leads').insert(leads).select('id');
+        if(le){
+          logInternal('contacts_import leads',le);
+          return reply({ok:false,error:created+' contato(s) criados, mas os leads deste lote falharam. Os contatos ficaram salvos; crie os leads pelo quadro ou importe de novo (contatos repetidos são ignorados).',created,leads:leadsCreated},500);
+        }
+        leadsCreated+=li.length;
+        const notes=chunk.map((c,k)=>c.note&&li[k]?{...base,lead_id:li[k].id,contact_id:ins[k].id,user_id:auth.user.id,content:c.note}:null).filter(Boolean);
+        if(notes.length){const {error:ne}=await admin.from('notes').insert(notes);if(ne)logInternal('contacts_import notes',ne)}
+      }
     }
+    await auditLog('contacts_import','contact',null,null,{created,leads:leadsCreated,source:withLeads?sourceName:null});
     const skipped=parsed.contacts.length-fresh.length;
-    const parts=[created+' contato(s) importado(s)'];
+    const parts=[created+' contato(s) importado(s)'+(withLeads?' e '+leadsCreated+' lead(s) no funil':'')];
     if(skipped)parts.push(skipped+' já existia(m) na empresa');
     if(parsed.duplicates)parts.push(parsed.duplicates+' repetido(s) na planilha');
     if(parsed.invalid.length)parts.push(parsed.invalid.length+' linha(s) com problema');
-    return reply({ok:true,message:parts.join(' · ')+'.',created,skipped,duplicates:parsed.duplicates,invalid:parsed.invalid.slice(0,50),truncated:Boolean(parsed.truncated)},201);
+    return reply({ok:true,message:parts.join(' · ')+'.',created,leads:leadsCreated,skipped,duplicates:parsed.duplicates,invalid:parsed.invalid.slice(0,50),truncated:Boolean(parsed.truncated)},201);
   }
   if(action==='contact_create'){
     const first_name=val(payload?.first_name,130);
