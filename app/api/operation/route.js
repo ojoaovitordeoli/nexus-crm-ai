@@ -4,6 +4,7 @@ import {runLeadStageAutomations} from '../../../lib/automation-runner';
 import {describeRequirement,evaluateRequirements,statusForStage} from '../../../lib/stage-requirements.mjs';
 import {buildLeadTimeline,canManagePipeline,canWriteOperation,localDateISO,parseDateTime,planPipelineStages,READ_ACTIONS,safeCalendarDate} from '../../../lib/operation-rules.mjs';
 import {logInternal} from '../../../lib/workflow-security.mjs';
+import {buildContacts,parseCsv} from '../../../lib/contact-import.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -444,6 +445,42 @@ export async function POST(request){
     if(trail.error)logInternal('Falha ao registrar a trilha do lead criado.',trail.error);
     const person=[contact.data.first_name,contact.data.last_name].filter(Boolean).join(' ').trim()||'contato';
     return reply({ok:true,message:'Lead de '+person+' criado na etapa "'+first.name+'" do funil "'+target.name+'".',item:data},201);
+  }
+  if(action==='contacts_import'){
+    // O servidor refaz a leitura e a validação; a prévia do navegador é só conferência.
+    const csv=typeof payload?.csv==='string'?payload.csv:'';
+    if(!csv.trim())return fails('Envie a planilha em CSV.');
+    if(csv.length>1500000)return fails('Planilha grande demais. Divida em arquivos de até 2.000 linhas.',413);
+    const parsed=buildContacts(parseCsv(csv));
+    if(parsed.error)return fails(parsed.error);
+    if(!parsed.contacts.length)return fails('Nenhum contato válido para importar.');
+    // Duplicados já cadastrados na empresa (mesmo WhatsApp) não são recriados.
+    const phones=[...new Set(parsed.contacts.map(c=>c.whatsapp).filter(Boolean))];
+    const existing=new Set();
+    for(let i=0;i<phones.length;i+=200){
+      const chunk=phones.slice(i,i+200);
+      const variants=chunk.flatMap(p=>[p,'55'+p]);
+      const {data,error}=await admin.from('contacts').select('whatsapp').eq('organization_id',orgId).in('whatsapp',variants);
+      if(error)return dbFail('Falha ao verificar contatos existentes.',error);
+      (data||[]).forEach(r=>{const d=String(r.whatsapp||'').replace(/\D/g,'');existing.add(d.length>11&&d.startsWith('55')?d.slice(2):d)});
+    }
+    const fresh=parsed.contacts.filter(c=>!c.whatsapp||!existing.has(c.whatsapp));
+    let created=0;
+    for(let i=0;i<fresh.length;i+=500){
+      const rows=fresh.slice(i,i+500).map(c=>({...base,...c,created_by:auth.user.id}));
+      const {error}=await admin.from('contacts').insert(rows);
+      if(error){
+        logInternal('contacts_import',error);
+        return reply({ok:false,error:'A importação parou no meio: '+created+' contato(s) foram criados antes do erro. Tente de novo com o restante.',created},500);
+      }
+      created+=rows.length;
+    }
+    const skipped=parsed.contacts.length-fresh.length;
+    const parts=[created+' contato(s) importado(s)'];
+    if(skipped)parts.push(skipped+' já existia(m) na empresa');
+    if(parsed.duplicates)parts.push(parsed.duplicates+' repetido(s) na planilha');
+    if(parsed.invalid.length)parts.push(parsed.invalid.length+' linha(s) com problema');
+    return reply({ok:true,message:parts.join(' · ')+'.',created,skipped,duplicates:parsed.duplicates,invalid:parsed.invalid.slice(0,50),truncated:Boolean(parsed.truncated)},201);
   }
   if(action==='contact_create'){
     const first_name=val(payload?.first_name,130);

@@ -141,6 +141,7 @@ export default function NexusOpportunityDesk({
   const [localStages,setLocalStages]=useState({});
   const listRef=useRef(null);
   const [creating,setCreating]=useState(Boolean(startCreating)),[newContactId,setNewContactId]=useState(''),[newSource,setNewSource]=useState(''),[creatingBusy,setCreatingBusy]=useState(false);
+  useEffect(()=>{if(startCreating)setCreating(true)},[startCreating]);
   // Contato já com atendimento aberto neste funil não aparece: a API recusaria o duplicado.
   const openByContact=useMemo(()=>new Set(leads.map(l=>l.contact?.id||l.contact_id).filter(Boolean)),[leads]);
   const availableContacts=useMemo(()=>contacts.filter(c=>!openByContact.has(c.id)),[contacts,openByContact]);

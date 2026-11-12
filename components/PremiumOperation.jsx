@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   Activity,ArrowDownRight,ArrowRight,ArrowUpRight,BarChart3,Briefcase,
   CalendarDays,Check,CheckCheck,ChevronDown,ChevronRight,CircleCheck,
-  Clock3,Columns3,ContactRound,Copy,Download,ExternalLink,Filter,LayoutList,
+  Clock3,Columns3,ContactRound,Copy,Download,ExternalLink,FileUp,Filter,LayoutList,
   Layers3,ListTodo,MessageCircle,MoreHorizontal,MoveRight,Plus,
   Search,ShieldCheck,Signal,SlidersHorizontal,Sparkles,TrendingUp,
   UserRound,UsersRound,Wallet,X,Zap
@@ -13,6 +13,7 @@ import {db} from '../lib/supabase';
 import NexusLeadDetail from './NexusLeadDetail';
 import NexusOpportunityDesk from './NexusOpportunityDesk';
 import NexusStageGate from './NexusStageGate';
+import NexusContactImport from './NexusContactImport';
 import {exportContacts as downloadContactsCsv,exportFilteredLeads} from '../lib/exportFilteredLeads';
 import {matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
 import {formatPhoneBR} from '../lib/format.mjs';
@@ -309,8 +310,10 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   const [createOnList,setCreateOnList]=useState(false);
   const [query,setQuery]=useState('');
   useEffect(()=>{
-    const q=new URLSearchParams(window.location.search).get('q');
+    const params=new URLSearchParams(window.location.search);
+    const q=params.get('q');
     if(q)setQuery(q);
+    if(params.get('new')==='1'&&!readonly)setCreateOnList(true);
   },[]);
   const [filter,setFilter]=useState('all');
   const [selected,setSelected]=useState(null);
@@ -404,11 +407,13 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
 }
 
 export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,onReload}){
+  const [showImport,setShowImport]=useState(false);
   const [query,setQuery]=useState('');
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search);
     if(params.get('q'))setQuery(params.get('q'));
     if(params.get('new')==='1')setShowCreate(true);
+    if(params.get('import')==='1')setShowImport(true);
     const onFilter=e=>setQuery(String(e.detail?.query||''));
     const onCreate=()=>setShowCreate(true);
     window.addEventListener('nexus:contact-filter',onFilter);
@@ -451,10 +456,11 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
   return <div className="fx-page fx-contacts">
     <header className="fx-pagehead">
       <div className="fx-pagehead-title"><h1>Contatos</h1><span className="fx-count">{fmt(count)} {count===1?'contato':'contatos'}</span></div>
-      {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn" onClick={exportContacts} disabled={!list.length} title="Exportar os contatos carregados conforme o filtro atual"><Download size={15}/> Exportar CSV</button><button className="fx-btn fx-btn--primary" type="button" aria-expanded={showCreate} onClick={()=>setShowCreate(v=>!v)}>{showCreate?<><X size={16}/> Fechar</>:<><Plus size={16}/> Novo contato</>}</button></div>}
+      {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn" onClick={()=>{setShowImport(v=>!v);setShowCreate(false)}} aria-expanded={showImport}><FileUp size={15}/> Importar planilha</button><button type="button" className="fx-btn" onClick={exportContacts} disabled={!list.length} title="Exportar os contatos carregados conforme o filtro atual"><Download size={15}/> Exportar</button><button className="fx-btn fx-btn--primary" type="button" aria-expanded={showCreate} onClick={()=>setShowCreate(v=>!v)}>{showCreate?<><X size={16}/> Fechar</>:<><Plus size={16}/> Novo contato</>}</button></div>}
     </header>
     {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
     {success&&<div className="fx-alert fx-alert--ok" role="status"><CircleCheck size={16}/>{success}</div>}
+    {showImport&&!readonly&&<NexusContactImport onOperation={onOperation} onReload={onReload} onClose={()=>setShowImport(false)}/>}
     {showCreate&&!readonly&&<form className="fx-panel" onSubmit={createContact} aria-label="Novo contato">
       <label>Nome<input type="text" placeholder="Nome do contato" minLength={2} maxLength={130} required value={newName} onChange={e=>setNewName(e.target.value)} autoFocus/></label>
       <label>WhatsApp com DDD<input type="tel" placeholder="(48) 99999-9999" value={newPhone} onChange={e=>setNewPhone(e.target.value)}/></label>

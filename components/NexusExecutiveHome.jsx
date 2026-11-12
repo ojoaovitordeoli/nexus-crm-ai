@@ -78,6 +78,33 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
   }
   const upcomingAppointments=appointments.filter(x=>x.start_at&&toDate(x.start_at)?.getTime()>=Date.now()&&!['cancelled','completed'].includes(String(x.status||'').toLowerCase())).length;
   const when=v=>toDate(v)?.toLocaleString('pt-BR',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  // Empresa ainda sem leads: em vez de um painel cheio de zeros, um guia curto do que fazer.
+  // Inspirado no "stepper" do Atomic CRM (marmelab/atomic-crm, MIT); implementação própria.
+  if(!loading&&Number(counts?.leads||0)===0){
+    const hasContacts=Number(counts?.contacts||0)>0;
+    const steps=[
+      {done:hasContacts,title:'Traga seus contatos',text:'Importe a planilha de clientes ou cadastre o primeiro contato.',
+        actions:readonly?[]:[{href:'/contacts?import=1',label:'Importar planilha',primary:!hasContacts},{href:'/contacts?new=1',label:'Novo contato'}]},
+      {done:false,title:'Abra o primeiro atendimento',text:'Transforme um contato em lead para acompanhar no funil até a venda.',
+        actions:readonly?[]:[{href:'/leads?new=1',label:'Novo lead',primary:hasContacts}]},
+      {done:false,title:'Confira as etapas do funil',text:'Ajuste as etapas e o que o vendedor precisa preencher em cada uma.',
+        actions:[{href:'/settings',label:'Abrir configurações'}]}
+    ];
+    const doneCount=steps.filter(x=>x.done).length;
+    return <div className="fx-home fx-onboarding">
+      <div className="fx-pagehead"><div className="fx-pagehead-title"><h1>Bem-vindo ao NEXUS</h1></div></div>
+      <section className="fx-box fx-steps" aria-label="Primeiros passos">
+        <div className="fx-boxhead"><h2>Primeiros passos em {organizationName||'sua empresa'}</h2><span className="fx-steps-progress">{doneCount} de {steps.length}</span></div>
+        <ol>{steps.map((st,i)=><li key={i} className={st.done?'is-done':''}>
+          <span className="fx-step-mark" aria-hidden="true">{st.done?<Check size={15}/>:i+1}</span>
+          <div className="fx-step-body"><strong>{st.title}</strong><p>{st.text}</p>
+            {!st.done&&st.actions.length>0&&<div className="fx-step-actions">{st.actions.map(a=><Link key={a.href} href={a.href} className={'fx-btn'+(a.primary?' fx-btn--primary':'')}>{a.label}</Link>)}</div>}
+            {st.done&&<small className="fx-muted">Feito</small>}
+          </div>
+        </li>)}</ol>
+      </section>
+    </div>;
+  }
   return <div className="fx-home" aria-busy={loading}>
     <div className="v14-hero fx-pagehead">
       <div className="fx-pagehead-title"><h1>Visão geral</h1><span className="fx-synced">{snapshot}</span></div>
