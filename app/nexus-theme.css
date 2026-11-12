@@ -914,6 +914,10 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .fx-import-head p{margin:0;font-size:13px;color:var(--fx-muted);max-width:640px;line-height:1.5}
 :root:root:root body .fx-import-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:12px}
 :root:root:root body .fx-import-tip{font-size:12.5px;margin:8px 0 0}
+:root:root:root body .fx-import-check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px;cursor:pointer}
+:root:root:root body .fx-import-check input{width:16px;height:16px;accent-color:var(--fx-purple)}
+:root:root:root body .fx-import-list{display:grid;gap:6px;margin-top:10px;font-size:13px;color:var(--fx-muted,#555);max-width:420px}
+:root:root:root body .fx-import-list input{height:38px;border:1px solid var(--fx-line,#ddd);border-radius:8px;padding:0 10px;font-size:14px;color:inherit;background:transparent}
 :root:root:root body .fx-import-preview{margin-top:14px;border-top:1px solid var(--fx-border);padding-top:12px}
 :root:root:root body .fx-import-preview>p{margin:0 0 10px;font-size:13.5px}
 :root:root:root body .fx-table--import .fx-thead,:root:root:root body .fx-table--import .fx-tr{grid-template-columns:2fr 1.2fr 1fr!important}
