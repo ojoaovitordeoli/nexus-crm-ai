@@ -1,6 +1,7 @@
 'use client';
 import {useMemo,useState} from 'react';
 import NexusCrmSettings from './NexusCrmSettings';
+import NexusTeam from './NexusTeam';
 import Link from 'next/link';
 import {CheckCircle2,Download,LockKeyhole,Moon,Sun} from 'lucide-react';
 
@@ -82,7 +83,7 @@ export function PremiumReports({data,counts,orgName,readonly}){
     <p className="fx-note">Para períodos mais longos ou relatórios financeiros completos, será necessária uma consulta paginada no servidor.</p>
   </div>;
 }
-export function PremiumSettings({profile,session,role,organization,onTheme,dark}){
+export function PremiumSettings({profile,session,role,organization,onTheme,dark,canManageTeam=false}){
   const [message,setMessage]=useState('');
   const organizationName=organization?.name||'Empresa não selecionada';
   return <div className="fx-page fx-settings">
@@ -102,9 +103,10 @@ export function PremiumSettings({profile,session,role,organization,onTheme,dark}
           <div><dt>Empresa</dt><dd>{organizationName}</dd></div>
           <div><dt>Perfil</dt><dd>{role||'Membro'}</dd></div>
         </dl>
-        <p className="fx-boxfoot fx-boxfoot--note"><LockKeyhole size={14}/> Permissões e cadastro são administrados pelo Super Admin. A senha é alterada pelo fluxo de recuperação do login.</p>
+        <p className="fx-boxfoot fx-boxfoot--note"><LockKeyhole size={14}/> {canManageTeam?'Você gerencia a equipe desta empresa logo abaixo.':'Seu acesso é definido pelo administrador da empresa.'} Para trocar a senha, use "Esqueci minha senha" na tela de login.</p>
       </section>
     </div>
+    {canManageTeam&&organization?.id&&<NexusTeam organizationId={organization.id}/>}
     <NexusCrmSettings organizationId={organization?.id}/>
   </div>;
 }

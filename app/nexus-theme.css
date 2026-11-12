@@ -931,3 +931,25 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .fx-step-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 :root:root:root body .fx-steps-progress{margin-left:auto;font-size:12.5px;color:var(--fx-muted)}
 :root:root:root body .fx-onboarding .fx-steps{max-width:720px}
+
+/* V30 — Equipe da empresa */
+:root:root:root body .fx-team{margin-bottom:18px}
+:root:root:root body .fx-team-add{margin-left:auto}
+:root:root:root body .fx-team-form{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:end;gap:12px;margin:0 16px 12px!important}
+:root:root:root body .fx-team-hint{grid-column:1/-1;margin:0;font-size:12.5px}
+:root:root:root body .fx-team-row{display:grid!important;grid-template-columns:auto 1fr 190px 90px;align-items:center;gap:12px;padding:10px 16px!important;border-bottom:1px solid var(--fx-border)}
+:root:root:root body .fx-team-who{display:flex;flex-direction:column;min-width:0}
+:root:root:root body .fx-team-who strong{font-size:14px;font-weight:600}
+:root:root:root body .fx-team-who strong small{font-weight:400;color:var(--fx-muted)}
+:root:root:root body .fx-team-who>small{font-size:12.5px;color:var(--fx-muted);overflow:hidden;text-overflow:ellipsis}
+:root:root:root body .fx-team-row select{height:34px;border:1px solid var(--fx-border);border-radius:8px;padding:0 8px;background:var(--fx-surface);color:var(--fx-text);font:inherit;font-size:13px}
+:root:root:root body .fx-team-off{color:var(--fx-danger,#b42318)!important}
+:root:root:root body .fx-team-inactive{padding:8px 16px}
+:root:root:root body .fx-team-inactive summary{cursor:pointer;font-size:13px;color:var(--fx-muted);padding:6px 0}
+:root:root:root body .fx-team-empty{padding:16px}
+@media (max-width:760px){
+  :root:root:root body .fx-team-form{grid-template-columns:1fr}
+  :root:root:root body .fx-team-row{grid-template-columns:auto 1fr;grid-auto-rows:auto}
+  :root:root:root body .fx-team-row select,:root:root:root body .fx-team-row .fx-team-off{grid-column:2}
+}
+:root:root:root body .fx-team-who strong small{display:inline;margin-left:4px}

@@ -97,6 +97,11 @@ try{
       contact_categories:{kind:'contact_categories',installed:false,items:[]},company_sectors:{kind:'company_sectors',installed:false,items:[]}},
       fields:[],pipelines:[],stages:[],requirements:[]})});
   });
+  await page.route('**/api/team**',async route=>{
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({members:[
+      {id:'m1',user_id:userId,role:'AGENCY_ADMIN',role_label:'Admin da agência',status:'active',full_name:'Operador de Teste',email:'test@example.invalid',is_me:true,editable:false}
+    ],can_assign:[{value:'SELLER',label:'Vendedor'}]})});
+  });
   await page.route('**/api/automations**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rules:[],executions:[],can_manage:true})});
   });

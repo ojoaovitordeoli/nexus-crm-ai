@@ -136,7 +136,8 @@ export default function NexusCrmSettings({organizationId}){
   const load=useCallback(async()=>{
     if(!organizationId)return;
     setError('');
-    try{setData(await call(organizationId))}catch(e){setError(e.message)}
+    // Resposta incompleta não pode derrubar a tela inteira de Configurações.
+    try{const r=await call(organizationId)||{};setData({...r,catalogs:r.catalogs||{},pipelines:r.pipelines||[],stages:r.stages||[],fields:r.fields||[],requirements:r.requirements||[]})}catch(e){setError(e.message)}
   },[organizationId]);
   useEffect(()=>{load()},[load]);
   const run=useCallback(async body=>{
@@ -147,7 +148,7 @@ export default function NexusCrmSettings({organizationId}){
     catch(e){setError(e.message);return false}
     finally{inFlight.current=false;setBusy(false)}
   },[organizationId,load]);
-  const counts=useMemo(()=>data?Object.fromEntries(Object.entries(data.catalogs).map(([k,c])=>[k,c.items.filter(i=>i.is_active).length])):{}, [data]);
+  const counts=useMemo(()=>data?Object.fromEntries(Object.entries(data.catalogs).map(([k,c])=>[k,(c?.items||[]).filter(i=>i.is_active).length])):{}, [data]);
   if(!organizationId)return null;
   return <section className="nxs" aria-labelledby="nxs-title">
     <header className="nxs-head">
