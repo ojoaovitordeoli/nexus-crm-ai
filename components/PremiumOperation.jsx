@@ -280,15 +280,16 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
   </div>;
 }
 
-function PipelineBar({pipelines,active,onChange,readonly,onNew,shown}){
+function PipelineBar({pipelines,active,onChange,readonly,onNew}){
   if(!pipelines.length)return null;
+  // Com um funil só, não há o que escolher: fica apenas o atalho discreto para quem gerencia.
+  if(pipelines.length<2)return readonly?null:<div className="nxg-pipebar nxg-pipebar--single"><button type="button" className="nx13-linkbutton" onClick={onNew}><Plus size={14}/> Criar outro funil</button></div>;
   return <div className="nxg-pipebar">
     <label htmlFor="nxg-pipeline">Funil
-      <select id="nxg-pipeline" value={active?.id||''} onChange={e=>onChange(e.target.value)} disabled={pipelines.length<2}>
+      <select id="nxg-pipeline" value={active?.id||''} onChange={e=>onChange(e.target.value)}>
         {pipelines.map(p=><option key={p.id} value={p.id}>{p.name}{p.is_default?' (padrão)':''}</option>)}
       </select></label>
-    <small>{fmt(shown)} {shown===1?'lead neste funil':'leads neste funil'}{pipelines.length>1?' · '+pipelines.length+' funis na empresa':''}</small>
-    {!readonly&&<button type="button" className="nxg-secondary" onClick={onNew}><Plus size={15}/> Novo funil</button>}
+    {!readonly&&<button type="button" className="nx13-linkbutton" onClick={onNew}><Plus size={14}/> Novo funil</button>}
   </div>;
 }
 export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizationName,readonly=false,canManagePipeline=!readonly,stages:defaultStages=[],pipeline:defaultPipeline,pipelines=[],allStages=[],contacts=[],onOperation,onReload}){

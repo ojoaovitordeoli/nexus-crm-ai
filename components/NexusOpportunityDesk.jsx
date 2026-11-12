@@ -35,6 +35,7 @@ function Avatar({person,large=false}){
 function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
   const [tab,setTab]=useState('detalhes'),[note,setNote]=useState(''),[due,setDue]=useState(''),[priority,setPriority]=useState('medium');
+  const [showTransfer,setShowTransfer]=useState(false);
   const [saving,setSaving]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
   const [timeline,setTimeline]=useState({status:'idle',events:[],warnings:[],truncated:false});
   useEffect(()=>{setTab('detalhes');setNote('');setDue('');setPriority('medium');setMessage('');setError('');setTimeline({status:'idle',events:[],warnings:[],truncated:false})},[lead.id]);
@@ -86,8 +87,9 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
             </select><ChevronDown size={16}/>
           </div>
           {!stages.length&&<p className="nx13-muted">Configure um funil para mover este registro entre etapas.</p>}
-          {!readonly&&transferTargets.length>0&&<>
-            <label htmlFor="nx13-transfer" className="nx13-field-label" style={{marginTop:12}}>Transferir de funil</label>
+          {!readonly&&transferTargets.length>0&&!showTransfer&&<button type="button" className="nx13-linkbutton" onClick={()=>setShowTransfer(true)}>Mudar de funil</button>}
+          {!readonly&&transferTargets.length>0&&showTransfer&&<>
+            <label htmlFor="nx13-transfer" className="nx13-field-label" style={{marginTop:12}}>Mudar de funil</label>
             <div className="nx13-stage-select">
               <select id="nx13-transfer" value="" disabled={busy} onChange={e=>{if(e.target.value)onStageChange(lead,e.target.value,{transfer:true})}}>
                 <option value="">Escolha o funil e a etapa…</option>
@@ -99,15 +101,8 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
           </>}
           {[
             ...(Number(lead.estimated_value)>0?[['Valor estimado',new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(lead.estimated_value))]]:[]),
-            ['Origem',lead.source||'Não informada'],['Temperatura',label(lead.temperature)],
-            ['Status',label(lead.status)],['Cadastro',date(lead.created_at)]
+            ['Origem',lead.source||'Não informada'],['Cadastro',date(lead.created_at)]
           ].map(([k,v])=><div className="nx13-keyval" key={k}><span>{k}</span><strong>{v}</strong></div>)}
-        </div>
-        <div className="nx13-detail-group">
-          <h3>Contato</h3>
-          <div className="nx13-keyval"><span>Nome</span><strong>{person}</strong></div>
-          <div className="nx13-keyval"><span>WhatsApp</span><strong>{formatPhoneBR(phone)||'Não informado'}</strong></div>
-          <div className="nx13-keyval"><span>Empresa</span><strong>{organizationName||"Não informada"}</strong></div>
         </div>
       </div>}
       {tab==='retorno'&&!readonly&&<div role="tabpanel" className="nx13-followup">
@@ -135,7 +130,6 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
         </>}
       </div>}
     </div>
-    <div className="nx13-detail-foot"><ShieldCheck size={15}/> Dados da empresa selecionada</div>
   </section>;
 }
 export default function NexusOpportunityDesk({
@@ -240,8 +234,6 @@ export default function NexusOpportunityDesk({
           <label className="nx13-search"><Search size={17}/><input type="search" aria-label="Pesquisar leads" placeholder="Buscar contato, telefone ou origem" value={search} onChange={e=>setSearch(e.target.value)}/>{search&&<button type="button" aria-label="Limpar busca" onClick={()=>setSearch('')}><X size={14}/></button>}</label>
           <div className="nx13-filterline">
             <label><Filter size={14}/><select aria-label="Filtrar por etapa" value={activeStageFilter} onChange={e=>setStageFilter(e.target.value)}><option value="all">Todas as etapas</option><option value="none">Sem etapa</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select><ChevronDown size={13}/></label>
-            <label><select value={presence} aria-label="Filtrar por WhatsApp" onChange={e=>setPresence(e.target.value)}><option value="all">Todos os contatos</option><option value="yes">Com WhatsApp</option><option value="no">Sem WhatsApp</option></select><ChevronDown size={13}/></label>
-            <label className="nx13-sort"><ArrowDownUp size={14}/><select aria-label="Ordenar leads" value={order} onChange={e=>setOrder(e.target.value)}><option value="recent">Mais recentes</option><option value="oldest">Mais antigos</option><option value="name">Nome A–Z</option></select></label>
           </div>
         </div>
         {problem&&<div role="alert" className="nx13-list-feedback error">{problem}</div>}

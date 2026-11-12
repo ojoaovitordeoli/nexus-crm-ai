@@ -473,7 +473,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
         {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)} style={companySelectStyle}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id} style={companySelectStyle}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group"><div className="staff-nav-title">{group.title}</div>{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin)).map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
+        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
@@ -486,14 +486,6 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           <div className="staff-breadcrumb"><span>{orgName}</span><ChevronRight size={15}/><strong>{page}</strong></div>
         </div>
         <div className="staff-topbar-right">
-          <button type="button" className="staff-tour-button" onClick={startTour} disabled={tourLoading}
-            title="Conhecer a plataforma em um tour interativo" aria-label="Iniciar tour do CRM">
-            <Compass size={16}/><span>Tour</span>
-          </button>
-          <button type="button" className="staff-command-trigger" onClick={()=>setCommandOpen(true)}
-            aria-label="Abrir paleta de comandos Ctrl K" title="Comandos rápidos (Ctrl + K)">
-            <Zap size={16}/><span>Comandos</span><kbd>Ctrl K</kbd>
-          </button>
           <div className="staff-global-search">
             <Search size={16}/>
             <input type="search" aria-label="Busca geral de leads, contatos e tarefas" placeholder="Buscar em sua operação..."
@@ -509,7 +501,6 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setSearchOpen(false)}>Fechar busca</button>
             </div>}
           </div>
-          <span className="staff-connected"><span/> Empresa selecionada</span>
           <div className="staff-notification-control">
             <button type="button" className="staff-icon-button" onClick={()=>{setNotificationsOpen(v=>!v);setSearchOpen(false)}} aria-label="Abrir notificações" aria-expanded={notificationsOpen}>
               <Bell size={18}/>
@@ -523,14 +514,10 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setNotificationsOpen(false)}>Fechar notificações</button>
             </div>}
           </div>
-          
-          <IconButton icon={RefreshCw} title="Atualizar dados" disabled={loading} onClick={()=>load()}/>
-          <IconButton icon={dark?Sun:Moon} title="Alternar tema" onClick={onToggleTheme}/>
-          <div className="staff-top-avatar" title={displayName}><Initials name={displayName}/></div>
         </div>
       </header>
       <div className="staff-body">
-        <div key={section+'-'+organizationId+'-'+motionReplay} onPointerMove={spotlight} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
+        <div key={section+'-'+organizationId+'-'+motionReplay} className={'staff-motion-scene staff-motion-scene--'+section+(navigationOut?' staff-motion-scene--leaving':'')}>
         {!assigned?<div className="staff-no-access"><span><BriefcaseBusiness size={30}/></span><h2>Seu espaço de trabalho ainda não foi liberado.</h2><p>{isSuperAdmin?'Selecione uma empresa ativa no painel Super Admin para acompanhar a operação.':'Peça ao responsável para vincular seu usuário a uma empresa ativa em Super Admin → Acessos.'}</p>{isSuperAdmin&&<Link className="staff-btn staff-btn--primary" href="/admin">Selecionar empresa <ArrowRight size={16}/></Link>}<button className="staff-btn staff-btn--outline" onClick={onSignOut}>Sair da conta</button></div>:<>
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}

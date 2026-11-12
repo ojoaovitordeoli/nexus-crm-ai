@@ -890,3 +890,19 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .fx-wa-quick-who strong{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 :root:root:root body .fx-wa-quick-who small{font-size:12.5px;color:var(--fx-muted)}
 @media (max-width:640px){:root:root:root body .fx-wa-quick-search{max-width:none;width:100%;margin:8px 0 0}}
+
+/* ==============================================================
+   V27 — mais leve: menos coisas na tela, entrada suave
+   ============================================================== */
+/* Entrada da tela: só um fade curto (sem desfoque nem deslocamento) */
+@keyframes fx-enter{from{opacity:0}to{opacity:1}}
+:root:root:root body .staff-motion-scene{animation:fx-enter .16s ease-out both!important;filter:none!important;transform:none!important}
+@media (prefers-reduced-motion:reduce){:root:root:root body .staff-motion-scene{animation:none!important}}
+/* Menu sem títulos de grupo: um respiro entre os grupos */
+:root:root:root body .staff-nav-group+.staff-nav-group{margin-top:10px!important;padding-top:10px!important;border-top:1px solid rgba(255,255,255,.06)!important}
+/* Botão em forma de link (ações raras, sem peso visual) */
+:root:root:root body .nx13-linkbutton{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:6px 0;font:inherit;font-size:13px;font-weight:600;color:var(--fx-accent-text);cursor:pointer}
+:root:root:root body .nx13-linkbutton:hover{text-decoration:underline}
+:root:root:root body .nx13-linkbutton:focus-visible{outline:2px solid var(--fx-accent);outline-offset:2px;border-radius:4px}
+:root:root:root body .nxg-pipebar--single{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;min-height:0!important}
+:root:root:root body .nxg-overline{text-transform:none!important;letter-spacing:0!important;font-size:12.5px!important;font-weight:600!important}

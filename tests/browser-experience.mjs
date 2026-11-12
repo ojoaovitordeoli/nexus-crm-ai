@@ -121,7 +121,7 @@ try{
   await dialog.getByText('Ana Teste',{exact:false}).first().waitFor({timeout:5000});
   await page.keyboard.press('Escape');
   await dialog.waitFor({state:'hidden',timeout:5000});
-  await page.getByRole('button',{name:'Abrir paleta de comandos Ctrl K'}).click();
+  await page.keyboard.press('Control+k'); // atalho segue ativo; o botão saiu do topo na V27
   await dialog.waitFor({state:'visible'});
   await search.fill('Minhas tarefas');
   await dialog.getByText('Minhas tarefas',{exact:true}).first().click();
@@ -157,7 +157,7 @@ try{
       await page.getByText('Nenhum lead encontrado').waitFor({timeout:5000});
       await search.fill('Ana');
       await page.getByRole('region',{name:'Ficha de Ana Teste'}).waitFor({timeout:5000});
-      await page.getByRole('combobox',{name:'Ordenar leads'}).selectOption('name');
+      if(await page.getByRole('combobox',{name:'Ordenar leads'}).count())throw new Error('Filtro de ordenação voltou (removido na V27)');
       const downloadPromise=page.waitForEvent('download');
       await page.getByRole('button',{name:'Exportar'}).click();
       const download=await downloadPromise;
@@ -223,12 +223,11 @@ try{
   if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
   await page.getByRole('button',{name:'Vencidas'}).click();
   await page.getByRole('button',{name:'Em aberto'}).click();
-  await page.getByRole('button',{name:'Alternar tema'}).click();
-  await page.waitForTimeout(350);
-  if(!await page.evaluate(()=>document.body.classList.contains('dark')))throw new Error('Dark theme toggle did not work');
+  // V27: topo enxuto — busca e notificações. Tema fica em Configurações; dados atualizam sozinhos.
+  for(const name of ['Alternar tema','Atualizar dados','Abrir paleta de comandos Ctrl K','Iniciar tour do CRM'])
+    if(await page.getByRole('button',{name}).count())throw new Error('Topbar voltou a ter o botão: '+name);
+  if(await page.locator('.staff-nav-title').count())throw new Error('Menu voltou a ter títulos de grupo');
   await page.screenshot({path:'test-artifacts/dashboard-light.png',fullPage:true});
-  await page.getByRole('button',{name:'Alternar tema'}).click();
-  await page.waitForTimeout(250);
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(450);
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
