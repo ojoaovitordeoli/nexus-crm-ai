@@ -1,0 +1,11 @@
+# Nunca levar segredos nem lixo de desenvolvimento para dentro da imagem
+.env
+.env.*
+!.env.example
+node_modules
+.next
+.git
+test-artifacts
+tests
+*.log
+.DS_Store
