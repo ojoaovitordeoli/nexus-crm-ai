@@ -261,7 +261,7 @@ export default function NexusOpportunityDesk({
             </button>;
           }):<div className="nx13-empty"><Users size={24}/><strong>Nenhum lead encontrado</strong><p>Altere a busca ou os filtros.</p><button type="button" onClick={()=>{setSearch('');setStageFilter('all');setPresence('all')}}>Limpar filtros</button></div>}
         </div>
-        <footer className="nx13-collection-foot">{partial?'Até 250 registros recentes carregados.':'Registros carregados na empresa.'} {readonly?'Acesso somente leitura.':'Selecione um contato para atender.'}</footer>
+        {(partial||readonly)&&<footer className="nx13-collection-foot">{partial?'Mostrando os 250 leads mais recentes.':''}{partial&&readonly?' ':''}{readonly?'Acesso somente leitura.':''}</footer>}
       </section>
       {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}
