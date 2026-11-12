@@ -548,7 +548,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
 
         {ready&&section==='reports'&&<PremiumReports data={data} counts={counts} orgName={orgName} readonly={readonly}/>}
-        {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark}/>}
+        {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark} canManageTeam={isSuperAdmin||role==='AGENCY_ADMIN'||role==='ORGANIZATION_ADMIN'}/>}
         {ready&&section==='tasks'&&<div className="fx-page fx-tasks">
           <header className="fx-pagehead">
             <div className="fx-pagehead-title"><h1>Minhas tarefas</h1><span className="fx-count">{openTasks.length} em aberto</span>{lateTaskCount>0&&<span className="fx-count fx-count--alert">{lateTaskCount} {lateTaskCount===1?'vencida':'vencidas'}</span>}</div>
