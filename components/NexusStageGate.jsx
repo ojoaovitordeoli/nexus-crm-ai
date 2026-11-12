@@ -118,7 +118,7 @@ function StageGateDialog({request,onOperation,onDone,onCancel}){
   return <div className="nxg-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&phase!=='saving')onCancel()}}>
     <form className="nxg-dialog" role="dialog" aria-modal="true" aria-labelledby="nxg-title" aria-describedby="nxg-desc" onSubmit={submit} noValidate>
       <header className="nxg-head">
-        <div><span className="nxg-overline">{transfer?'TRANSFERIR DE FUNIL':'MUDAR DE ETAPA'}</span>
+        <div><span className="nxg-overline">{transfer?'Mudar de funil':'Mudar de etapa'}</span>
           <h2 id="nxg-title">{info?.stage?.name}</h2>
           <p id="nxg-desc">{leadName} · {info?.pipeline?.name}. Preencha os campos obrigatórios para concluir.</p></div>
         <button type="button" className="nxg-close" onClick={onCancel} disabled={phase==='saving'} aria-label="Cancelar e fechar"><X size={18}/></button>

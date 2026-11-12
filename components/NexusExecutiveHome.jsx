@@ -124,9 +124,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
           </Link>):<div className="fx-empty-small">Sem compromissos futuros.</div>}</div>
         </section>
         <section className="fx-box fx-leadsbox">
-          <Title title="Leads recentes" link="Abrir lista" href="/leads">
-            <label className="fx-search"><Search size={15}/><input type="search" value={term} onChange={e=>setTerm(e.target.value)} placeholder="Buscar lead" aria-label="Buscar lead"/></label>
-          </Title>
+          <Title title="Leads recentes" link="Abrir lista" href="/leads"/>
           <div className="v14-rows">{recent.length?recent.map(l=>{
             const who=fullName(l.contact),w=whatsapp(l.contact?.whatsapp),stage=pipelineStages.find(s=>s.id===l.pipeline_stage_id);
             return <div className="fx-row fx-leadrow" key={l.id}>
