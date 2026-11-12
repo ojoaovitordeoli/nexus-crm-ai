@@ -10,10 +10,10 @@ import {
   UserRound,UsersRound,Wallet,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
-import NexusLeadDetail from './NexusLeadDetail';
 import NexusOpportunityDesk from './NexusOpportunityDesk';
 import NexusStageGate from './NexusStageGate';
 import NexusContactImport from './NexusContactImport';
+import NexusContactEdit from './NexusContactEdit';
 import {exportContacts as downloadContactsCsv,exportFilteredLeads} from '../lib/exportFilteredLeads';
 import {matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
 import {formatPhoneBR} from '../lib/format.mjs';
@@ -308,6 +308,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   const gateView=gate&&<NexusStageGate key={gate.lead.id+gate.stageId} request={gate} onOperation={onOperation} onDone={closeGate} onCancel={()=>closeGate(null)}/>;
   const [mode,setMode]=useState('list');
   const [createOnList,setCreateOnList]=useState(false);
+  const [focusLead,setFocusLead]=useState('');
   const [query,setQuery]=useState('');
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search);
@@ -356,7 +357,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   // Função de renderização (não componente): um componente criado dentro do render era recriado
   // a cada renderização, remontando o card arrastado no meio do drag.
   const renderCard=item=><div key={item.id} className={'nxp-lead-card'+(busy===item.id?' is-busy':'')} aria-busy={busy===item.id||undefined} draggable={canDrag} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
-    <button type="button" className="nxp-lead-card-main" onClick={()=>setSelected(item)} aria-label={'Abrir lead '+display(item.contact)}>
+    <button type="button" className="nxp-lead-card-main" onClick={()=>openInList(item.id)} aria-label={'Abrir lead '+display(item.contact)}>
       <div className="nxp-lead-card-top"><Avatar value={display(item.contact)}/><span className="nxp-lead-date">{date(item.created_at)}</span></div>
       <strong>{display(item.contact)}</strong><small>{formatPhoneBR(item.contact?.whatsapp)||'Telefone não informado'}</small>
       <div className="nxp-lead-card-foot"><span>{item.source||'Origem não informada'}</span><ChevronRight size={16}/></div>
@@ -364,11 +365,13 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
   const openCreate=()=>{setCreateOnList(true);setMode('list')};
+  // Quadro e lista usam a mesma ficha: abrir um card leva à lista com o lead selecionado.
+  const openInList=id=>{setFocusLead(id);setCreateOnList(false);setMode('list')};
   if(mode==='list')return <>
     <NexusOpportunityDesk leads={leads} count={visibleCount} organizationName={organizationName} readonly={readonly}
       stages={stages} onOperation={onOperation} onReload={onReload} onRequestStage={requestStage}
       pipelines={pipelines} allStages={allStages} pipelineBar={bar} contacts={contacts} pipelineId={pipeline?.id||''}
-      startCreating={createOnList}
+      startCreating={createOnList} focusLeadId={focusLead} canDelete={canManagePipeline&&!readonly}
       onShowBoard={()=>{setCreateOnList(false);setMode('board')}} onConfigure={canManagePipeline?()=>setEditorOpen(true):null}/>
     {editor}{gateView}
   </>;
@@ -401,12 +404,11 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
       </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn" aria-label={'Abrir lead '+display(l.contact)}><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{formatPhoneBR(l.contact?.whatsapp)||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
       <div className="nxp-footnote">{filtered.length} {filtered.length===1?'lead exibido':'leads exibidos'} · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
-    <NexusLeadDetail lead={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} pending={Boolean(busy)}/>
     {editor}{gateView}
   </div>;
 }
 
-export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,onReload}){
+export function PremiumContacts({contacts=[],count=0,readonly=false,canDelete=false,onOperation,onReload}){
   const [showImport,setShowImport]=useState(false);
   const [query,setQuery]=useState('');
   useEffect(()=>{
@@ -460,6 +462,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
     </header>
     {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
     {success&&<div className="fx-alert fx-alert--ok" role="status"><CircleCheck size={16}/>{success}</div>}
+    {selected&&<NexusContactEdit key={selected.id} contact={selected} readonly={readonly} canDelete={canDelete&&!readonly} onOperation={onOperation} onReload={onReload} onClose={()=>setSelected(null)}/>}
     {showImport&&!readonly&&<NexusContactImport onOperation={onOperation} onReload={onReload} onClose={()=>setShowImport(false)}/>}
     {showCreate&&!readonly&&<form className="fx-panel" onSubmit={createContact} aria-label="Novo contato">
       <label>Nome<input type="text" placeholder="Nome do contato" minLength={2} maxLength={130} required value={newName} onChange={e=>setNewName(e.target.value)} autoFocus/></label>
@@ -482,7 +485,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
       {!list.length&&<div className="fx-empty"><strong>{query?'Nenhum contato encontrado':'Nenhum contato cadastrado'}</strong><p>{query?'Confira a grafia ou busque pelo número com DDD.':readonly?'Os contatos da empresa aparecerão aqui.':'Use “Novo contato” para cadastrar o primeiro.'}</p>{query&&<button type="button" className="fx-btn" onClick={()=>setQuery('')}>Limpar busca</button>}</div>}
       <div className="fx-boxfoot">{fmt(withPhone)} com WhatsApp entre os carregados · até 250 registros recentes por empresa</div>
     </section>
-    {selected&&<div className="nxp-premium fx-drawer-host"><Drawer type="contact" data={selected} onClose={()=>setSelected(null)}/></div>}
+
   </div>;
 }
 

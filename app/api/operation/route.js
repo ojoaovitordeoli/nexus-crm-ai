@@ -5,6 +5,7 @@ import {describeRequirement,evaluateRequirements,statusForStage} from '../../../
 import {buildLeadTimeline,canManagePipeline,canWriteOperation,localDateISO,parseDateTime,planPipelineStages,READ_ACTIONS,safeCalendarDate} from '../../../lib/operation-rules.mjs';
 import {logInternal} from '../../../lib/workflow-security.mjs';
 import {buildContacts,parseCsv} from '../../../lib/contact-import.mjs';
+import {canDeleteRecord,canEditRecord,canEditSale,contactDeleteBlock} from '../../../lib/record-rules.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -45,7 +46,7 @@ async function loadStageGate(admin,orgId,payload){
   if(!validId(payload?.id)||!validId(payload?.stage_id))return {error:'Lead ou etapa inválidos.',status:400};
   const {data:lead,error:leadError}=await admin.from('leads')
     .select('id,pipeline_id,pipeline_stage_id,source,estimated_value,lost_reason,closed_at')
-    .eq('id',payload.id).eq('organization_id',orgId).maybeSingle();
+    .eq('id',payload.id).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
   if(leadError||!lead)return {error:'Lead não encontrado.',status:404};
   const {data:stage,error:stageError}=await admin.from('pipeline_stages')
     .select('id,pipeline_id,name,is_won,is_lost').eq('id',payload.stage_id).maybeSingle();
@@ -120,13 +121,15 @@ export async function GET(request){
   const fields=[
     'id,organization_id,source,status,temperature,created_at,closed_at,pipeline_id,pipeline_stage_id,estimated_value,contact:contacts(id,first_name,last_name,whatsapp)',
     'id,title,status,priority,due_date,due_time,created_at,created_by,assigned_to,completed_at,lead_id',
-    'id,first_name,last_name,whatsapp,created_at',
+    'id,first_name,last_name,whatsapp,email,city,created_at',
     'id,title,description,type,start_at,end_at,status,location,created_at,lead_id',
     'id,value,created_at,sale_date,lead_id,contact_id,seller_id,contact:contacts(id,first_name,last_name)'
   ];
-  const requestRows=names.map((name,i)=>admin.from(name).select(fields[i]).eq('organization_id',orgId)
+  // Contatos e leads excluídos ficam na "lixeira" (deleted_at) e não aparecem em lugar nenhum.
+  const live=(q,name)=>name==='leads'||name==='contacts'?q.is('deleted_at',null):q;
+  const requestRows=names.map((name,i)=>live(admin.from(name).select(fields[i]).eq('organization_id',orgId),name)
     .order(name==='appointments'?'start_at':'created_at',{ascending:name==='appointments'?true:false}).limit(250));
-  const requestCounts=names.map(name=>admin.from(name).select('id',{count:'exact',head:true}).eq('organization_id',orgId));
+  const requestCounts=names.map(name=>live(admin.from(name).select('id',{count:'exact',head:true}).eq('organization_id',orgId),name));
   const [rows,counts,pipelines]=await Promise.all([
     Promise.all(requestRows),Promise.all(requestCounts),
     admin.from('pipelines').select('id,name,is_default,position,created_at').eq('organization_id',orgId)
@@ -179,7 +182,7 @@ export async function POST(request){
     if(payload?.lead_id==null||payload?.lead_id==='')return {lead:null};
     if(!validId(payload.lead_id))return {error:'Lead inválido.',status:400};
     const {data,error}=await admin.from('leads').select('id,contact_id')
-      .eq('id',payload.lead_id).eq('organization_id',orgId).maybeSingle();
+      .eq('id',payload.lead_id).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
     if(error){logInternal('stage-gate',error);return {error:'Falha ao validar o lead.',status:500}};
     if(!data)return {error:'Lead não encontrado nesta empresa.',status:404};
     return {lead:data};
@@ -187,7 +190,7 @@ export async function POST(request){
   if(action==='lead_timeline'){
     if(!validId(payload?.lead_id))return fails('Lead inválido.');
     const {data:lead,error:leadError}=await admin.from('leads')
-      .select('id,source,created_at,pipeline_id,pipeline_stage_id').eq('id',payload.lead_id).eq('organization_id',orgId).maybeSingle();
+      .select('id,source,created_at,pipeline_id,pipeline_stage_id').eq('id',payload.lead_id).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
     if(leadError)return dbFail('Falha ao consultar o lead.',leadError);
     if(!lead)return fails('Lead não encontrado nesta empresa.',404);
     const limit=100;
@@ -406,7 +409,7 @@ export async function POST(request){
     const contactId=String(payload?.contact_id||'');
     if(!validId(contactId))return fails('Selecione o contato do lead.');
     const contact=await admin.from('contacts').select('id,first_name,last_name')
-      .eq('id',contactId).eq('organization_id',orgId).maybeSingle();
+      .eq('id',contactId).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
     if(contact.error)return dbFail('Falha ao validar o contato.',contact.error);
     if(!contact.data)return fails('Contato não encontrado nesta empresa.',404);
     // Funil de destino: o informado ou o padrão da empresa.
@@ -428,7 +431,7 @@ export async function POST(request){
     const first=(st.data||[]).find(x=>!x.is_won&&!x.is_lost)||null;
     if(!first)return fails('Configure ao menos uma etapa ativa no funil "'+target.name+'" antes de cadastrar leads.',409);
     // Um atendimento aberto por contato em cada funil (lead sem funil conta no padrão).
-    const open=await admin.from('leads').select('id,pipeline_id').eq('organization_id',orgId)
+    const open=await admin.from('leads').select('id,pipeline_id').eq('organization_id',orgId).is('deleted_at',null)
       .eq('contact_id',contactId).is('closed_at',null).limit(50);
     if(open.error)return dbFail('Falha ao verificar atendimentos abertos.',open.error);
     const defaultId=fallback?.id||null;
@@ -446,6 +449,124 @@ export async function POST(request){
     const person=[contact.data.first_name,contact.data.last_name].filter(Boolean).join(' ').trim()||'contato';
     return reply({ok:true,message:'Lead de '+person+' criado na etapa "'+first.name+'" do funil "'+target.name+'".',item:data},201);
   }
+  // ---------- Corrigir e excluir registros (V31) ----------
+  const auditLog=async(action,entity,id,before,after)=>{
+    const {error}=await admin.from('audit_logs').insert({user_id:auth.user.id,organization_id:orgId,action,entity_type:entity,entity_id:id,before,after});
+    if(error)logInternal('audit '+action,error);
+  };
+  const noDelete=()=>fails('Excluir é permitido só para gestor ou administrador.',403);
+  if(action==='contact_update'){
+    if(!validId(payload?.id))return fails('Contato inválido.');
+    const first_name=val(payload?.first_name,130),last_name=val(payload?.last_name,130)||null;
+    const whatsapp=String(payload?.whatsapp||'').replace(/\D/g,'');
+    const email=val(payload?.email,200)||null,city=val(payload?.city,120)||null;
+    if(first_name.length<2)return fails('Informe o nome do contato.');
+    if(whatsapp&&!(whatsapp.length>=10&&whatsapp.length<=13))return fails('WhatsApp inválido. Informe DDD e número.');
+    if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return fails('E-mail inválido.');
+    const {data,error}=await admin.from('contacts').update({first_name,last_name,whatsapp:whatsapp||null,email,city,updated_at:new Date().toISOString()})
+      .eq('id',payload.id).eq('organization_id',orgId).is('deleted_at',null).select('id').maybeSingle();
+    if(error)return dbFail('Falha ao salvar o contato.',error);
+    if(!data)return fails('Contato não encontrado nesta empresa.',404);
+    await auditLog('contact_update','contact',data.id,null,{first_name,last_name,whatsapp:whatsapp||null,email,city});
+    return reply({ok:true,message:'Contato atualizado.'});
+  }
+  if(action==='contact_delete'){
+    if(!canDeleteRecord(auth.role))return noDelete();
+    if(!validId(payload?.id))return fails('Contato inválido.');
+    const open=await admin.from('leads').select('id',{count:'exact',head:true}).eq('organization_id',orgId).eq('contact_id',payload.id).is('deleted_at',null).is('closed_at',null);
+    if(open.error)return dbFail('Falha ao verificar atendimentos.',open.error);
+    const block=contactDeleteBlock(open.count);
+    if(block)return fails(block,409);
+    const {data,error}=await admin.from('contacts').update({deleted_at:new Date().toISOString()})
+      .eq('id',payload.id).eq('organization_id',orgId).is('deleted_at',null).select('id,first_name').maybeSingle();
+    if(error)return dbFail('Falha ao excluir o contato.',error);
+    if(!data)return fails('Contato não encontrado nesta empresa.',404);
+    await auditLog('contact_delete','contact',data.id,{first_name:data.first_name},{deleted:true});
+    return reply({ok:true,message:'Contato excluído.'});
+  }
+  if(action==='lead_update'){
+    if(!validId(payload?.id))return fails('Lead inválido.');
+    const patch={updated_at:new Date().toISOString()};
+    if('source' in (payload||{}))patch.source=val(payload.source,120)||null;
+    if('estimated_value' in (payload||{})){
+      if(payload.estimated_value===null||payload.estimated_value==='')patch.estimated_value=null;
+      else{const v=Number(payload.estimated_value);if(!Number.isFinite(v)||v<0||v>1000000000)return fails('Valor inválido.');patch.estimated_value=v}
+    }
+    const {data,error}=await admin.from('leads').update(patch).eq('id',payload.id).eq('organization_id',orgId).is('deleted_at',null).select('id').maybeSingle();
+    if(error)return dbFail('Falha ao salvar o lead.',error);
+    if(!data)return fails('Lead não encontrado nesta empresa.',404);
+    await auditLog('lead_update','lead',data.id,null,patch);
+    return reply({ok:true,message:'Lead atualizado.'});
+  }
+  if(action==='lead_delete'){
+    if(!canDeleteRecord(auth.role))return noDelete();
+    if(!validId(payload?.id))return fails('Lead inválido.');
+    const {data,error}=await admin.from('leads').update({deleted_at:new Date().toISOString()})
+      .eq('id',payload.id).eq('organization_id',orgId).is('deleted_at',null).select('id,contact_id,pipeline_stage_id').maybeSingle();
+    if(error)return dbFail('Falha ao excluir o lead.',error);
+    if(!data)return fails('Lead não encontrado nesta empresa.',404);
+    await auditLog('lead_delete','lead',data.id,{contact_id:data.contact_id,pipeline_stage_id:data.pipeline_stage_id},{deleted:true});
+    return reply({ok:true,message:'Lead excluído. Tarefas e vendas ligadas a ele continuam registradas.'});
+  }
+  if(action==='sale_update'||action==='sale_delete'){
+    if(!validId(payload?.id))return fails('Venda inválida.');
+    const {data:sale,error:saleError}=await admin.from('sales').select('id,value,lead_id,contact_id,seller_id,sale_date').eq('id',payload.id).eq('organization_id',orgId).maybeSingle();
+    if(saleError)return dbFail('Falha ao localizar a venda.',saleError);
+    if(!sale)return fails('Venda não encontrada nesta empresa.',404);
+    if(action==='sale_delete'){
+      if(!canDeleteRecord(auth.role))return noDelete();
+      const {error}=await admin.from('sales').delete().eq('id',sale.id).eq('organization_id',orgId);
+      if(error)return dbFail('Falha ao excluir a venda.',error);
+      await auditLog('sale_delete','sale',sale.id,sale,null);
+      return reply({ok:true,message:'Venda excluída.'});
+    }
+    if(!canEditSale({role:auth.role,actorId:auth.user.id,sellerId:sale.seller_id}))return fails('Você só pode corrigir as suas próprias vendas.',403);
+    const value=Number(payload?.value);
+    if(!Number.isFinite(value)||value<=0||value>100000000)return fails('Informe um valor de venda válido.');
+    const patch={value,updated_at:new Date().toISOString()};
+    if('lead_id' in (payload||{})){
+      if(!payload.lead_id){patch.lead_id=null;patch.contact_id=null}
+      else{const link=await linkedLead();if(link.error)return fails(link.error,link.status);patch.lead_id=link.lead.id;patch.contact_id=link.lead.contact_id||null}
+    }
+    const {error}=await admin.from('sales').update(patch).eq('id',sale.id).eq('organization_id',orgId);
+    if(error)return dbFail('Falha ao salvar a venda.',error);
+    await auditLog('sale_update','sale',sale.id,{value:sale.value,lead_id:sale.lead_id},patch);
+    return reply({ok:true,message:'Venda corrigida.'});
+  }
+  if(action==='task_update'||action==='task_delete'){
+    if(!validId(payload?.id))return fails('Tarefa inválida.');
+    if(action==='task_delete'){
+      if(!canEditRecord(auth.role))return fails('Seu perfil permite apenas visualizar os dados.',403);
+      const {data,error}=await admin.from('tasks').delete().eq('id',payload.id).eq('organization_id',orgId).select('id,title').maybeSingle();
+      if(error)return dbFail('Falha ao excluir a tarefa.',error);
+      if(!data)return fails('Tarefa não encontrada nesta empresa.',404);
+      await auditLog('task_delete','task',data.id,{title:data.title},null);
+      return reply({ok:true,message:'Tarefa excluída.'});
+    }
+    const title=val(payload?.title,190);
+    if(title.length<2)return fails('Informe o título da tarefa.');
+    const due=payload?.due_date?safeDate(payload.due_date):null;
+    if(payload?.due_date&&!due)return fails('Data inválida.');
+    const priority=['low','medium','high','urgent'].includes(payload?.priority)?payload.priority:'medium';
+    const {data,error}=await admin.from('tasks').update({title,due_date:due,priority,updated_at:new Date().toISOString()})
+      .eq('id',payload.id).eq('organization_id',orgId).select('id').maybeSingle();
+    if(error)return dbFail('Falha ao salvar a tarefa.',error);
+    if(!data)return fails('Tarefa não encontrada nesta empresa.',404);
+    return reply({ok:true,message:'Tarefa atualizada.'});
+  }
+  if(action==='appointment_update'){
+    if(!validId(payload?.id))return fails('Compromisso inválido.');
+    const title=val(payload?.title);
+    const start=validateDateTime(payload?.start_at);
+    if(title.length<2)return fails('Informe o título do compromisso.');
+    if(!start)return fails('Data e horário inválidos.');
+    const {data,error}=await admin.from('appointments').update({title,start_at:start,location:val(payload?.location,220)||null,updated_at:new Date().toISOString()})
+      .eq('id',payload.id).eq('organization_id',orgId).select('id').maybeSingle();
+    if(error)return dbFail('Falha ao salvar o compromisso.',error);
+    if(!data)return fails('Compromisso não encontrado nesta empresa.',404);
+    await auditLog('appointment_update','appointment',data.id,null,{title,start_at:start});
+    return reply({ok:true,message:'Compromisso atualizado.'});
+  }
   if(action==='contacts_import'){
     // O servidor refaz a leitura e a validação; a prévia do navegador é só conferência.
     const csv=typeof payload?.csv==='string'?payload.csv:'';
@@ -460,7 +581,7 @@ export async function POST(request){
     for(let i=0;i<phones.length;i+=200){
       const chunk=phones.slice(i,i+200);
       const variants=chunk.flatMap(p=>[p,'55'+p]);
-      const {data,error}=await admin.from('contacts').select('whatsapp').eq('organization_id',orgId).in('whatsapp',variants);
+      const {data,error}=await admin.from('contacts').select('whatsapp').eq('organization_id',orgId).is('deleted_at',null).in('whatsapp',variants);
       if(error)return dbFail('Falha ao verificar contatos existentes.',error);
       (data||[]).forEach(r=>{const d=String(r.whatsapp||'').replace(/\D/g,'');existing.add(d.length>11&&d.startsWith('55')?d.slice(2):d)});
     }

@@ -21,6 +21,7 @@ import NexusAutomations from './NexusAutomations';
 import NexusWhatsAppInbox from './NexusWhatsAppInbox';
 import NexusAIInsights from './NexusAIInsights';
 import PremiumSales from './PremiumSales';
+import ConfirmButton from './ConfirmButton';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -90,6 +91,27 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [appointmentType,setAppointmentType]=useState('meeting');
   const [appointmentLocation,setAppointmentLocation]=useState('');
   const [appointmentLead,setAppointmentLead]=useState('');
+  const [editApptId,setEditApptId]=useState(''),[editAppt,setEditAppt]=useState({title:'',start:'',location:''});
+  async function saveApptEdit(e,a){
+    e.preventDefault();if(saving)return;
+    const start=new Date(editAppt.start);
+    if(!editAppt.start||Number.isNaN(start.getTime())){setError('Data e horário inválidos.');return}
+    setSaving(true);setError('');
+    try{const r=await operation({action:'appointment_update',id:a.id,title:editAppt.title,start_at:start.toISOString(),location:editAppt.location});setEditApptId('');setNotice(r.message||'Compromisso atualizado.');await load({silent:true})}
+    catch(err){setError(err.message||'Não foi possível reagendar.')}finally{setSaving(false)}
+  }
+  const [editTaskId,setEditTaskId]=useState(''),[editTask,setEditTask]=useState({title:'',due_date:'',priority:'medium'});
+  const startTaskEdit=t=>{setEditTaskId(t.id);setEditTask({title:t.title||'',due_date:t.due_date||'',priority:t.priority||'medium'})};
+  async function saveTaskEdit(e,t){
+    e.preventDefault();if(saving)return;setSaving(true);setError('');
+    try{const r=await operation({action:'task_update',id:t.id,...editTask});setEditTaskId('');setNotice(r.message||'Tarefa atualizada.');await load({silent:true})}
+    catch(err){setError(err.message||'Não foi possível salvar a tarefa.')}finally{setSaving(false)}
+  }
+  async function deleteTask(t){
+    if(saving)return;setSaving(true);setError('');
+    try{const r=await operation({action:'task_delete',id:t.id});setEditTaskId('');setNotice(r.message||'Tarefa excluída.');await load({silent:true})}
+    catch(err){setError(err.message||'Não foi possível excluir a tarefa.')}finally{setSaving(false)}
+  }
   const [stages,setStages]=useState([]);
   const [pipeline,setPipeline]=useState(null);
   const [pipelines,setPipelines]=useState([]);
@@ -537,8 +559,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={orgName}
           readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} contacts={data.contacts} onOperation={operation} onReload={load}
         />}
-        {ready&&section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} readonly={readonly} onOperation={operation} onReload={load}/>}
-        {ready&&section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
+        {ready&&section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} readonly={readonly} canManage={canManagePipeline} userId={session?.id||''} onOperation={operation} onReload={load}/>}
+        {ready&&section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} canDelete={canManagePipeline} onOperation={operation} onReload={load}/>}
         {section==='whatsapp'&&<NexusWhatsAppInbox
           organizationId={organizationId} contacts={data.contacts} isSuperAdmin={isSuperAdmin}
         />}
@@ -567,11 +589,11 @@ export default function StaffWorkspace({section,session,profile,organizations,me
             <div className="fx-boxhead"><div className="fx-tabs" role="group" aria-label="Filtrar tarefas">{[['open','Em aberto'],['done','Concluídas'],['all','Todas']].map(([id,label])=><button type="button" key={id} aria-pressed={taskFilter===id} onClick={()=>setTaskFilter(id)} className={taskFilter===id?'active':''}>{label}</button>)}</div><label className="fx-search fx-search--end"><Search size={15}/><input placeholder="Buscar tarefa" aria-label="Buscar tarefa" value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
             {taskGroups.map(([id,label,items])=><div key={id} className={'fx-group fx-group--'+id}>
               <div className="fx-subhead"><h3>{label}</h3><span className="fx-groupcount">{items.length}</span></div>
-              {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
+              {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());if(editTaskId===t.id)return <form key={t.id} className='fx-row fx-taskline fx-task-edit' onSubmit={e=>saveTaskEdit(e,t)} aria-label='Editar tarefa'><input aria-label='Título da tarefa' required minLength={2} maxLength={190} value={editTask.title} onChange={e=>setEditTask(v=>({...v,title:e.target.value}))} autoFocus/><input type='date' aria-label='Prazo' value={editTask.due_date} onChange={e=>setEditTask(v=>({...v,due_date:e.target.value}))}/><select aria-label='Prioridade' value={editTask.priority} onChange={e=>setEditTask(v=>({...v,priority:e.target.value}))}><option value='low'>Baixa</option><option value='medium'>Normal</option><option value='high'>Alta</option><option value='urgent'>Urgente</option></select><span className='fx-row-actions'><button type='submit' className='fx-btn fx-btn--primary' disabled={saving}>Salvar</button><button type='button' className='fx-btn' onClick={()=>setEditTaskId('')}>Cancelar</button><ConfirmButton onConfirm={()=>deleteTask(t)} disabled={saving}/></span></form>;return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
                 <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+(t.title||'tarefa')}><Check size={14}/></button>
                 <div><strong className={done?'fx-done':''}>{t.title||'Tarefa sem título'}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}</div>
                 <span className={id==='late'?'fx-late':'fx-due'}>{dueKey(t)?(id==='today'?'Hoje':dueDate(t.due_date).toLocaleDateString('pt-BR')):'Sem prazo'}</span>
-              </div>})}
+              {!readonly&&<button type='button' className='nx13-linkbutton fx-task-editlink' onClick={()=>startTaskEdit(t)} aria-label={'Editar '+(t.title||'tarefa')}>Editar</button>}</div>})}
             </div>)}
             {!filteredTasks.length&&<div className="fx-empty"><strong>{search?'Nenhuma tarefa encontrada':taskFilter==='done'?'Nenhuma tarefa concluída':'Nada pendente'}</strong><p>{search?'Ajuste a busca ou o filtro.':taskFilter==='open'&&!readonly?'Use “Adicionar tarefa” para registrar a próxima atividade.':'Altere o filtro para ver outras tarefas.'}</p></div>}
           </section>
@@ -584,12 +606,19 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           const todays=data.appointments.filter(a=>a.start_at&&keyOf(a.start_at)===todayKey).sort((a,b)=>new Date(a.start_at)-new Date(b.start_at));
           const upcoming=data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&keyOf(a.start_at)!==todayKey&&!['cancelled','completed'].includes(a.status))).sort((a,b)=>new Date(a.start_at||0)-new Date(b.start_at||0));
           const hour=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
-          const row=(a,showDay)=><div className="fx-row fx-apptrow" key={a.id}>
+          const localInput=v=>{if(!v)return '';const d=new Date(v);return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-')+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
+          const row=(a,showDay)=>editApptId===a.id?<form className="fx-row fx-apptrow fx-appt-edit" key={a.id} onSubmit={e=>saveApptEdit(e,a)} aria-label="Reagendar compromisso">
+            <input aria-label="Título" required minLength={2} maxLength={190} value={editAppt.title} onChange={e=>setEditAppt(v=>({...v,title:e.target.value}))} autoFocus/>
+            <input type="datetime-local" aria-label="Data e horário" required value={editAppt.start} onChange={e=>setEditAppt(v=>({...v,start:e.target.value}))}/>
+            <input aria-label="Local" maxLength={220} placeholder="Local" value={editAppt.location} onChange={e=>setEditAppt(v=>({...v,location:e.target.value}))}/>
+            <span className="fx-row-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={saving}>Salvar</button><button type="button" className="fx-btn" onClick={()=>setEditApptId('')}>Cancelar</button></span>
+          </form>:<div className="fx-row fx-apptrow" key={a.id}>
             <span className="fx-appt-when">{showDay&&<small>{a.start_at?new Date(a.start_at).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace(/\./g,''):'Sem data'}</small>}<strong>{hour(a.start_at)}</strong></span>
             <div><strong>{a.title||'Agendamento'}</strong><small>{[APPT_TYPES[a.type]||'',a.location||''].filter(Boolean).join(' · ')||'Sem local informado'}</small></div>
             {readonly?<Chip value={a.status}/>:<select className="fx-select" aria-label={'Status de '+(a.title||'agendamento')} value={a.status||'scheduled'} disabled={saving} onChange={e=>updateAppointment(a,e.target.value)}>
               <option value="scheduled">Agendado</option><option value="confirmed">Confirmado</option><option value="completed">Concluído</option><option value="cancelled">Cancelado</option><option value="no_show">Não compareceu</option>
             </select>}
+            {!readonly&&<button type="button" className="nx13-linkbutton" onClick={()=>{setEditApptId(a.id);setEditAppt({title:a.title||'',start:localInput(a.start_at),location:a.location||''})}} aria-label={'Reagendar '+(a.title||'compromisso')}>Reagendar</button>}
           </div>;
           return <div className="fx-page fx-agenda">
           <header className="fx-pagehead">
