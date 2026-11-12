@@ -58,9 +58,9 @@ export async function POST(request){
   // Aggregate only. Never transmit individual contacts, phone numbers or customer messages.
   const oldest=new Date(now.getTime()-30*86400000).toISOString();
   const [leadTotal,contactTotal,leads,tasks,appointments,sales]=await Promise.all([
-    ctx.admin.from('leads').select('id',{head:true,count:'exact'}).eq('organization_id',org),
-    ctx.admin.from('contacts').select('id',{head:true,count:'exact'}).eq('organization_id',org),
-    ctx.admin.from('leads').select('created_at').eq('organization_id',org)
+    ctx.admin.from('leads').select('id',{head:true,count:'exact'}).eq('organization_id',org).is('deleted_at',null),
+    ctx.admin.from('contacts').select('id',{head:true,count:'exact'}).eq('organization_id',org).is('deleted_at',null),
+    ctx.admin.from('leads').select('created_at').eq('organization_id',org).is('deleted_at',null)
       .order('created_at',{ascending:false}).limit(250),
     ctx.admin.from('tasks').select('status,due_date').eq('organization_id',org)
       .order('created_at',{ascending:false}).limit(250),

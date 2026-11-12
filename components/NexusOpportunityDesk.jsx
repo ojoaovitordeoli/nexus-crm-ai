@@ -10,6 +10,8 @@ import {
 import {exportFilteredLeads} from '../lib/exportFilteredLeads';
 import {codeLabel,matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
 import {formatPhoneBR} from '../lib/format.mjs';
+import {parseBRL} from '../lib/shell-rules.mjs';
+import ConfirmButton from './ConfirmButton';
 
 const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Contato sem nome';
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
@@ -32,10 +34,24 @@ function Avatar({person,large=false}){
   const initials=person.trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase();
   return <span className={'nx13-avatar'+(large?' nx13-avatar-large':'')} aria-hidden="true">{initials||'?'}</span>;
 }
-function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose}) {
+function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose,canDelete=false}) {
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
   const [tab,setTab]=useState('detalhes'),[note,setNote]=useState(''),[due,setDue]=useState(''),[priority,setPriority]=useState('medium');
   const [showTransfer,setShowTransfer]=useState(false);
+  const [editing,setEditing]=useState(false),[editSource,setEditSource]=useState(''),[editValue,setEditValue]=useState(''),[editBusy,setEditBusy]=useState(false),[editError,setEditError]=useState('');
+  const startEdit=()=>{setEditSource(lead.source||'');setEditValue(Number(lead.estimated_value)>0?new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(lead.estimated_value)):'');setEditError('');setEditing(true)};
+  const saveEdit=async e=>{
+    e.preventDefault();if(editBusy)return;
+    const value=editValue.trim()?parseBRL(editValue):null;
+    if(editValue.trim()&&!(Number.isFinite(value)&&value>=0)){setEditError('Valor inválido. Use o formato 1.500,00.');return}
+    setEditBusy(true);setEditError('');
+    try{await onOperation({action:'lead_update',id:lead.id,source:editSource.trim(),estimated_value:value});setEditing(false);await onReload?.()}
+    catch(err){setEditError(err.message||'Não foi possível salvar.')}finally{setEditBusy(false)}
+  };
+  const removeLead=async()=>{
+    try{await onOperation({action:'lead_delete',id:lead.id});await onReload?.()}
+    catch(err){setEditError(err.message||'Não foi possível excluir.')}
+  };
   const [saving,setSaving]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
   const [timeline,setTimeline]=useState({status:'idle',events:[],warnings:[],truncated:false});
   useEffect(()=>{setTab('detalhes');setNote('');setDue('');setPriority('medium');setMessage('');setError('');setTimeline({status:'idle',events:[],warnings:[],truncated:false})},[lead.id]);
@@ -99,10 +115,18 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
               </select><ChevronDown size={16}/>
             </div>
           </>}
-          {[
-            ...(Number(lead.estimated_value)>0?[['Valor estimado',new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(lead.estimated_value))]]:[]),
+          {!editing&&<>{[
+            ['Valor',Number(lead.estimated_value)>0?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(lead.estimated_value)):'Não informado'],
             ['Origem',lead.source||'Não informada'],['Cadastro',date(lead.created_at)]
           ].map(([k,v])=><div className="nx13-keyval" key={k}><span>{k}</span><strong>{v}</strong></div>)}
+          {!readonly&&<div className="nx13-detail-actions"><button type="button" className="nx13-linkbutton" onClick={startEdit}>Editar valor e origem</button>
+            {canDelete&&<ConfirmButton label="Excluir lead" onConfirm={removeLead}/>}</div>}</>}
+          {editing&&<form className="nx13-editform" onSubmit={saveEdit} aria-label="Editar lead">
+            <label>Valor (R$)<input inputMode="decimal" placeholder="Ex.: 1.500,00" value={editValue} onChange={e=>setEditValue(e.target.value)} autoFocus/></label>
+            <label>Origem<input maxLength={120} placeholder="Instagram, indicação..." value={editSource} onChange={e=>setEditSource(e.target.value)}/></label>
+            <div className="nx13-detail-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={editBusy}>{editBusy?'Salvando...':'Salvar'}</button><button type="button" className="fx-btn" onClick={()=>setEditing(false)} disabled={editBusy}>Cancelar</button></div>
+          </form>}
+          {editError&&<p className="nx13-error" role="alert">{editError}</p>}
         </div>
       </div>}
       {tab==='retorno'&&!readonly&&<div role="tabpanel" className="nx13-followup">
@@ -134,7 +158,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
 }
 export default function NexusOpportunityDesk({
  leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure,
- onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId='',startCreating=false
+ onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId='',startCreating=false,focusLeadId='',canDelete=false
 }){
   const [search,setSearch]=useState(''),[stageFilter,setStageFilter]=useState('all'),[presence,setPresence]=useState('all'),[order,setOrder]=useState('recent');
   const [selectedId,setSelectedId]=useState(null),[closed,setClosed]=useState(false),[busy,setBusy]=useState(''),[problem,setProblem]=useState(''),[notice,setNotice]=useState('');
@@ -142,6 +166,7 @@ export default function NexusOpportunityDesk({
   const listRef=useRef(null);
   const [creating,setCreating]=useState(Boolean(startCreating)),[newContactId,setNewContactId]=useState(''),[newSource,setNewSource]=useState(''),[creatingBusy,setCreatingBusy]=useState(false);
   useEffect(()=>{if(startCreating)setCreating(true)},[startCreating]);
+  useEffect(()=>{if(focusLeadId){setSelectedId(focusLeadId);setClosed(false)}},[focusLeadId]);
   // Contato já com atendimento aberto neste funil não aparece: a API recusaria o duplicado.
   const openByContact=useMemo(()=>new Set(leads.map(l=>l.contact?.id||l.contact_id).filter(Boolean)),[leads]);
   const availableContacts=useMemo(()=>contacts.filter(c=>!openByContact.has(c.id)),[contacts,openByContact]);
@@ -256,7 +281,7 @@ export default function NexusOpportunityDesk({
         </div>
         {(partial||readonly)&&<footer className="nx13-collection-foot">{partial?'Mostrando os 250 leads mais recentes.':''}{partial&&readonly?' ':''}{readonly?'Acesso somente leitura.':''}</footer>}
       </section>
-      {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
+      {selected&&!closed?<Detail key={selected.id} lead={selected} canDelete={canDelete} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}
     </div>
   </div>;
