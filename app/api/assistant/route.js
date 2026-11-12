@@ -189,8 +189,9 @@ export async function POST(request){
     const r=await runAgent({config,system,history,tools,runTool,maxSteps:MAX_STEPS});
     return reply({ok:true,text:r.text||(proposals.length?'Preparei a ação abaixo. Confira e confirme.':'Não consegui concluir. Tente perguntar de outro jeito.'),proposals});
   }catch(e){
-    logInternal('assistant provider',{status:e.status,detail:String(e.detail||e.message||'').slice(0,200)});
+    logInternal('assistant provider',{code:e.status?('http_'+e.status):(e.name||null),message:String(e.detail||e.message||'')});
     if(e.status===401||e.status===403)return fail('A chave da IA foi recusada pelo provedor. O administrador precisa conferir a chave no servidor.',502);
+    if(e.status===400&&/credit|billing|balance/i.test(String(e.detail||'')))return fail('A conta da IA está sem crédito. O administrador precisa adicionar crédito no provedor.',502);
     if(e.status===429)return fail('O provedor da IA está limitando as chamadas agora. Tente em um minuto.',503);
     if(e.name==='AbortError')return fail('A IA demorou demais para responder. Tente de novo.',504);
     return fail('O assistente não conseguiu responder agora. Tente de novo em instantes.',502);

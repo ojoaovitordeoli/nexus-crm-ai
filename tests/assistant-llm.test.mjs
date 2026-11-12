@@ -37,3 +37,23 @@ test('para depois do limite de rodadas',async()=>{
   const r=await runAgent({config:{provider:'anthropic',apiKey:'k',model:'m'},system:'s',history:[{role:'user',content:'oi'}],tools,runTool:async()=>({}),maxSteps:3,fetchImpl});
   assert.equal(r.steps,3);assert.equal(r.text,'');
 });
+
+test('Claude: se x-api-key for recusada (401), tenta uma vez com Bearer',async()=>{
+  const seen=[];
+  const fetchImpl=async(url,opt)=>{seen.push(opt.headers);
+    if(opt.headers['x-api-key'])return {ok:false,status:401,json:async()=>({error:{message:'invalid x-api-key'}})};
+    return reply({stop_reason:'end_turn',content:[{type:'text',text:'ok'}]})};
+  const config={provider:'anthropic',apiKey:'k',model:'m'};
+  const r=await runAgent({config,system:'s',history:[{role:'user',content:'oi'}],tools,runTool:async()=>({}),fetchImpl});
+  assert.equal(r.text,'ok');assert.equal(seen.length,2);
+  assert.equal(seen[1].authorization,'Bearer k');assert.equal(seen[1]['x-api-key'],undefined);
+});
+test('Claude: chave inválida nos dois formatos devolve o erro 401',async()=>{
+  const fetchImpl=async()=>({ok:false,status:401,json:async()=>({error:{message:'invalid'}})});
+  await assert.rejects(runAgent({config:{provider:'anthropic',apiKey:'k',model:'m'},system:'s',history:[{role:'user',content:'oi'}],tools,runTool:async()=>({}),fetchImpl}),e=>e.status===401);
+});
+test('Claude: outros erros (ex.: 400 sem crédito) não fazem segunda tentativa',async()=>{
+  let n=0;const fetchImpl=async()=>{n++;return {ok:false,status:400,json:async()=>({error:{message:'credit balance too low'}})}};
+  await assert.rejects(runAgent({config:{provider:'anthropic',apiKey:'k',model:'m'},system:'s',history:[{role:'user',content:'oi'}],tools,runTool:async()=>({}),fetchImpl}),e=>e.status===400&&/credit/.test(e.detail));
+  assert.equal(n,1);
+});
