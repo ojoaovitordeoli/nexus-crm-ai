@@ -22,6 +22,7 @@ import NexusWhatsAppInbox from './NexusWhatsAppInbox';
 import NexusAIInsights from './NexusAIInsights';
 import PremiumSales from './PremiumSales';
 import ConfirmButton from './ConfirmButton';
+import NexusAssistant from './NexusAssistant';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -523,6 +524,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <button type="button" onClick={()=>setSearchOpen(false)}>Fechar busca</button>
             </div>}
           </div>
+          {assigned&&validOrg&&<NexusAssistant organizationId={organizationId} organizationName={orgName} readonly={readonly} canConfigure={isSuperAdmin} onOperation={operation} onChanged={()=>load({silent:true})}/>}
           <div className="staff-notification-control">
             <button type="button" className="staff-icon-button" onClick={()=>{setNotificationsOpen(v=>!v);setSearchOpen(false)}} aria-label="Abrir notificações" aria-expanded={notificationsOpen}>
               <Bell size={18}/>
