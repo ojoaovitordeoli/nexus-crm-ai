@@ -50,3 +50,9 @@ test('pickSheet ignora aba de instruções e acha a de dados; rowsToCsv escapa',
   assert.equal(s.sheet,'Dados');
   const csv=rowsToCsv(s.data);assert.equal(parseCsv(csv)[1][0],'A;B "C"');
 });
+test('coluna "Número" do endereço não é confundida com telefone',()=>{
+  const r=buildContacts([['Razão','Endereço','Número','Telefone 1'],['ACME LTDA','RUA X','123','48999990000']]);
+  assert.equal(r.contacts[0].whatsapp,'48999990000');
+  const only=buildContacts([['Nome','Número'],['Ana','48999990000']]);
+  assert.equal(only.contacts[0].whatsapp,'48999990000');
+});

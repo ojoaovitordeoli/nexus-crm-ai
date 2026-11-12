@@ -81,9 +81,9 @@ export default function NexusContactImport({onOperation,onReload,onClose}){
       </div>}
       {preview.invalid.length>0&&<details className="fx-import-invalid"><summary>Ver linhas com problema</summary>
         <ul>{preview.invalid.slice(0,20).map(x=><li key={x.line}>Linha {x.line}: {x.reason}</li>)}</ul></details>}
-      <label className="fx-import-check"><input type="checkbox" checked={asLeads} onChange={e=>setAsLeads(e.target.checked)} disabled={busy}/> Criar um lead no funil para cada contato novo</label>
-      {asLeads&&<label className="fx-import-list">Nome da lista (vira a origem dos leads)
-        <input value={listName} maxLength={80} onChange={e=>setListName(e.target.value)} disabled={busy} placeholder="Ex.: Prospecção novembro"/></label>}
+      <div className="fx-import-check"><input id="nx-import-leads" type="checkbox" checked={asLeads} onChange={e=>setAsLeads(e.target.checked)} disabled={busy}/><label htmlFor="nx-import-leads">Criar um lead no funil para cada contato novo</label></div>
+      {asLeads&&<div className="fx-import-list"><label htmlFor="nx-import-list">Nome da lista (vira a origem dos leads)</label>
+        <input id="nx-import-list" value={listName} maxLength={80} onChange={e=>setListName(e.target.value)} disabled={busy} placeholder="Ex.: Prospecção novembro"/></div>}
       <div className="fx-import-actions">
         <button type="button" className="fx-btn fx-btn--primary" onClick={send} disabled={busy||!preview.contacts.length}>{busy?'Importando...':'Importar '+preview.contacts.length+' '+(preview.contacts.length===1?'contato':'contatos')+(asLeads?' como leads':'')}</button>
         <button type="button" className="fx-btn" onClick={()=>{setPreview(null);setCsv('');setFileName('');if(input.current)input.current.value=''}} disabled={busy}>Cancelar</button>
