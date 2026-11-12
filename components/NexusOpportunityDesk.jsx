@@ -9,12 +9,19 @@ import {
 } from 'lucide-react';
 import {exportFilteredLeads} from '../lib/exportFilteredLeads';
 import {codeLabel,matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
+import {formatPhoneBR} from '../lib/format.mjs';
 
 const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Contato sem nome';
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
 const date=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'Não informado';
 const dateTime=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Sem data';
-const since=v=>v&&!Number.isNaN(Date.parse(v))?new Intl.RelativeTimeFormat('pt-BR',{numeric:'auto'}).format(Math.round((new Date(v).getTime()-Date.now())/86400000),'day'):'Sem data';
+// Diferença em dias de calendário no fuso do navegador: lead de ontem às 22h é "ontem", não "hoje".
+const dayStart=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+const since=v=>{
+  if(!v||Number.isNaN(Date.parse(v)))return 'Sem data';
+  const days=Math.round((dayStart(new Date(v))-dayStart(new Date()))/86400000);
+  return days<-6?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}).replace('.',''):new Intl.RelativeTimeFormat('pt-BR',{numeric:'auto'}).format(days,'day');
+};
 const label=s=>codeLabel(s);
 const validPhone=whatsappUrl;
 // Data inválida vira 0 para não gerar NaN no comparador (ordenação instável).
@@ -55,7 +62,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
     <div className="nx13-detail-breadcrumb"><button type="button" onClick={onClose} title="Fechar ficha" aria-label="Fechar ficha"><PanelRightClose size={18}/></button></div>
     <div className="nx13-person">
       <Avatar person={person} large/>
-      <div><h2>{person}</h2><p>{phone||'Telefone não informado'}</p></div>
+      <div><h2>{person}</h2><p>{formatPhoneBR(phone)||'Telefone não informado'}</p></div>
     </div>
     <div className="nx13-actionbar">
       {whatsapp?<a href={whatsapp} target="_blank" rel="noopener noreferrer" className="nx13-action-primary"><MessageCircle size={17}/> WhatsApp</a>:
@@ -99,7 +106,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
         <div className="nx13-detail-group">
           <h3>Contato</h3>
           <div className="nx13-keyval"><span>Nome</span><strong>{person}</strong></div>
-          <div className="nx13-keyval"><span>WhatsApp</span><strong>{phone||'Não informado'}</strong></div>
+          <div className="nx13-keyval"><span>WhatsApp</span><strong>{formatPhoneBR(phone)||'Não informado'}</strong></div>
           <div className="nx13-keyval"><span>Empresa</span><strong>{organizationName||"Não informada"}</strong></div>
         </div>
       </div>}
@@ -133,13 +140,13 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
 }
 export default function NexusOpportunityDesk({
  leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure,
- onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId=''
+ onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId='',startCreating=false
 }){
   const [search,setSearch]=useState(''),[stageFilter,setStageFilter]=useState('all'),[presence,setPresence]=useState('all'),[order,setOrder]=useState('recent');
   const [selectedId,setSelectedId]=useState(null),[closed,setClosed]=useState(false),[busy,setBusy]=useState(''),[problem,setProblem]=useState(''),[notice,setNotice]=useState('');
   const [localStages,setLocalStages]=useState({});
   const listRef=useRef(null);
-  const [creating,setCreating]=useState(false),[newContactId,setNewContactId]=useState(''),[newSource,setNewSource]=useState(''),[creatingBusy,setCreatingBusy]=useState(false);
+  const [creating,setCreating]=useState(Boolean(startCreating)),[newContactId,setNewContactId]=useState(''),[newSource,setNewSource]=useState(''),[creatingBusy,setCreatingBusy]=useState(false);
   // Contato já com atendimento aberto neste funil não aparece: a API recusaria o duplicado.
   const openByContact=useMemo(()=>new Set(leads.map(l=>l.contact?.id||l.contact_id).filter(Boolean)),[leads]);
   const availableContacts=useMemo(()=>contacts.filter(c=>!openByContact.has(c.id)),[contacts,openByContact]);
@@ -218,7 +225,7 @@ export default function NexusOpportunityDesk({
       <label className="fx-panel-grow">Contato
         <select required value={newContactId} onChange={e=>setNewContactId(e.target.value)} aria-label="Contato do lead">
           <option value="">Selecione o contato...</option>
-          {availableContacts.map(c=><option key={c.id} value={c.id}>{nameOf(c)}{c.whatsapp?' · '+c.whatsapp:''}</option>)}
+          {availableContacts.map(c=><option key={c.id} value={c.id}>{nameOf(c)}{c.whatsapp?' · '+formatPhoneBR(c.whatsapp):''}</option>)}
         </select>
       </label>
       <label>Origem (opcional)<input maxLength={120} placeholder="Instagram, indicação..." value={newSource} onChange={e=>setNewSource(e.target.value)} aria-label="Origem do lead"/></label>
@@ -246,7 +253,7 @@ export default function NexusOpportunityDesk({
             return <button key={lead.id} type="button" data-lead-row="true" aria-current={active?'true':undefined}
                 className={'nx13-listrow'+(active?' is-selected':'')} onClick={()=>select(lead.id)}>
               <Avatar person={person}/>
-              <span className="nx13-listrow-info"><strong>{person}</strong><small>{lead.contact?.whatsapp||'Sem telefone'}{phone&&<MessageCircle size={12} aria-hidden="true"/>}</small></span>
+              <span className="nx13-listrow-info"><strong>{person}</strong><small>{formatPhoneBR(lead.contact?.whatsapp)||'Sem telefone'}{phone&&<MessageCircle size={12} aria-hidden="true"/>}</small></span>
               <span className="nx13-listrow-meta"><span className={'nx13-pip'+(!knownStage(lead)?' nx13-pip-empty':'')}>{stageOf(lead)}</span></span>
               <span className="nx13-col-source">{lead.source||'—'}</span>
               <span className="nx13-col-date">{since(lead.created_at)}</span>
@@ -254,7 +261,7 @@ export default function NexusOpportunityDesk({
             </button>;
           }):<div className="nx13-empty"><Users size={24}/><strong>Nenhum lead encontrado</strong><p>Altere a busca ou os filtros.</p><button type="button" onClick={()=>{setSearch('');setStageFilter('all');setPresence('all')}}>Limpar filtros</button></div>}
         </div>
-        <footer className="nx13-collection-foot">{partial?'Até 250 registros recentes carregados.':'Registros carregados na empresa.'} {readonly?'Acesso somente leitura.':'Selecione um contato para atender.'}</footer>
+        {(partial||readonly)&&<footer className="nx13-collection-foot">{partial?'Mostrando os 250 leads mais recentes.':''}{partial&&readonly?' ':''}{readonly?'Acesso somente leitura.':''}</footer>}
       </section>
       {selected&&!closed?<Detail key={selected.id} lead={selected} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}

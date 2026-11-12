@@ -99,7 +99,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
       {funnel.length?<ol className="fx-funnel-track">{funnel.map(g=><li key={g.id} className={'fx-stage'+(g.won?' fx-stage--won':'')+(g.lost?' fx-stage--lost':'')}>
         <Link href="/leads">
           <span className="fx-stage-name">{g.name}</span>
-          <span className="fx-stage-nums"><strong>{int(g.count)}</strong><small>{g.value>0?brl(g.value):'sem valor'}</small></span>
+          <span className="fx-stage-nums"><strong>{int(g.count)}</strong>{g.value>0&&<small>{brl(g.value)}</small>}</span>
           <span className="fx-stage-bar" aria-hidden="true"><span style={{width:(g.count?Math.max(6,g.count/funnelMax*100):0)+'%'}}/></span>
         </Link>
       </li>)}</ol>:<p className="fx-funnel-empty">Nenhum lead cadastrado. As etapas aparecem aqui assim que o primeiro lead entrar.</p>}
@@ -137,14 +137,6 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
         </section>
       </div>
       <aside className="fx-side">
-        <section className="v16-brief" aria-label="Resumo das tarefas abertas">
-          <h2>Tarefas</h2>
-          <dl className="fx-kv">
-            <div><dt>Em aberto</dt><dd>{loading?'—':int(pending.length)}</dd></div>
-            <div className={late.length?'is-alert':''}><dt>Vencidas</dt><dd>{loading?'—':int(late.length)}</dd></div>
-            <div><dt>Para hoje</dt><dd>{loading?'—':int(dueToday.length)}</dd></div>
-          </dl>
-        </section>
         <section className="v14-stats" aria-label="Indicadores dos últimos 30 dias">
           <h2>Últimos 30 dias</h2>
           <dl className="fx-kv">
@@ -156,7 +148,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
             ].map(s=><div key={s.label} className="fx-stat"><dt><Link href={s.to}>{s.label}</Link>{s.sample&&<small>amostra</small>}</dt><dd>{loading?'—':s.value}</dd></div>)}
           </dl>
         </section>
-        <p className="fx-note">{filteredCounts?'Atenção: existem mais registros no banco do que os exibidos. Os cartões sinalizados como amostra não são totais consolidados.':'Indicadores calculados a partir dos registros carregados na empresa.'} Consulte os relatórios para os totais consolidados.</p>
+        {filteredCounts&&<p className="fx-note">Há mais registros no banco do que os carregados aqui; números marcados como amostra não são totais. Veja os totais em Relatórios.</p>}
       </aside>
     </div>
   </div>;
