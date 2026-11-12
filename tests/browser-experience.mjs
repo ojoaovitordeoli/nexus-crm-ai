@@ -217,8 +217,7 @@ try{
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
   if(!await page.locator('.v14-stats').count())throw new Error('V14 metrics section missing');
   if(!await page.locator('.v14-workgrid').count())throw new Error('V14 actionable work section missing');
-  if(!await page.locator('.fx-funnel').count())throw new Error('Funnel overview missing');
-  if(await page.locator('.v16-brief').count())throw new Error('Duplicated task summary (removed in V26) is back');
+  if(!await page.locator('.v16-brief').count())throw new Error('V16 operational briefing missing');
   if(await page.locator('.v14-hero-motif').count())throw new Error('Legacy decorative hero motif still present');
   if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
   await page.getByRole('button',{name:'Vencidas'}).click();

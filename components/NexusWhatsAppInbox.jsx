@@ -2,13 +2,9 @@
 import {useCallback,useEffect,useMemo,useState} from 'react';
 import {ExternalLink,Info,Plus,RefreshCw,Search,ShieldCheck,X} from 'lucide-react';
 import {db} from '../lib/supabase';
-import {formatPhoneBR} from '../lib/format.mjs';
 
 const localDate=t=>t?new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
 const initial=s=>String(s||'?').slice(-2).toUpperCase();
-// Link oficial de conversa (wa.me). Abre o WhatsApp do aparelho; não envia nada pelo NEXUS.
-const waLink=v=>{let d=String(v||'').replace(/\D/g,'');if(d.length===10||d.length===11)d='55'+d;return d.length>=12&&d.length<=13?'https://wa.me/'+d:''};
-const personName=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Contato sem nome';
 export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAdmin=false}){
   const [connections,setConnections]=useState([]);
   const [messages,setMessages]=useState([]);
@@ -89,30 +85,14 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
     {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
     {notice&&<div className="fx-alert fx-alert--ok" role="status">{notice}</div>}
 
-    {unavailable?<><section className="fx-box fx-int-off" aria-labelledby="fx-wa-off">
+    {unavailable?<section className="fx-box fx-int-off" aria-labelledby="fx-wa-off">
       <div className="fx-int-off-body">
         <Info size={18} aria-hidden="true"/>
         <div><h2 id="fx-wa-off">WhatsApp ainda não ativado</h2>
           <p>O administrador da sua empresa precisa ativar a caixa de entrada do WhatsApp. Até lá, nenhuma mensagem é recebida aqui.</p></div>
       </div>
       {isSuperAdmin&&<p className="fx-boxfoot fx-int-tech"><strong>Detalhe técnico (Super Admin):</strong> {unavailable} Arquivo: <code>supabase/20261028_automation_whatsapp_foundation.sql</code></p>}
-    </section>
-    {(()=>{
-      const q=filter.trim().toLocaleLowerCase('pt-BR');
-      const reachable=contacts.filter(c=>waLink(c.whatsapp)).filter(c=>!q||(personName(c)+' '+String(c.whatsapp||'')).toLocaleLowerCase('pt-BR').includes(q));
-      return <section className="fx-box" aria-labelledby="fx-wa-quick">
-        <div className="fx-boxhead"><h2 id="fx-wa-quick">Conversar pelo WhatsApp</h2><span className="fx-groupcount">{reachable.length}</span>
-          <label className="fx-search fx-wa-quick-search"><Search size={15}/><input type="search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Buscar contato" aria-label="Buscar contato para conversar"/></label>
-        </div>
-        {reachable.length?<div className="fx-wa-quick-list">{reachable.slice(0,60).map(c=><div key={c.id} className="fx-row fx-wa-quick-row">
-          <span className="fx-avatar">{personName(c).split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</span>
-          <span className="fx-wa-quick-who"><strong>{personName(c)}</strong><small>{formatPhoneBR(c.whatsapp)}</small></span>
-          <a className="fx-btn fx-wa" href={waLink(c.whatsapp)} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> Abrir conversa</a>
-        </div>)}</div>:<div className="fx-empty"><strong>{q?'Nenhum contato encontrado':'Nenhum contato com WhatsApp'}</strong><p>{q?'Tente outro nome ou número.':'Cadastre o WhatsApp do contato na tela Contatos.'}</p></div>}
-        <p className="fx-boxfoot">Abre a conversa no WhatsApp do seu celular ou computador. Enquanto a caixa oficial não é ativada, as mensagens não ficam registradas no NEXUS.</p>
-      </section>;
-    })()}
-    </>:<>
+    </section>:<>
     <section className="fx-box">
       <div className="fx-boxhead"><h2>Números conectados</h2><span className="fx-groupcount">{connections.length}</span>
         {isSuperAdmin&&<button type="button" className="fx-btn fx-int-meta-end" aria-expanded={formOpen} onClick={()=>setFormOpen(v=>!v)}>{formOpen?<><X size={16}/> Fechar cadastro</>:<><Plus size={16}/> Registrar número da Meta</>}</button>}

@@ -15,7 +15,6 @@ import NexusOpportunityDesk from './NexusOpportunityDesk';
 import NexusStageGate from './NexusStageGate';
 import {exportContacts as downloadContactsCsv,exportFilteredLeads} from '../lib/exportFilteredLeads';
 import {matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
-import {formatPhoneBR} from '../lib/format.mjs';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -77,7 +76,7 @@ function Drawer({data,type='lead',onClose,readonly,stages=[],onStageChange,pendi
   return <div className="nxp-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}>
     <aside ref={ref} tabIndex={-1} className="nxp-drawer" role="dialog" aria-modal="true" aria-label={'Detalhes de '+who}>
       <div className="nxp-drawer-top"><span>VISÃO DO {type==='lead'?'LEAD':'CONTATO'}</span><button type="button" aria-label="Fechar detalhes" onClick={onClose}><X size={21}/></button></div>
-      <div className="nxp-drawer-identity"><Avatar value={who} large/><div><h2>{who}</h2><p>{formatPhoneBR(person?.whatsapp)||'Telefone não informado'}</p></div></div>
+      <div className="nxp-drawer-identity"><Avatar value={who} large/><div><h2>{who}</h2><p>{person?.whatsapp||'Telefone não informado'}</p></div></div>
       <div className="nxp-drawer-sep"/>
       <div className="nxp-drawer-block"><span className="nxp-kicker">AÇÃO RÁPIDA</span><WhatsLink phone={person?.whatsapp} className="nxp-button nxp-button--whatsapp">Abrir conversa</WhatsLink></div>
       {type==='lead'&&<>
@@ -305,7 +304,6 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   const closeGate=result=>{gate?.resolve(result);setGate(null)};
   const gateView=gate&&<NexusStageGate key={gate.lead.id+gate.stageId} request={gate} onOperation={onOperation} onDone={closeGate} onCancel={()=>closeGate(null)}/>;
   const [mode,setMode]=useState('list');
-  const [createOnList,setCreateOnList]=useState(false);
   const [query,setQuery]=useState('');
   useEffect(()=>{
     const q=new URLSearchParams(window.location.search).get('q');
@@ -354,30 +352,22 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   const renderCard=item=><div key={item.id} className={'nxp-lead-card'+(busy===item.id?' is-busy':'')} aria-busy={busy===item.id||undefined} draggable={canDrag} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
     <button type="button" className="nxp-lead-card-main" onClick={()=>setSelected(item)} aria-label={'Abrir lead '+display(item.contact)}>
       <div className="nxp-lead-card-top"><Avatar value={display(item.contact)}/><span className="nxp-lead-date">{date(item.created_at)}</span></div>
-      <strong>{display(item.contact)}</strong><small>{formatPhoneBR(item.contact?.whatsapp)||'Telefone não informado'}</small>
+      <strong>{display(item.contact)}</strong><small>{item.contact?.whatsapp||'Telefone não informado'}</small>
       <div className="nxp-lead-card-foot"><span>{item.source||'Origem não informada'}</span><ChevronRight size={16}/></div>
     </button>
     {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
   </div>;
-  const openCreate=()=>{setCreateOnList(true);setMode('list')};
   if(mode==='list')return <>
     <NexusOpportunityDesk leads={leads} count={visibleCount} organizationName={organizationName} readonly={readonly}
       stages={stages} onOperation={onOperation} onReload={onReload} onRequestStage={requestStage}
       pipelines={pipelines} allStages={allStages} pipelineBar={bar} contacts={contacts} pipelineId={pipeline?.id||''}
-      startCreating={createOnList}
-      onShowBoard={()=>{setCreateOnList(false);setMode('board')}} onConfigure={canManagePipeline?()=>setEditorOpen(true):null}/>
+      onShowBoard={()=>setMode('board')} onConfigure={canManagePipeline?()=>setEditorOpen(true):null}/>
     {editor}{gateView}
   </>;
-  return <div className="nxp-premium nxp-premium--board">
-    <header className="nx13-header">
-      <div className="nx13-header-title"><div className="nx13-titleline"><h1>Leads</h1><span className="nx13-count">{fmt(count)}</span></div></div>
-      <div className="nx13-header-actions">
-        <button type="button" className="nx13-softbutton" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar</button>
-        {!readonly&&canManagePipeline&&<button type="button" className="nx13-softbutton" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}
-        {!readonly&&<button type="button" className="fx-btn fx-btn--primary" onClick={openCreate}><UsersRound size={16}/> Novo lead</button>}
-      </div>
-    </header>
+  return <div className="nxp-premium">
     {bar}
+    <PanelHeader eyebrow="CRM" title="Leads" detail="Contatos recebidos e andamento dos atendimentos." right={<div className="nxp-leads-head-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>exportFilteredLeads(filtered,stageLabel,organizationName)} disabled={!filtered.length} title="Exportar os leads filtrados que estão carregados" aria-label="Exportar leads filtrados em CSV"><Download size={16}/> Exportar CSV</button>{!readonly&&canManagePipeline&&<button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setEditorOpen(true)}><SlidersHorizontal size={16}/> Configurar funil</button>}</div>}/>
+    <div className="v11-compact-summary"><span><strong>{fmt(count)}</strong> {count===1?'lead na empresa':'leads na empresa'}</span><i/><span><strong>{baseCols.length}</strong> {baseCols.length===1?'etapa':'etapas'}</span><i/><span><strong>{filtered.length}</strong> {filtered.length===1?'exibido no filtro':'exibidos no filtro'}</span></div>
     <section className="nxp-surface nxp-leads-workarea">
       <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={activeFilter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
@@ -394,7 +384,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
       </section>)}
       {!cols.length&&<Empty icon={UsersRound} title="Seu funil começa aqui" detail="Quando sua empresa receber leads, as etapas aparecerão automaticamente."/>}
        
-      </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn" aria-label={'Abrir lead '+display(l.contact)}><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{formatPhoneBR(l.contact?.whatsapp)||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
+      </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn" aria-label={'Abrir lead '+display(l.contact)}><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{l.contact?.whatsapp||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
       <div className="nxp-footnote">{filtered.length} {filtered.length===1?'lead exibido':'leads exibidos'} · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
     <NexusLeadDetail lead={selected} onClose={()=>setSelected(null)} readonly={readonly} stages={stages} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} pending={Boolean(busy)}/>
@@ -466,11 +456,11 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,onOperation,
         <div className="fx-tabs" role="group" aria-label="Exibição"><button type="button" className={layout==='list'?'active':''} title="Lista" aria-label="Lista" aria-pressed={layout==='list'} onClick={()=>setLayout('list')}><LayoutList size={16}/></button><button type="button" className={layout==='grid'?'active':''} title="Cards" aria-label="Cards" aria-pressed={layout==='grid'} onClick={()=>setLayout('grid')}><Columns3 size={16}/></button></div>
       </div>
       {layout==='grid'?<div className="fx-cardgrid">{list.map(c=><article className="fx-pcard" key={c.id}>
-        <button type="button" className="fx-pcard-person" onClick={()=>setSelected(c)}><span className="fx-avatar">{letters(display(c))}</span><span><strong>{display(c)}</strong><small>{formatPhoneBR(c.whatsapp)||'Telefone não informado'}</small></span></button>
+        <button type="button" className="fx-pcard-person" onClick={()=>setSelected(c)}><span className="fx-avatar">{letters(display(c))}</span><span><strong>{display(c)}</strong><small>{c.whatsapp||'Telefone não informado'}</small></span></button>
         <div className="fx-pcard-foot"><span>Desde {date(c.created_at)}</span><WhatsLink phone={c.whatsapp} className="fx-wa">Conversar</WhatsLink></div>
       </article>)}</div>:list.length>0&&<div className="fx-table fx-table--contacts" role="table" aria-label="Contatos">
         <div className="fx-thead" role="row"><span role="columnheader">Contato</span><span role="columnheader">WhatsApp</span><span role="columnheader">Cadastrado</span><span role="columnheader"><span className="fx-sr">Ações</span></span></div>
-        {list.map(c=><div className="fx-tr" role="row" key={c.id}><span role="cell"><button type="button" className="fx-person" onClick={()=>setSelected(c)}><span className="fx-avatar">{letters(display(c))}</span><strong>{display(c)}</strong></button></span><span role="cell" className="fx-muted">{formatPhoneBR(c.whatsapp)||'—'}</span><span role="cell" className="fx-muted">{date(c.created_at)}</span><span role="cell" className="fx-cell-end"><WhatsLink phone={c.whatsapp} className="fx-wa">Conversar</WhatsLink></span></div>)}
+        {list.map(c=><div className="fx-tr" role="row" key={c.id}><span role="cell"><button type="button" className="fx-person" onClick={()=>setSelected(c)}><span className="fx-avatar">{letters(display(c))}</span><strong>{display(c)}</strong></button></span><span role="cell" className="fx-muted">{c.whatsapp||'—'}</span><span role="cell" className="fx-muted">{date(c.created_at)}</span><span role="cell" className="fx-cell-end"><WhatsLink phone={c.whatsapp} className="fx-wa">Conversar</WhatsLink></span></div>)}
       </div>}
       {!list.length&&<div className="fx-empty"><strong>{query?'Nenhum contato encontrado':'Nenhum contato cadastrado'}</strong><p>{query?'Confira a grafia ou busque pelo número com DDD.':readonly?'Os contatos da empresa aparecerão aqui.':'Use “Novo contato” para cadastrar o primeiro.'}</p>{query&&<button type="button" className="fx-btn" onClick={()=>setQuery('')}>Limpar busca</button>}</div>}
       <div className="fx-boxfoot">{fmt(withPhone)} com WhatsApp entre os carregados · até 250 registros recentes por empresa</div>
@@ -491,6 +481,6 @@ export function PremiumWhatsApp({organizationName,contacts=[]}){
     </div>
     {expanded&&<section className="nxp-surface nxp-integration-guide"><span className="nxp-kicker">CONEXÃO SEGURA</span><h3>O que falta para ativar a caixa de entrada</h3><div className="nxp-integration-steps">{[['01','Conta e número WhatsApp Business','Uma conta de negócios e um número elegível na Meta.'],['02','Credenciais protegidas por empresa','Identificadores, token seguro e permissões armazenados somente no servidor.'],['03','Webhook + isolamento dos dados','Receber mensagens, associar contatos e aplicar permissões da empresa.'],['04','Caixa de entrada e automações','Listar conversas reais, responder mensagens e integrar os fluxos do N8N.']].map(([n,title,desc])=><div key={n}><span>{n}</span><div><strong>{title}</strong><p>{desc}</p></div></div>)}</div><p className="nxp-security-tip"><ShieldCheck size={18}/> Não informe tokens, senhas ou chaves secretas no chat ou no GitHub. A conexão será configurada por um fluxo seguro quando a API estiver implementada.</p></section>}
     <section className="nxp-surface nxp-available-contacts"><div className="nxp-panel-head"><div><span className="nxp-kicker">ENQUANTO ISSO</span><h3>Acessar contatos no WhatsApp</h3><p>Abrir conversas externas; mensagens ainda não são sincronizadas com o CRM.</p></div><Link href="/contacts" className="nxp-icon-link">Ver contatos <ArrowRight size={15}/></Link></div>
-    <div className="nxp-compact-list">{contactable.map(c=><div key={c.id} className="nxp-contactable"><Avatar value={display(c)}/><div><strong>{display(c)}</strong><small>{formatPhoneBR(c.whatsapp)}</small></div><WhatsLink phone={c.whatsapp}>Abrir WhatsApp</WhatsLink></div>)}{!contactable.length&&<Empty icon={ContactRound} title="Sem contatos com telefone" detail="Cadastre ou importe contatos para começar a conversar."/>}</div></section>
+    <div className="nxp-compact-list">{contactable.map(c=><div key={c.id} className="nxp-contactable"><Avatar value={display(c)}/><div><strong>{display(c)}</strong><small>{c.whatsapp}</small></div><WhatsLink phone={c.whatsapp}>Abrir WhatsApp</WhatsLink></div>)}{!contactable.length&&<Empty icon={ContactRound} title="Sem contatos com telefone" detail="Cadastre ou importe contatos para começar a conversar."/>}</div></section>
   </div>;
 }

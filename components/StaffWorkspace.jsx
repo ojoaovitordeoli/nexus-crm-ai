@@ -73,10 +73,6 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [data,setData]=useState({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
   const [counts,setCounts]=useState({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
   const [loading,setLoading]=useState(true);
-  // Empresa cujos dados estão de fato carregados. Enquanto difere da atual, as telas
-  // mostram "Carregando" em vez de vazio ou dados da empresa anterior.
-  const [loadedOrg,setLoadedOrg]=useState('');
-  const currentOrgRef=useRef('');
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
@@ -89,7 +85,6 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const [appointmentStart,setAppointmentStart]=useState('');
   const [appointmentType,setAppointmentType]=useState('meeting');
   const [appointmentLocation,setAppointmentLocation]=useState('');
-  const [appointmentLead,setAppointmentLead]=useState('');
   const [stages,setStages]=useState([]);
   const [pipeline,setPipeline]=useState(null);
   const [pipelines,setPipelines]=useState([]);
@@ -253,10 +248,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       setStages([]);setPipeline(null);setPipelines([]);setAllStages([]);setLoading(false);return;
     }
     if(!silent){setLoading(true);setError('')}
-    const orgAtCall=organizationId;
     try{
       const result=await operation();
-      if(currentOrgRef.current!==orgAtCall)return; // usuário trocou de empresa no meio do caminho
       setData(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
       setCounts(result.counts||{leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages(result.stages||[]);
@@ -265,12 +258,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       setAllStages(result.all_stages||result.stages||[]);
       if(result.warnings?.length)setError('Algumas informações não puderam ser carregadas: '+result.warnings.join(' · '));
       setLastSync(new Date());
-      setLoadedOrg(orgAtCall);
-    }catch(e){if(!silent&&currentOrgRef.current===orgAtCall)setError('Não foi possível carregar a empresa: '+e.message)}
-    finally{if(!silent&&currentOrgRef.current===orgAtCall)setLoading(false)}
-  },[validOrg,operation,organizationId]);
-  currentOrgRef.current=organizationId;
-  const ready=!validOrg||loadedOrg===organizationId;
+    }catch(e){if(!silent)setError('Não foi possível carregar a empresa: '+e.message)}
+    finally{if(!silent)setLoading(false)}
+  },[validOrg,operation]);
   useEffect(()=>{load()},[load]);
   useEffect(()=>{
     if(!validOrg||!db||!organizationId)return;
@@ -387,8 +377,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     setSaving(true);
     try{
       const start=startDate.toISOString();
-      const res=await operation({action:'appointment_create',title:appointmentTitle.trim(),start_at:start,type:appointmentType,location:appointmentLocation.trim(),...(appointmentLead?{lead_id:appointmentLead}:{})});
-      setAppointmentTitle('');setAppointmentStart('');setAppointmentLocation('');setAppointmentLead('');
+      const res=await operation({action:'appointment_create',title:appointmentTitle.trim(),start_at:start,type:appointmentType,location:appointmentLocation.trim()});
+      setAppointmentTitle('');setAppointmentStart('');setAppointmentLocation('');
       await load();setNotice(res.message||'Agendamento criado.');
     }catch(e){setError('Falha ao agendar: '+e.message)}
     finally{setSaving(false)}
@@ -473,7 +463,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
         {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)} style={companySelectStyle}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id} style={companySelectStyle}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group"><div className="staff-nav-title">{group.title}</div>{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin)).map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
+        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group"><div className="staff-nav-title">{group.title}</div>{MENU.filter(item=>group.paths.includes(item.path)).map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
@@ -535,23 +525,18 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {error&&<div className="staff-alert staff-alert--error" role="alert">{error}</div>}
         {notice&&!error&&<div className="staff-v4-toast" role="status"><CheckCircle2 size={18}/><span>{notice}</span><button type="button" aria-label="Fechar aviso" onClick={()=>setNotice('')}><X size={17}/></button></div>}
 
-        {!ready&&['dashboard','leads','sales','contacts','reports','tasks','agenda'].includes(section)&&<div className="fx-loading" role="status" aria-live="polite">
-          <span className="fx-loading-bar" aria-hidden="true"/>
-          <p>{error?'Não foi possível carregar os dados desta empresa.':'Carregando os dados de '+(orgName||'sua empresa')+'...'}</p>
-          {error&&<button type="button" className="fx-btn" onClick={()=>load()}>Tentar novamente</button>}
-        </div>}
-        {ready&&section==='dashboard'&&<NexusExecutiveHome
+        {section==='dashboard'&&<NexusExecutiveHome
           data={data} counts={counts} loading={loading}
           organizationName={orgName} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages} pipelines={pipelines} activePipelineId={dashPipeline?.id||''} onPipelineChange={setDashPipelineId}
           onOperation={operation} onReload={load} readonly={readonly}
         />}
-        {ready&&section==='leads'&&<PremiumLeads
+        {section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={orgName}
           readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} contacts={data.contacts} onOperation={operation} onReload={load}
         />}
-        {ready&&section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} readonly={readonly} onOperation={operation} onReload={load}/>}
-        {ready&&section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
+        {section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} readonly={readonly} onOperation={operation} onReload={load}/>}
+        {section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} onOperation={operation} onReload={load}/>}
         {section==='whatsapp'&&<NexusWhatsAppInbox
           organizationId={organizationId} contacts={data.contacts} isSuperAdmin={isSuperAdmin}
         />}
@@ -560,9 +545,9 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         />}
         {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
 
-        {ready&&section==='reports'&&<PremiumReports data={data} counts={counts} orgName={orgName} readonly={readonly}/>}
+        {section==='reports'&&<PremiumReports data={data} counts={counts} orgName={orgName} readonly={readonly}/>}
         {section==='settings'&&<PremiumSettings profile={profile} session={session} role={roleLabel} organization={currentOrganization} onTheme={onToggleTheme} dark={dark}/>}
-        {ready&&section==='tasks'&&<div className="fx-page fx-tasks">
+        {section==='tasks'&&<div className="fx-page fx-tasks">
           <header className="fx-pagehead">
             <div className="fx-pagehead-title"><h1>Minhas tarefas</h1><span className="fx-count">{openTasks.length} em aberto</span>{lateTaskCount>0&&<span className="fx-count fx-count--alert">{lateTaskCount} {lateTaskCount===1?'vencida':'vencidas'}</span>}</div>
             {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn fx-btn--primary" aria-expanded={taskFormOpen} onClick={()=>setTaskFormOpen(v=>!v)}>{taskFormOpen?<><X size={16}/> Fechar</>:<><Plus size={16}/> Adicionar tarefa</>}</button></div>}
@@ -590,7 +575,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           </section>
         </div>}
 
-        {ready&&section==='agenda'&&(()=>{
+        {section==='agenda'&&(()=>{
           const now=new Date();const pad=v=>String(v).padStart(2,'0');
           const keyOf=v=>{const d=new Date(v);return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-')};
           const todayKey=keyOf(now);
@@ -616,10 +601,6 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <option value="meeting">Reunião</option><option value="call">Ligação</option><option value="followup">Retorno</option><option value="visit">Visita</option><option value="consultation">Consulta</option><option value="exam">Exame</option>
             </select></label>
             <label>Local (opcional)<input maxLength={220} placeholder="Online ou endereço" value={appointmentLocation} onChange={e=>setAppointmentLocation(e.target.value)}/></label>
-            <label>Cliente (opcional)<select value={appointmentLead} onChange={e=>setAppointmentLead(e.target.value)} aria-label="Lead do compromisso">
-              <option value="">Sem vínculo com lead</option>
-              {(data.leads||[]).filter(l=>l.contact&&!l.closed_at&&l.status!=='won'&&l.status!=='lost').map(l=><option key={l.id} value={l.id}>{[l.contact.first_name,l.contact.last_name].filter(Boolean).join(' ')||'Contato sem nome'}</option>)}
-            </select></label>
             <button className="fx-btn fx-btn--primary" disabled={saving||!appointmentTitle.trim()||!appointmentStart} type="submit">{saving?'Salvando...':'Salvar compromisso'}</button>
           </form>}
           <div className="fx-agenda-grid">

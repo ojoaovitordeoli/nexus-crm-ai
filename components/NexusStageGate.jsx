@@ -1,6 +1,5 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-import {createPortal} from 'react-dom';
 import {AlertCircle,ArrowRight,Loader2,ShieldCheck,X} from 'lucide-react';
 
 // Diálogo de campos obrigatórios da etapa.
@@ -59,7 +58,7 @@ function Field({req,value,onChange,ctx,first}){
   </div>;
 }
 
-function StageGateDialog({request,onOperation,onDone,onCancel}){
+export default function NexusStageGate({request,onOperation,onDone,onCancel}){
   const [phase,setPhase]=useState('loading');
   const [info,setInfo]=useState(null);
   const [values,setValues]=useState({});
@@ -136,13 +135,4 @@ function StageGateDialog({request,onOperation,onDone,onCancel}){
       </footer>
     </form>
   </div>;
-}
-
-// Renderiza no <body>: dentro das telas animadas (transform) o position:fixed
-// passava a ser relativo ao bloco animado e a janela abria cortada.
-export default function NexusStageGate(props){
-  const [mounted,setMounted]=useState(false);
-  useEffect(()=>setMounted(true),[]);
-  if(!mounted||typeof document==='undefined')return null;
-  return createPortal(<StageGateDialog {...props}/>,document.body);
 }
