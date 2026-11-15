@@ -8,7 +8,7 @@ import {
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
   LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,Sparkles,
   Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
-  ReceiptText,UserRound,UsersRound,X,Zap
+  ReceiptText,Radar,UserRound,UsersRound,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {dueDayKey,dueDate,contactSearchTerm} from '../lib/shell-rules.mjs';
@@ -23,6 +23,7 @@ import NexusAIInsights from './NexusAIInsights';
 import PremiumSales from './PremiumSales';
 import ConfirmButton from './ConfirmButton';
 import NexusAssistant from './NexusAssistant';
+import NexusProspecting from './NexusProspecting';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -30,6 +31,7 @@ const MENU=[
   {path:'sales',label:'Vendas',icon:ReceiptText},
   {path:'contacts',label:'Contatos',icon:ContactRound},
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
+  {path:'prospeccao',label:'Prospecção',icon:Radar},
   {path:'automations',label:'Automações',icon:Workflow},
 
   {path:'agenda',label:'Agenda',icon:CalendarDays},
@@ -40,10 +42,10 @@ const MENU=[
 ]; 
 const NAV_GROUPS=[
   {title:'Comercial',paths:['dashboard','leads','sales','contacts']},
-  {title:'Atendimento',paths:['whatsapp','agenda','tasks']},
+  {title:'Atendimento',paths:['prospeccao','whatsapp','agenda','tasks']},
   {title:'Gestão',paths:['reports','automations','settings','minha-area']}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',prospeccao:'Prospecção',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -216,6 +218,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const readonly=role==='VIEWER';
   // Espelha a regra do servidor (lib/operation-rules.mjs); a API continua sendo a barreira real.
   const canManagePipeline=['AGENCY_ADMIN','ORGANIZATION_ADMIN','MANAGER'].includes(role);
+  // Mesma regra de lib/prospecting-alerts.mjs (canSeeProspecting); o servidor confere de novo.
+  const canSeeProspecting=isSuperAdmin||role==='AGENCY_ADMIN'||role==='ORGANIZATION_ADMIN';
   const validOrg=Boolean(currentOrganization&&currentOrganization.status==='active'&&(isSuperAdmin||activeMember)&&session?.id&&profile?.status==='active');
   const roleLabel=ROLES[role]||'Colaborador';
   const page=PAGES[section]||'Visão geral';
@@ -496,7 +500,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
         {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)} style={companySelectStyle}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id} style={companySelectStyle}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
+        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin)&&(item.path!=='prospeccao'||canSeeProspecting)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
@@ -566,6 +570,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='whatsapp'&&<NexusWhatsAppInbox
           organizationId={organizationId} contacts={data.contacts} isSuperAdmin={isSuperAdmin}
         />}
+        {section==='prospeccao'&&<NexusProspecting organizationId={organizationId} canSee={canSeeProspecting&&validOrg}/>}
         {section==='automations'&&<NexusAutomations
           organizationId={organizationId} stages={stages} readonly={readonly}
         />}

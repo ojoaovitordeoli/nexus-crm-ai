@@ -102,6 +102,22 @@ try{
       {id:'m1',user_id:userId,role:'AGENCY_ADMIN',role_label:'Admin da agência',status:'active',full_name:'Operador de Teste',email:'test@example.invalid',is_me:true,editable:false}
     ],can_assign:[{value:'SELLER',label:'Vendedor'}]})});
   });
+  // Avisos fictícios SÓ dentro do teste, para validar layout e ações da aba Prospecção (V34).
+  let prospStatusCalls=0;
+  await page.route('**/api/prospecting-alerts**',async route=>{
+    if(route.request().method()==='POST'){
+      const payload=route.request().postDataJSON();
+      if(payload.action==='status')prospStatusCalls+=1;
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,message:'Situação atualizada.'})});
+    }
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connection:{active:true,hint:'Ab12Cd',last_used_at:'2026-11-14T13:05:00Z'},alerts:[
+      {id:'11111111-1111-4111-8111-111111111111',source:'harvey_email',channel:'email',kind:'interesse',kind_label:'Interesse',status:'novo',status_label:'Novo',
+        company_name:'Ótica Exemplo',contact_name:'Pessoa Teste',contact_email:'contato@example.invalid',contact_phone:'5548999990000',
+        whatsapp_url:'https://wa.me/5548999990000',mail_url:'mailto:contato@example.invalid',message:'Tenho interesse, pode me mandar os valores?',occurred_at:'2026-11-14T12:00:00Z'},
+      {id:'22222222-2222-4222-8222-222222222222',source:'whatsapp_agent',channel:'whatsapp',kind:'venda',kind_label:'Venda',status:'em_atendimento',status_label:'Em atendimento',
+        company_name:'Clínica Exemplo',contact_name:'',contact_email:'',contact_phone:'5548999992222',whatsapp_url:'https://wa.me/5548999992222',mail_url:null,
+        message:'Fechou o plano anual pelo WhatsApp.',occurred_at:'2026-11-13T09:30:00Z'}]})});
+  });
   await page.route('**/api/automations**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rules:[],executions:[],can_manage:true})});
   });
@@ -208,6 +224,22 @@ try{
     }
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
+  await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Prospecção'}).waitFor({timeout:12000});
+  await page.getByText('Ótica Exemplo').first().waitFor({timeout:8000});
+  const waLink=page.getByRole('link',{name:/Abrir no WhatsApp/}).first();
+  if(await waLink.getAttribute('href')!=='https://wa.me/5548999990000')throw new Error('Link do WhatsApp da prospecção incorreto');
+  if(!await page.getByRole('link',{name:/Prospecção/}).count())throw new Error('Menu Prospecção não aparece para o admin');
+  await page.getByLabel(/Situação do aviso de Ótica Exemplo/).selectOption('resolvido');
+  for(let k=0;k<20&&!prospStatusCalls;k++)await sleep(100);
+  if(!prospStatusCalls)throw new Error('Mudança de situação não chamou a API');
+  for(const [w,h,name] of [[1440,900,'desktop'],[768,1024,'tablet'],[390,844,'mobile']]){
+    await page.setViewportSize({width:w,height:h});await sleep(250);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+    if(overflow>1)throw new Error('Prospecção com rolagem horizontal em '+w+'px ('+overflow+'px)');
+    await page.screenshot({path:'test-artifacts/prospeccao-'+name+'.png',fullPage:true});
+  }
+  await page.setViewportSize({width:1440,height:900});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:/Visão geral/}).waitFor();
   await page.waitForTimeout(400);
