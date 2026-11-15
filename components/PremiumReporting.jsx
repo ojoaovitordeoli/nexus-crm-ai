@@ -5,6 +5,43 @@ import NexusTeam from './NexusTeam';
 import Link from 'next/link';
 import {CheckCircle2,Download,LockKeyhole,Moon,Sun} from 'lucide-react';
 import {referralRanking} from '../lib/referrals.mjs';
+import {aceSummary} from '../lib/ace.mjs';
+
+const rate=v=>v===null||v===undefined?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(v)+'%';
+function AcePanel({ace,referralsReady}){
+  const {attraction:a,conversion:c,expansion:e}=ace;
+  return <section className="fx-box fx-ace" aria-label="Método ACE">
+    <div className="fx-boxhead"><h2>Método ACE</h2><span className="fx-boxmeta">Atração → Conversão → Expansão · leads que chegaram nos últimos {ace.days} dias</span></div>
+    <div className="fx-ace-flow">
+      <div className="fx-ace-step" aria-label="Atração">
+        <span className="fx-ace-kicker">1 · Atração</span>
+        <strong className="fx-ace-big">{integer(a.leads)}</strong><span className="fx-ace-unit">{a.leads===1?'lead chegou':'leads chegaram'}</span>
+        {a.sources.length?<ul className="fx-ace-list">{a.sources.slice(0,4).map(s=><li key={s.name}><span>{s.name}</span><b>{integer(s.count)}</b></li>)}</ul>
+          :<p className="fx-empty-small">Nenhum lead no período.</p>}
+      </div>
+      <div className="fx-ace-step" aria-label="Conversão">
+        <span className="fx-ace-kicker">2 · Conversão</span>
+        <strong className="fx-ace-big">{rate(c.saleRate)}</strong><span className="fx-ace-unit">dos leads compraram ({integer(c.sold)})</span>
+        <ul className="fx-ace-list">
+          <li><span>Agendaram</span><b>{integer(c.scheduled)} · {rate(c.scheduleRate)}</b></li>
+          <li><span>Compareceram</span><b>{integer(c.attended)} · {rate(c.attendanceRate)}</b></li>
+          <li><span>Faltaram</span><b className={c.noShow?'fx-ace-warn':''}>{integer(c.noShow)} · {rate(c.noShowRate)}</b></li>
+          <li><span>Vendido</span><b>{currency(c.revenue)}</b></li>
+        </ul>
+      </div>
+      <div className="fx-ace-step" aria-label="Expansão">
+        <span className="fx-ace-kicker">3 · Expansão</span>
+        <strong className="fx-ace-big">{integer(e.repeatCustomers)}</strong><span className="fx-ace-unit">{e.repeatCustomers===1?'cliente comprou de novo':'clientes compraram de novo'}</span>
+        <ul className="fx-ace-list">
+          <li><span>Recompra</span><b>{currency(e.repeatRevenue)}</b></li>
+          <li><span>Clientes no período</span><b>{integer(e.customers)}{e.customers?' · '+rate(e.repeatRate)+' voltaram':''}</b></li>
+          {referralsReady&&<li><span>Leads por indicação</span><b>{integer(e.referred)} · {rate(e.referredShare)}</b></li>}
+        </ul>
+      </div>
+    </div>
+    <p className="fx-boxfoot fx-boxfoot--note">Conversão conta só agendamentos e vendas vinculados ao lead; agendamento cancelado não entra. Recompra = cliente com mais de uma venda e a nova compra no período.</p>
+  </section>;
+}
 
 const currency=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(Number(n)||0);
 const decimal=n=>new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:false}).format(Number(n)||0);
@@ -38,7 +75,7 @@ export function PremiumReports({data,counts,orgName,readonly}){
     // Indicações dos leads do período; a venda conta mesmo que tenha saído depois (vínculo pelo lead).
     const referrals=referralRanking({leads,sales:data.sales,contacts:data.contacts});
     return {leads,appointments,sales,sources:[...grouped.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8),
-      revenue:sales.reduce((total,s)=>total+Number(s.value||0),0),referrals,
+      revenue:sales.reduce((total,s)=>total+Number(s.value||0),0),referrals,ace:aceSummary(data,period),
       referredLeads:referrals.reduce((t,r)=>t+r.leads,0)};
   },[data,period]);
   const rows=[
@@ -69,6 +106,7 @@ export function PremiumReports({data,counts,orgName,readonly}){
       <div><span>Faturamento</span><strong>{currency(view.revenue)}</strong></div>
       <p className="fx-strip-note">Baseado nos últimos 250 registros carregados por módulo. Nenhum valor é estimado.</p>
     </section>
+    <AcePanel ace={view.ace} referralsReady={Boolean(data.referrals_ready)}/>
     <div className="fx-two">
       <section className="fx-box"><div className="fx-boxhead"><h2>Origem dos leads</h2><span className="fx-groupcount">{view.sources.length}</span></div>
         {view.sources.length?<ol className="fx-bars">{view.sources.map(([name,value])=><li key={name}><span className="fx-bars-name">{name}</span><strong>{value}</strong><span className="fx-stage-bar"><span style={{width:Math.max(2,100*value/most)+'%'}}/></span></li>)}</ol>

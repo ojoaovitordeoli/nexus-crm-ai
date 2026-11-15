@@ -53,7 +53,9 @@ try{
     leads:[lead],contacts:[contact,referrer],tasks:[{
       id:'92618c31-e9af-41a1-8b48-7e7dac9ae0ef',title:'Retornar para Ana',
       status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z'
-    }],appointments:[],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
+    }],appointments:[{id:'3c2b1a09-8f7e-4d6c-9b5a-4e3d2c1b0a99',title:'Exame de vista — Ana',description:null,type:'meeting',
+      start_at:new Date(Date.now()-86400000).toISOString(),end_at:null,status:'completed',location:null,
+      created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId}],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
       sale_date:new Date().toISOString(),lead_id:leadId,contact_id:contactId,seller_id:userId,contact}]
   };
   let referralUpdates=0;
@@ -239,6 +241,15 @@ try{
     }
   }
   await page.goto(host+'/reports',{waitUntil:'domcontentloaded'});
+  // V37: painel ACE com a coorte do período (1 lead → agendou, compareceu e comprou).
+  const ace=page.getByRole('region',{name:'Método ACE'});
+  await ace.waitFor({timeout:10000});
+  for(const step of ['Atração','Conversão','Expansão'])if(!await ace.getByRole('generic',{name:step}).count()&&!await ace.locator('[aria-label="'+step+'"]').count())throw new Error('Painel ACE sem a etapa '+step);
+  const conv=ace.locator('[aria-label="Conversão"]');
+  if(!await conv.getByText('100%').count())throw new Error('Taxa de compra do ACE errada');
+  if(!await conv.getByText('1 · 100%').count())throw new Error('Agendaram/compareceram do ACE errado');
+  if(!await ace.locator('[aria-label="Expansão"]').getByText('Leads por indicação').count())throw new Error('ACE sem indicação');
+  await page.screenshot({path:'test-artifacts/reports-ace-desktop.png',fullPage:true});
   const refBox=page.getByRole('region',{name:'Quem mais indica'});
   await refBox.waitFor({timeout:10000});
   await refBox.getByText('Bruno Indicador').waitFor({timeout:5000});
@@ -248,6 +259,7 @@ try{
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     if(overflow>1)throw new Error('Relatórios com rolagem horizontal em '+w+'px ('+overflow+'px)');
     await page.screenshot({path:'test-artifacts/reports-indicacao-'+name+'.png',fullPage:true});
+    if(name==='mobile')await page.screenshot({path:'test-artifacts/reports-ace-mobile.png',fullPage:true});
   }
   await page.setViewportSize({width:1440,height:900});
   for(const route of ['tasks','agenda','reports','settings','whatsapp','automations']){
@@ -259,7 +271,8 @@ try{
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:'Prospecção'}).waitFor({timeout:12000});
+  // exact: "Números da prospecção" também contém a palavra e, se carregar junto, quebrava o modo estrito.
+  await page.getByRole('heading',{name:'Prospecção',exact:true}).waitFor({timeout:12000});
   await page.getByText('Ótica Exemplo').first().waitFor({timeout:8000});
   await page.getByRole('heading',{name:'Números da prospecção'}).waitFor({timeout:5000});
   if(!await page.getByText('R$ 1.591').count())throw new Error('Total vendido do quadro não aparece');
