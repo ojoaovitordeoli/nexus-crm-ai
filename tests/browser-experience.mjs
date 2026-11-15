@@ -31,6 +31,16 @@ try{
   page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('Console: '+m.text())});
   await page.goto(host+'/login',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'Bem-vindo de volta'}).waitFor();
+  // V43: olho para mostrar/ocultar a senha.
+  const passBox=page.getByPlaceholder('Sua senha');
+  await passBox.fill('senha-teste');
+  if(await passBox.getAttribute('type')!=='password')throw new Error('Senha deveria começar oculta');
+  await page.getByRole('button',{name:'Mostrar senha'}).click();
+  if(await passBox.getAttribute('type')!=='text')throw new Error('Mostrar senha não revelou o texto');
+  await page.screenshot({path:'test-artifacts/login-v42-mostrar-senha.png'});
+  await page.getByRole('button',{name:'Ocultar senha'}).click();
+  if(await passBox.getAttribute('type')!=='password')throw new Error('Ocultar senha não escondeu o texto');
+  await passBox.fill('');
   await page.getByRole('button',{name:'Esqueci minha senha'}).click();
   await page.getByRole('heading',{name:'Recuperar acesso'}).waitFor({timeout:5000});
   await page.getByRole('button',{name:'Voltar ao login'}).click();
