@@ -18,7 +18,24 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run test:rls
-      - run: npm run build
+      - name: Build com iscas nas variáveis de servidor
+        run: npm run build
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ISCA_SERVICE_ROLE_9f3c7a
+          META_APP_SECRET: ISCA_META_SECRET_51b2
+          META_WEBHOOK_VERIFY_TOKEN: ISCA_META_VERIFY_77d0
+          ANTHROPIC_API_KEY: ISCA_ANTHROPIC_0c4e
+          ASSISTANT_API_KEY: ISCA_ASSISTENTE_8a1f
+          OPENAI_API_KEY: ISCA_OPENAI_3e9d
+      - name: Nenhum segredo de servidor no bundle do navegador
+        run: npm run test:secrets
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ISCA_SERVICE_ROLE_9f3c7a
+          META_APP_SECRET: ISCA_META_SECRET_51b2
+          META_WEBHOOK_VERIFY_TOKEN: ISCA_META_VERIFY_77d0
+          ANTHROPIC_API_KEY: ISCA_ANTHROPIC_0c4e
+          ASSISTANT_API_KEY: ISCA_ASSISTENTE_8a1f
+          OPENAI_API_KEY: ISCA_OPENAI_3e9d
 
   experience:
     runs-on: ubuntu-latest

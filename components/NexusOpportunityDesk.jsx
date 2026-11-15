@@ -34,18 +34,23 @@ function Avatar({person,large=false}){
   const initials=person.trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase();
   return <span className={'nx13-avatar'+(large?' nx13-avatar-large':'')} aria-hidden="true">{initials||'?'}</span>;
 }
-function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose,canDelete=false}) {
+function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose,canDelete=false,contacts=[],referralsReady=false}) {
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
+  const leadContactId=lead.contact?.id||lead.contact_id||'';
+  const referrer=lead.referred_by_contact_id?contacts.find(c=>c.id===lead.referred_by_contact_id):null;
   const [tab,setTab]=useState('detalhes'),[note,setNote]=useState(''),[due,setDue]=useState(''),[priority,setPriority]=useState('medium');
   const [showTransfer,setShowTransfer]=useState(false);
   const [editing,setEditing]=useState(false),[editSource,setEditSource]=useState(''),[editValue,setEditValue]=useState(''),[editBusy,setEditBusy]=useState(false),[editError,setEditError]=useState('');
-  const startEdit=()=>{setEditSource(lead.source||'');setEditValue(Number(lead.estimated_value)>0?new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(lead.estimated_value)):'');setEditError('');setEditing(true)};
+  const [editReferrer,setEditReferrer]=useState('');
+  const startEdit=()=>{setEditSource(lead.source||'');setEditReferrer(lead.referred_by_contact_id||'');setEditValue(Number(lead.estimated_value)>0?new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(lead.estimated_value)):'');setEditError('');setEditing(true)};
   const saveEdit=async e=>{
     e.preventDefault();if(editBusy)return;
     const value=editValue.trim()?parseBRL(editValue):null;
     if(editValue.trim()&&!(Number.isFinite(value)&&value>=0)){setEditError('Valor inválido. Use o formato 1.500,00.');return}
     setEditBusy(true);setEditError('');
-    try{await onOperation({action:'lead_update',id:lead.id,source:editSource.trim(),estimated_value:value});setEditing(false);await onReload?.()}
+    const payload={action:'lead_update',id:lead.id,source:editSource.trim(),estimated_value:value};
+    if(referralsReady&&editReferrer!==(lead.referred_by_contact_id||''))payload.referred_by_contact_id=editReferrer||null;
+    try{await onOperation(payload);setEditing(false);await onReload?.()}
     catch(err){setEditError(err.message||'Não foi possível salvar.')}finally{setEditBusy(false)}
   };
   const removeLead=async()=>{
@@ -117,13 +122,20 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
           </>}
           {!editing&&<>{[
             ['Valor',Number(lead.estimated_value)>0?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(lead.estimated_value)):'Não informado'],
-            ['Origem',lead.source||'Não informada'],['Cadastro',date(lead.created_at)]
+            ['Origem',lead.source||'Não informada'],
+            ...(referralsReady?[['Indicado por',lead.referred_by_contact_id?(referrer?nameOf(referrer):'Contato fora da lista carregada'):'Ninguém']]:[]),
+            ['Cadastro',date(lead.created_at)]
           ].map(([k,v])=><div className="nx13-keyval" key={k}><span>{k}</span><strong>{v}</strong></div>)}
-          {!readonly&&<div className="nx13-detail-actions"><button type="button" className="nx13-linkbutton" onClick={startEdit}>Editar valor e origem</button>
+          {!readonly&&<div className="nx13-detail-actions"><button type="button" className="nx13-linkbutton" onClick={startEdit}>{referralsReady?'Editar valor, origem e indicação':'Editar valor e origem'}</button>
             {canDelete&&<ConfirmButton label="Excluir lead" onConfirm={removeLead}/>}</div>}</>}
           {editing&&<form className="nx13-editform" onSubmit={saveEdit} aria-label="Editar lead">
             <label>Valor (R$)<input inputMode="decimal" placeholder="Ex.: 1.500,00" value={editValue} onChange={e=>setEditValue(e.target.value)} autoFocus/></label>
             <label>Origem<input maxLength={120} placeholder="Instagram, indicação..." value={editSource} onChange={e=>setEditSource(e.target.value)}/></label>
+            {referralsReady&&<label>Indicado por<select value={editReferrer} onChange={e=>setEditReferrer(e.target.value)}>
+              <option value="">Ninguém indicou</option>
+              {lead.referred_by_contact_id&&!referrer&&<option value={lead.referred_by_contact_id}>Contato atual (fora da lista carregada)</option>}
+              {contacts.filter(c=>c.id!==leadContactId).map(c=><option key={c.id} value={c.id}>{nameOf(c)}</option>)}
+            </select></label>}
             <div className="nx13-detail-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={editBusy}>{editBusy?'Salvando...':'Salvar'}</button><button type="button" className="fx-btn" onClick={()=>setEditing(false)} disabled={editBusy}>Cancelar</button></div>
           </form>}
           {editError&&<p className="nx13-error" role="alert">{editError}</p>}
@@ -158,13 +170,15 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
 }
 export default function NexusOpportunityDesk({
  leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure,
- onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId='',startCreating=false,focusLeadId='',canDelete=false
+ onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId='',startCreating=false,focusLeadId='',canDelete=false,
+ referralsReady=false
 }){
   const [search,setSearch]=useState(''),[stageFilter,setStageFilter]=useState('all'),[presence,setPresence]=useState('all'),[order,setOrder]=useState('recent');
   const [selectedId,setSelectedId]=useState(null),[closed,setClosed]=useState(false),[busy,setBusy]=useState(''),[problem,setProblem]=useState(''),[notice,setNotice]=useState('');
   const [localStages,setLocalStages]=useState({});
   const listRef=useRef(null);
   const [creating,setCreating]=useState(Boolean(startCreating)),[newContactId,setNewContactId]=useState(''),[newSource,setNewSource]=useState(''),[creatingBusy,setCreatingBusy]=useState(false);
+  const [newReferrer,setNewReferrer]=useState('');
   useEffect(()=>{if(startCreating)setCreating(true)},[startCreating]);
   useEffect(()=>{if(focusLeadId){setSelectedId(focusLeadId);setClosed(false)}},[focusLeadId]);
   // Contato já com atendimento aberto neste funil não aparece: a API recusaria o duplicado.
@@ -178,8 +192,9 @@ export default function NexusOpportunityDesk({
       const payload={action:'lead_create',contact_id:newContactId};
       if(pipelineId)payload.pipeline_id=pipelineId;
       if(newSource.trim())payload.source=newSource.trim().slice(0,120);
+      if(referralsReady&&newReferrer&&newReferrer!==newContactId)payload.referred_by_contact_id=newReferrer;
       const result=await onOperation(payload);
-      setCreating(false);setNewContactId('');setNewSource('');
+      setCreating(false);setNewContactId('');setNewSource('');setNewReferrer('');
       setNotice(result?.message||'Lead criado.');
       await onReload?.();
     }catch(err){setProblem(err.message||'Não foi possível criar o lead.')}
@@ -249,6 +264,12 @@ export default function NexusOpportunityDesk({
         </select>
       </label>
       <label>Origem (opcional)<input maxLength={120} placeholder="Instagram, indicação..." value={newSource} onChange={e=>setNewSource(e.target.value)} aria-label="Origem do lead"/></label>
+      {referralsReady&&<label>Indicado por (opcional)
+        <select value={newReferrer} onChange={e=>{setNewReferrer(e.target.value);if(e.target.value&&!newSource.trim())setNewSource('Indicação')}} aria-label="Contato que indicou este lead">
+          <option value="">Ninguém indicou</option>
+          {contacts.filter(c=>c.id!==newContactId).map(c=><option key={c.id} value={c.id}>{nameOf(c)}</option>)}
+        </select>
+      </label>}
       <button type="submit" className="fx-btn fx-btn--primary" disabled={creatingBusy||!newContactId}>{creatingBusy?'Criando...':'Criar lead'}</button>
       {!availableContacts.length&&<span className="fx-form-hint">{contacts.length?'Todos os contatos carregados já têm atendimento aberto neste funil.':'Cadastre um contato na tela Contatos para criar o lead.'}</span>}
     </form>}
@@ -281,7 +302,7 @@ export default function NexusOpportunityDesk({
         </div>
         {(partial||readonly)&&<footer className="nx13-collection-foot">{partial?'Mostrando os 250 leads mais recentes.':''}{partial&&readonly?' ':''}{readonly?'Acesso somente leitura.':''}</footer>}
       </section>
-      {selected&&!closed?<Detail key={selected.id} lead={selected} canDelete={canDelete} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
+      {selected&&!closed?<Detail key={selected.id} lead={selected} canDelete={canDelete} contacts={contacts} referralsReady={referralsReady} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}
     </div>
   </div>;

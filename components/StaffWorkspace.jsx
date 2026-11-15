@@ -284,7 +284,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     try{
       const result=await operation();
       if(currentOrgRef.current!==orgAtCall)return; // usuário trocou de empresa no meio do caminho
-      setData(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
+      setData({...(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]}),referrals_ready:Boolean(result.referrals_ready)});
       setCounts(result.counts||{leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages(result.stages||[]);
       setPipeline(result.pipeline||null);
@@ -564,6 +564,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {ready&&section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={orgName}
           readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} contacts={data.contacts} onOperation={operation} onReload={load}
+          referralsReady={Boolean(data.referrals_ready)}
         />}
         {ready&&section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} readonly={readonly} canManage={canManagePipeline} userId={session?.id||''} onOperation={operation} onReload={load}/>}
         {ready&&section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} canDelete={canManagePipeline} onOperation={operation} onReload={load}/>}

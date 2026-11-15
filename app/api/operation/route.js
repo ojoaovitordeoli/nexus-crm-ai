@@ -6,6 +6,7 @@ import {buildLeadTimeline,canManagePipeline,canWriteOperation,localDateISO,parse
 import {logInternal} from '../../../lib/workflow-security.mjs';
 import {buildContacts,parseCsv} from '../../../lib/contact-import.mjs';
 import {canDeleteRecord,canEditRecord,canEditSale,contactDeleteBlock} from '../../../lib/record-rules.mjs';
+import {isMissingReferralColumn,referralError,REFERRAL_PENDING_MESSAGE} from '../../../lib/referrals.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -162,7 +163,17 @@ export async function GET(request){
     }
   }
   const stages=pipeline?allStages.filter(s=>s.pipeline_id===pipeline.id):[];
-  return reply({data,counts:total,pipeline,pipelines:pipelineList,stages,all_stages:allStages,warnings,role:auth.role,
+  // Indicação: consulta à parte para não derrubar a lista de leads antes da migração 20261116.
+  let referralsReady=false;
+  const ref=await admin.from('leads').select('id,referred_by_contact_id').eq('organization_id',orgId)
+    .is('deleted_at',null).not('referred_by_contact_id','is',null).limit(1000);
+  if(ref.error){if(!isMissingReferralColumn(ref.error)){logInternal('GET indicações',ref.error);warnings.push('indicações')}}
+  else{
+    referralsReady=true;
+    const byId=new Map((ref.data||[]).map(r=>[r.id,r.referred_by_contact_id]));
+    data.leads=data.leads.map(l=>({...l,referred_by_contact_id:byId.get(l.id)||null}));
+  }
+  return reply({data,counts:total,pipeline,pipelines:pipelineList,stages,all_stages:allStages,warnings,role:auth.role,referrals_ready:referralsReady,
     read_only:!canWriteOperation(auth.role),can_manage_pipeline:canManagePipeline(auth.role)});
 }
 
@@ -405,9 +416,26 @@ export async function POST(request){
     if(error)return dbFail('Falha ao registrar venda.',error);
     return reply({ok:true,message:'Venda registrada e indicadores atualizados.',item:data},201);
   }
+  // Indicação: o indicador precisa ser contato ativo da MESMA empresa e diferente do contato do lead.
+  // O banco repete a trava (trigger leads_referral_guard) depois da migração 20261116.
+  const checkReferrer=async(referrerId,leadContactId)=>{
+    if(referrerId===null||referrerId===undefined||referrerId==='')return {value:null};
+    if(!validId(referrerId))return {error:'Quem indicou: contato inválido.',status:400};
+    let referrer=null;
+    if(String(referrerId)!==String(leadContactId)){
+      const r=await admin.from('contacts').select('id').eq('id',referrerId).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
+      if(r.error){logInternal('indicação: validar contato',r.error);return {error:'Falha ao validar quem indicou. Tente novamente em instantes.',status:500}}
+      referrer=r.data;
+    }
+    const problem=referralError({leadContactId,referrerId,referrer});
+    return problem?{error:problem,status:problem.includes('si mesmo')?400:404}:{value:String(referrerId)};
+  };
+  const referralSaveFail=(message,error)=>isMissingReferralColumn(error)?fails(REFERRAL_PENDING_MESSAGE,409):dbFail(message,error);
   if(action==='lead_create'){
     const contactId=String(payload?.contact_id||'');
     if(!validId(contactId))return fails('Selecione o contato do lead.');
+    const referral=await checkReferrer(payload?.referred_by_contact_id,contactId);
+    if(referral.error)return fails(referral.error,referral.status);
     const contact=await admin.from('contacts').select('id,first_name,last_name')
       .eq('id',contactId).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
     if(contact.error)return dbFail('Falha ao validar o contato.',contact.error);
@@ -438,11 +466,13 @@ export async function POST(request){
     const clash=(open.data||[]).some(l=>(l.pipeline_id||defaultId)===target.id);
     if(clash)return fails('Este contato já tem um atendimento aberto no funil "'+target.name+'". Abra o lead existente em vez de criar outro.',409);
     const source=val(payload?.source,120)||null;
-    const {data,error}=await admin.from('leads').insert({
-      ...base,contact_id:contactId,pipeline_id:target.id,pipeline_stage_id:first.id,
-      status:'active',source,created_by:auth.user.id,stage_changed_at:new Date().toISOString()
-    }).select('id,contact_id,pipeline_id,pipeline_stage_id,source,created_at').single();
-    if(error)return dbFail('Falha ao criar o lead.',error);
+    // A coluna de indicação só entra no insert quando informada: sem a migração, criar lead continua funcionando.
+    const row={...base,contact_id:contactId,pipeline_id:target.id,pipeline_stage_id:first.id,
+      status:'active',source,created_by:auth.user.id,stage_changed_at:new Date().toISOString()};
+    if(referral.value)row.referred_by_contact_id=referral.value;
+    const {data,error}=await admin.from('leads').insert(row)
+      .select('id,contact_id,pipeline_id,pipeline_stage_id,source,created_at').single();
+    if(error)return referralSaveFail('Falha ao criar o lead.',error);
     // Trilha: registra a entrada na primeira etapa; falha aqui não desfaz o lead.
     const trail=await admin.from('lead_stage_history').insert({lead_id:data.id,from_stage_id:null,to_stage_id:first.id,changed_by:auth.user.id});
     if(trail.error)logInternal('Falha ao registrar a trilha do lead criado.',trail.error);
@@ -492,8 +522,16 @@ export async function POST(request){
       if(payload.estimated_value===null||payload.estimated_value==='')patch.estimated_value=null;
       else{const v=Number(payload.estimated_value);if(!Number.isFinite(v)||v<0||v>1000000000)return fails('Valor inválido.');patch.estimated_value=v}
     }
+    if('referred_by_contact_id' in (payload||{})){
+      const cur=await admin.from('leads').select('contact_id').eq('id',payload.id).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
+      if(cur.error)return dbFail('Falha ao carregar o lead.',cur.error);
+      if(!cur.data)return fails('Lead não encontrado nesta empresa.',404);
+      const referral=await checkReferrer(payload.referred_by_contact_id,cur.data.contact_id);
+      if(referral.error)return fails(referral.error,referral.status);
+      patch.referred_by_contact_id=referral.value;
+    }
     const {data,error}=await admin.from('leads').update(patch).eq('id',payload.id).eq('organization_id',orgId).is('deleted_at',null).select('id').maybeSingle();
-    if(error)return dbFail('Falha ao salvar o lead.',error);
+    if(error)return referralSaveFail('Falha ao salvar o lead.',error);
     if(!data)return fails('Lead não encontrado nesta empresa.',404);
     await auditLog('lead_update','lead',data.id,null,patch);
     return reply({ok:true,message:'Lead atualizado.'});
