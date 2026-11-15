@@ -107,14 +107,17 @@ Cada item entra como versão pequena, com teste e sem fingir integração.
 ### Usuário (operação da empresa)
 | Ordem | Entrega | Depende de |
 |---|---|---|
-| V38 ✅ | Card do Kanban: tempo na etapa, Conversar, Mover para…, ficha sobre o quadro | — |
-| V39 ✅ | Agenda com Compareceu / Não compareceu / Reagendar na linha | — |
-| V40 ✅ | Venda completa: forma, condição, parcelas, fonte, desconto + **Metas do mês** no painel | — (usa colunas e tabela `goals` já existentes) |
-| V41 | **WhatsApp que envia** (texto, áudio, imagem) via WuzAPI, etapa e origem na conversa, contador de não lidas no menu e no card | WuzAPI homologada |
-| V42 | **Lembretes de agendamento** com a régua (3 dias, véspera, 08:00, 2h antes) e histórico de envios | V41 |
-| V43 | **Pós-venda automático** criado pela venda, régua editável 7→365 dias | V41 |
-| V44 | Repescagem (Kanban próprio + envio em massa com limite anti-bloqueio) | V41 |
-| V45 | Notificações escolhidas pelo usuário (novo lead, venda, agendamento, meta) | — |
+| V39 ✅ | Card do Kanban: tempo na etapa, Conversar, Mover para…, ficha sobre o quadro | — |
+| V40 ✅ | Agenda com Compareceu / Não compareceu / Reagendar na linha | — |
+| V41 ✅ | Venda completa: forma, condição, parcelas, fonte, desconto + **Metas do mês** no painel | — (usa colunas e tabela `goals` já existentes) |
+| V42 | **WhatsApp que envia** (texto, áudio, imagem) via WuzAPI, etapa e origem na conversa, contador de não lidas no menu e no card | WuzAPI homologada |
+| V43 | **Lembretes de agendamento** com a régua (3 dias, véspera, 08:00, 2h antes) e histórico de envios | V42 |
+| V44 | **Pós-venda automático** criado pela venda, régua editável 7→365 dias | V42 |
+| V45 | Repescagem (Kanban próprio + envio em massa com limite anti-bloqueio) | V42 |
+| V46 | Notificações escolhidas pelo usuário (novo lead, venda, agendamento, meta) | — |
+
+
+Já na main por outra frente: V36 indicação (#44), V37 painel ACE (#45), V38 proposta comercial pela ficha do lead (#46).
 
 ### ADM (dono do NEXUS / super admin)
 | Ordem | Entrega |

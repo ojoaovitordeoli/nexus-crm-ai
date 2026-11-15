@@ -57,7 +57,7 @@ try{
     }],appointments:[{id:'3c2b1a09-8f7e-4d6c-9b5a-4e3d2c1b0a99',title:'Exame de vista — Ana',description:null,type:'meeting',
       start_at:new Date(Date.now()-86400000).toISOString(),end_at:null,status:'completed',location:null,
       created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId},
-      // V39: um compromisso que já passou e segue em aberto (pede presença) e outro futuro (pede confirmação).
+      // V40: um compromisso que já passou e segue em aberto (pede presença) e outro futuro (pede confirmação).
       {id:'4d3c2b1a-0f9e-4d8c-8b7a-5f4e3d2c1b0a',title:'Retorno da Ana',description:null,type:'followup',start_at:new Date(Date.now()-3600000).toISOString(),end_at:null,status:'scheduled',location:null,created_at:new Date(Date.now()-86400000).toISOString(),lead_id:leadId},
       {id:'5e4d3c2b-1a0f-4e9d-9c8b-6a5f4e3d2c1b',title:'Entrega dos óculos',description:null,type:'visit',start_at:new Date(Date.now()+86400000*2).toISOString(),end_at:null,status:'scheduled',location:'Loja',created_at:new Date().toISOString(),lead_id:leadId}],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
       sale_date:new Date().toISOString(),lead_id:leadId,contact_id:contactId,seller_id:userId,contact}]
@@ -264,7 +264,7 @@ try{
       await hint.getByRole('button',{name:/Configurar funil/}).click();
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
-      // V38: card acionável — tempo na etapa visível e ficha abrindo por cima do quadro (sem trocar para a lista).
+      // V39: card acionável — tempo na etapa visível e ficha abrindo por cima do quadro (sem trocar para a lista).
       const card=page.locator('.nxp-kcard').first();
       await card.waitFor({timeout:5000});
       if(!(await card.locator('.nxp-kcard-age').innerText()).includes('2d'))throw new Error('Card sem tempo na etapa');
@@ -317,7 +317,7 @@ try{
     }
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
-  // V39: agenda mostra de quem é, pede presença do compromisso que passou e oferece confirmação do futuro.
+  // V40: agenda mostra de quem é, pede presença do compromisso que passou e oferece confirmação do futuro.
   await page.goto(host+'/agenda',{waitUntil:'domcontentloaded'});
   await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).waitFor({timeout:8000});
   await page.getByRole('button',{name:'Marcar que faltou: Retorno da Ana'}).waitFor({timeout:3000});
@@ -330,7 +330,7 @@ try{
   await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).click();
   for(let k=0;k<40&&!apptStatus.length;k++)await sleep(100);
   if(apptStatus[0]!=='completed')throw new Error('Compareceu não enviou appointment_status completed: '+apptStatus.join(','));
-  // V40: venda com forma de pagamento/produto e meta do mês com progresso.
+  // V41: venda com forma de pagamento/produto e meta do mês com progresso.
   await page.goto(host+'/sales',{waitUntil:'domcontentloaded'});
   const goalBox=page.getByRole('region',{name:'Meta do mês'});
   await goalBox.getByRole('button',{name:'Definir meta'}).click();

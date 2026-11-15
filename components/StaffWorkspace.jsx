@@ -623,7 +623,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
             <input aria-label="Local" maxLength={220} placeholder="Local" value={editAppt.location} onChange={e=>setEditAppt(v=>({...v,location:e.target.value}))}/>
             <span className="fx-row-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={saving}>Salvar</button><button type="button" className="fx-btn" onClick={()=>setEditApptId('')}>Cancelar</button></span>
           </form>:(()=>{
-            // V39: de quem é o compromisso, confirmação pelo WhatsApp e presença em um clique.
+            // V40: de quem é o compromisso, confirmação pelo WhatsApp e presença em um clique.
             const contact=leadById.get(a.lead_id)?.contact;
             const who=contact?nameOf(contact):'';
             const confirm=!readonly&&confirmationLink(a,contact);
