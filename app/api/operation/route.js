@@ -120,7 +120,7 @@ export async function GET(request){
 
   const names=['leads','tasks','contacts','appointments','sales'];
   const fields=[
-    'id,organization_id,source,status,temperature,created_at,closed_at,pipeline_id,pipeline_stage_id,estimated_value,contact:contacts(id,first_name,last_name,whatsapp)',
+    'id,organization_id,source,status,temperature,created_at,closed_at,stage_changed_at,pipeline_id,pipeline_stage_id,estimated_value,contact:contacts(id,first_name,last_name,whatsapp)',
     'id,title,status,priority,due_date,due_time,created_at,created_by,assigned_to,completed_at,lead_id',
     'id,first_name,last_name,whatsapp,email,city,created_at',
     'id,title,description,type,start_at,end_at,status,location,created_at,lead_id',
