@@ -127,7 +127,7 @@ export async function POST(request){
       if(name==='leads_parados'){
         const dias=Math.min(180,Math.max(1,Number(args.dias)||3));
         const cutoff=new Date(Date.now()-dias*86400000).toISOString();
-        const {data}=await admin.from('leads').select('pipeline_stage_id,stage_changed_at,created_at,source,contact:contacts(first_name,last_name)')
+        const {data}=await admin.from('leads').select('pipeline_stage_id,stage_changed_at,created_at,source,contact:contacts!leads_contact_id_fkey(first_name,last_name)')
           .eq('organization_id',orgId).is('deleted_at',null).is('closed_at',null)
           .or('stage_changed_at.lt.'+cutoff+',and(stage_changed_at.is.null,created_at.lt.'+cutoff+')').order('stage_changed_at',{ascending:true,nullsFirst:true}).limit(15);
         const {byId}=await stageMap();
