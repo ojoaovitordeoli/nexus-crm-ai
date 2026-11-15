@@ -1066,3 +1066,27 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
   :root:root:root body .fx-prosp-links .fx-btn{flex:1 1 auto;justify-content:center}
   :root:root:root body .fx-prosp-filters select{width:100%}
 }
+
+/* V35 — quadro de números da prospecção */
+:root:root:root body .fx-prosp-board{margin-bottom:14px}
+:root:root:root body .fx-prosp-board-when{margin-left:auto;font-size:12.5px}
+:root:root:root body .fx-prosp-board-wrap{overflow-x:auto;padding:0 16px 4px}
+:root:root:root body .fx-prosp-board-table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+:root:root:root body .fx-prosp-board-table th,:root:root:root body .fx-prosp-board-table td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--fx-border);white-space:nowrap}
+:root:root:root body .fx-prosp-board-table thead th{font-size:12px;font-weight:600;color:var(--fx-muted)}
+:root:root:root body .fx-prosp-board-table th:first-child,:root:root:root body .fx-prosp-board-table td:first-child{text-align:left}
+:root:root:root body .fx-prosp-board-table tbody th{font-weight:600}
+:root:root:root body .fx-prosp-board-table td small{margin-left:6px;font-size:11.5px;color:var(--fx-muted)}
+:root:root:root body .fx-prosp-board-table tr.is-total th,:root:root:root body .fx-prosp-board-table tr.is-total td{font-weight:700;border-bottom:0}
+:root:root:root body .fx-prosp-board-note{margin:6px 16px 12px;font-size:12px}
+@media (max-width:640px){
+  :root:root:root body .fx-prosp-board-when{margin-left:0;width:100%}
+  :root:root:root body .fx-prosp-board-table thead{display:none}
+  :root:root:root body .fx-prosp-board-table,:root:root:root body .fx-prosp-board-table tbody{display:block}
+  :root:root:root body .fx-prosp-board-table tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px;padding:10px 0;border-bottom:1px solid var(--fx-border)}
+  :root:root:root body .fx-prosp-board-table tr.is-total{border-bottom:0}
+  :root:root:root body .fx-prosp-board-table th,:root:root:root body .fx-prosp-board-table td{display:block;padding:0;border:0;text-align:left;font-size:14px}
+  :root:root:root body .fx-prosp-board-table tbody th{grid-column:1/-1;font-size:13px;color:var(--fx-muted);text-transform:uppercase;letter-spacing:.04em}
+  :root:root:root body .fx-prosp-board-table td::before{content:attr(data-label);display:block;font-size:11px;font-weight:500;color:var(--fx-muted)}
+  :root:root:root body .fx-prosp-board-table td small{margin-left:4px}
+}

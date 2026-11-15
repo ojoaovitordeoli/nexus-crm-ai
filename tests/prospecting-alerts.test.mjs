@@ -1,13 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {canSeeProspecting,changeStatus,generateIngestToken,hashIngestToken,ingestAlerts,listForMember,
-  normalizePhone,parseIngestBody,readIngestToken,revokeAll,rotateToken,validateAlert,whatsAppLink} from '../lib/prospecting-alerts.mjs';
+  normalizePhone,parseIngestBody,presentTotals,readIngestToken,revokeAll,rotateToken,validateAlert,validateTotals,whatsAppLink} from '../lib/prospecting-alerts.mjs';
 
 // Store em memória com o mesmo contrato do Supabase: tudo filtrado por organization_id.
 function memoryStore(){
-  const tokens=[],alerts=[],audits=[];let n=0;
+  const tokens=[],alerts=[],audits=[],totals=[];let n=0;
   const uuid=()=>'00000000-0000-4000-8000-'+String(++n).padStart(12,'0');
-  return {tokens,alerts,audits,
+  return {tokens,alerts,audits,totals,
+    async upsertTotals(org,tokenId,rows){for(const r of rows){const i=totals.findIndex(t=>t.organization_id===org&&t.channel===r.channel);const row={...r,organization_id:org,token_id:tokenId};if(i>=0)totals[i]=row;else totals.push(row)}},
+    async listTotals(org){return totals.filter(t=>t.organization_id===org)},
     async findActiveToken(hash){const t=tokens.find(x=>x.token_hash===hash&&!x.revoked_at);return t?{id:t.id,organization_id:t.organization_id}:null},
     async touchToken(id){tokens.find(t=>t.id===id).last_used_at=new Date().toISOString()},
     async insertAlerts(org,tokenId,rows){let inserted=0;for(const r of rows){
@@ -127,4 +129,40 @@ test('leitura e tratamento: acesso cruzado entre empresas e papéis sem permiss�
   assert.equal((await changeStatus({store,access:ADMIN,orgId:A,actorId:'a',alertId:id,status:'resolvido'})).status,200);
   assert.equal((await listForMember({store,access:ADMIN,orgId:A,filters})).body.alerts.length,0,'resolvido sai de "em aberto"');
   assert.equal(store.audits.filter(a=>a.action==='prospecting_alert.status').length,2);
+});
+
+test('totais por canal: validação estrita',()=>{
+  const now=new Date('2026-11-15T12:00:00Z');
+  const ok=validateTotals({channel:'email',sent:600,replied:12,interested:5,sales:2,revenue:594.5},{now});
+  assert.equal(ok.ok,true);assert.equal(ok.value.revenue_cents,59450);
+  for(const bad of [{channel:'sms'},{channel:'email',sent:-1},{channel:'email',sent:1.5},{channel:'email',sent:'10'},
+    {channel:'email',revenue:-3},{channel:'email',revenue:'100'},{channel:'email',measured_at:'2027-01-01T00:00:00Z'},null,[]])
+    assert.equal(validateTotals(bad,{now}).ok,false,JSON.stringify(bad));
+  const p=presentTotals([{channel:'email',sent:10,replied:2,interested:1,sales:1,revenue_cents:29700,measured_at:'x'}]);
+  assert.equal(p.available,true);assert.equal(p.lines[1].sent,0);assert.equal(p.total.revenue,297);assert.equal(p.total.sales,1);
+  assert.equal(presentTotals(null).available,false);
+});
+
+test('totais: token grava só na própria empresa, atualiza em vez de duplicar e não vaza para outra',async()=>{
+  const store=memoryStore();const now=new Date('2026-11-15T12:00:00Z');
+  const ta=(await rotateToken({store,access:ADMIN,orgId:A,actorId:'a'})).body.token;
+  await rotateToken({store,access:ADMIN,orgId:B,actorId:'b'});
+  let r=await ingestAlerts({store,authorization:'Bearer '+ta,now,body:{organization_id:B,totals:[{channel:'email',sent:100,replied:3},{channel:'whatsapp',sent:20,sales:1,revenue:297}]}});
+  assert.equal(r.status,200);assert.equal(r.body.totals_saved,2);assert.equal(r.body.created,0);
+  r=await ingestAlerts({store,authorization:'Bearer '+ta,now,body:{totals:[{channel:'email',sent:150,replied:5}]}});
+  assert.equal(store.totals.filter(t=>t.organization_id===A).length,2);
+  assert.equal(store.totals.find(t=>t.channel==='email').sent,150);
+  assert.equal(store.totals.some(t=>t.organization_id===B),false);
+  const filters={status:'open',channel:'all'};
+  const a=await listForMember({store,access:ADMIN,orgId:A,filters});
+  assert.equal(a.body.totals.total.sent,170);assert.equal(a.body.totals.total.revenue,297);
+  const b=await listForMember({store,access:ADMIN,orgId:B,filters});
+  assert.equal(b.body.totals.total.sent,0);
+  assert.equal((await listForMember({store,access:{role:'SELLER'},orgId:A,filters})).status,403);
+  // avisos e totais no mesmo envio
+  r=await ingestAlerts({store,authorization:'Bearer '+ta,now,body:{alerts:[alert()],totals:[{channel:'email',sent:151,replied:6}]}});
+  assert.deepEqual([r.body.created,r.body.totals_saved],[1,1]);
+  for(const body of [{totals:[]},{totals:[{channel:'email'},{channel:'email'}]},{totals:[{channel:'x'}]},{totals:'a'}])
+    assert.equal((await ingestAlerts({store,authorization:'Bearer '+ta,now,body})).status,400,JSON.stringify(body));
+  assert.equal((await ingestAlerts({store,authorization:'',now,body:{totals:[{channel:'email'}]}})).status,401);
 });

@@ -110,7 +110,10 @@ try{
       if(payload.action==='status')prospStatusCalls+=1;
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,message:'Situação atualizada.'})});
     }
-    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connection:{active:true,hint:'Ab12Cd',last_used_at:'2026-11-14T13:05:00Z'},alerts:[
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({connection:{active:true,hint:'Ab12Cd',last_used_at:'2026-11-14T13:05:00Z'},
+      totals:{available:true,lines:[{channel:'email',label:'E-mail',sent:600,replied:18,interested:6,sales:2,revenue:594,measured_at:'2026-11-14T13:00:00Z'},
+        {channel:'whatsapp',label:'WhatsApp',sent:40,replied:9,interested:3,sales:1,revenue:997,measured_at:'2026-11-14T13:00:00Z'}],
+        total:{channel:'total',label:'Total',sent:640,replied:27,interested:9,sales:3,revenue:1591,measured_at:null}},alerts:[
       {id:'11111111-1111-4111-8111-111111111111',source:'harvey_email',channel:'email',kind:'interesse',kind_label:'Interesse',status:'novo',status_label:'Novo',
         company_name:'Ótica Exemplo',contact_name:'Pessoa Teste',contact_email:'contato@example.invalid',contact_phone:'5548999990000',
         whatsapp_url:'https://wa.me/5548999990000',mail_url:'mailto:contato@example.invalid',message:'Tenho interesse, pode me mandar os valores?',occurred_at:'2026-11-14T12:00:00Z'},
@@ -227,6 +230,8 @@ try{
   await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'Prospecção'}).waitFor({timeout:12000});
   await page.getByText('Ótica Exemplo').first().waitFor({timeout:8000});
+  await page.getByRole('heading',{name:'Números da prospecção'}).waitFor({timeout:5000});
+  if(!await page.getByText('R$ 1.591').count())throw new Error('Total vendido do quadro não aparece');
   const waLink=page.getByRole('link',{name:/Abrir no WhatsApp/}).first();
   if(await waLink.getAttribute('href')!=='https://wa.me/5548999990000')throw new Error('Link do WhatsApp da prospecção incorreto');
   if(!await page.getByRole('link',{name:/Prospecção/}).count())throw new Error('Menu Prospecção não aparece para o admin');

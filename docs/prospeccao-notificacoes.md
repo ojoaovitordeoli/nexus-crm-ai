@@ -62,6 +62,22 @@ Exemplo:
 }
 ```
 
+### Totais por canal (V35, quadro "Números da prospecção")
+
+No mesmo endpoint, o vigia pode mandar (junto com `alerts` ou sozinho) os totais acumulados por canal de **origem**:
+
+```json
+{"totals": [
+  {"channel": "email", "sent": 600, "replied": 18, "interested": 6, "sales": 2, "revenue": 594.0, "measured_at": "2026-11-15T10:00:00-03:00"},
+  {"channel": "whatsapp", "sent": 40, "replied": 9, "interested": 3, "sales": 1, "revenue": 997.0}
+]}
+```
+
+- `channel`: `email` ou `whatsapp` (1 ou 2 canais, sem repetir). Venda que começou no e-mail e fechou no WhatsApp conta como `email`.
+- `sent` (contatados), `replied`, `interested`, `sales`: inteiros ≥ 0. `revenue`: reais (número). `measured_at`: opcional, ISO.
+- Cada envio **substitui** o total daquele canal (não soma). Tabela `prospecting_channel_totals` (migração `20261115_prospeccao_totais.sql`, rollback ao lado).
+- Resposta 200 traz `totals_saved`.
+
 ### Respostas
 
 | Status | Quando | Corpo |
