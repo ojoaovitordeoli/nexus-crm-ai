@@ -285,7 +285,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     try{
       const result=await operation();
       if(currentOrgRef.current!==orgAtCall)return; // usuário trocou de empresa no meio do caminho
-      setData({...(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]}),referrals_ready:Boolean(result.referrals_ready)});
+      setData({...(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]}),referrals_ready:Boolean(result.referrals_ready),goal:result.goal||null});
       setCounts(result.counts||{leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages(result.stages||[]);
       setPipeline(result.pipeline||null);
@@ -567,7 +567,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} contacts={data.contacts} onOperation={operation} onReload={load}
           referralsReady={Boolean(data.referrals_ready)}
         />}
-        {ready&&section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} readonly={readonly} canManage={canManagePipeline} userId={session?.id||''} onOperation={operation} onReload={load}/>}
+        {ready&&section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} goal={data.goal} readonly={readonly} canManage={canManagePipeline} userId={session?.id||''} onOperation={operation} onReload={load}/>}
         {ready&&section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} canDelete={canManagePipeline} onOperation={operation} onReload={load}/>}
         {section==='whatsapp'&&<NexusWhatsAppInbox
           organizationId={organizationId} contacts={data.contacts} isSuperAdmin={isSuperAdmin}
