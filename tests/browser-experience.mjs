@@ -73,7 +73,7 @@ try{
       table==='organizations'?[organization]:[];
     return route.fulfill({status:200,headers,body:JSON.stringify(rows)});
   });
-  let createdTasks=0;let completedTasks=0;const apptStatus=[];let linkedTasks=0;let timelineCalls=0;
+  let createdTasks=0;let completedTasks=0;const apptStatus=[];let goalTarget=null;const saleCreates=[];const goalSets=[];let linkedTasks=0;let timelineCalls=0;
   await page.route('**/api/operation**',async route=>{
     if(route.request().method()==='POST'){
       const payload=route.request().postDataJSON();
@@ -88,13 +88,16 @@ try{
       }
       if(payload.action==='lead_update'&&'referred_by_contact_id' in payload)referralUpdates+=1;
       if(payload.action==='appointment_status')apptStatus.push(payload.status);
+      if(payload.action==='sale_create')saleCreates.push(payload);
+      if(payload.action==='goal_set'){goalSets.push(payload);goalTarget=payload.target;}
       if(payload.action==='task_create')createdTasks+=1;
       if(payload.action==='task_create'&&payload.lead_id===leadId)linkedTasks+=1;
       if(payload.action==='task_status'&&payload.status==='completed')completedTasks+=1;
       return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
     }
     const response={data,counts:{leads:1,contacts:2,tasks:1,appointments:0,sales:1},
-      stages:[],warnings:[],read_only:false,referrals_ready:true};
+      stages:[],warnings:[],read_only:false,referrals_ready:true,
+      goal:{month:new Date().toISOString().slice(0,7),target:goalTarget,achieved:1500,sales_count:1,from:new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1,3)).toISOString(),to:new Date(Date.now()+20*86400000).toISOString(),partial:false}};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
   });
   // Optional integrations are not provisioned in CI. Exercise their explicit
@@ -301,6 +304,26 @@ try{
   await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).click();
   for(let k=0;k<40&&!apptStatus.length;k++)await sleep(100);
   if(apptStatus[0]!=='completed')throw new Error('Compareceu não enviou appointment_status completed: '+apptStatus.join(','));
+  // V39: venda com forma de pagamento/produto e meta do mês com progresso.
+  await page.goto(host+'/sales',{waitUntil:'domcontentloaded'});
+  const goalBox=page.getByRole('region',{name:'Meta do mês'});
+  await goalBox.getByRole('button',{name:'Definir meta'}).click();
+  await goalBox.getByRole('textbox',{name:'Meta de faturamento'}).fill('10.000,00');
+  await goalBox.getByRole('button',{name:'Salvar meta'}).click();
+  for(let k=0;k<40&&!goalSets.length;k++)await sleep(100);
+  if(goalSets[0]?.target!==10000)throw new Error('Meta não enviou o valor certo: '+JSON.stringify(goalSets));
+  await goalBox.getByRole('progressbar').waitFor({timeout:6000});
+  await page.getByRole('button',{name:'Registrar venda'}).click();
+  const saleForm=page.getByRole('form',{name:'Registrar venda'});
+  await saleForm.getByRole('textbox',{name:/Valor da venda/}).fill('1.250,00');
+  await saleForm.getByRole('combobox',{name:'Forma de pagamento'}).selectOption('pix');
+  await saleForm.getByRole('textbox',{name:/Produto ou serviço/}).fill('Óculos multifocal');
+  await page.waitForTimeout(500);
+  await page.screenshot({path:'test-artifacts/vendas-v39-meta.png',fullPage:true});
+  await saleForm.getByRole('button',{name:'Salvar venda'}).click();
+  for(let k=0;k<40&&!saleCreates.length;k++)await sleep(100);
+  const sc=saleCreates[0]||{};
+  if(sc.value!==1250||sc.payment_method!=='pix'||sc.product!=='Óculos multifocal')throw new Error('Venda não enviou os campos novos: '+JSON.stringify(sc));
   await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
   // exact: "Números da prospecção" também contém a palavra e, se carregar junto, quebrava o modo estrito.
   await page.getByRole('heading',{name:'Prospecção',exact:true}).waitFor({timeout:12000});

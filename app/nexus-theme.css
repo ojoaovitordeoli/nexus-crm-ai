@@ -1123,3 +1123,32 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
   :root:root:root body .fx-apptrow{grid-template-columns:92px minmax(0,1fr)}
   :root:root:root body .fx-apptrow>.fx-attend,:root:root:root body .fx-apptrow>.fx-appt-links{grid-column:2;justify-self:start}
 }
+
+/* V39 — venda completa e meta do mês */
+:root:root:root body .fx-sale-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;align-items:start}
+:root:root:root body .fx-sale-form label{display:flex;flex-direction:column;gap:5px;min-width:0}
+:root:root:root body .fx-sale-form .fx-sale-form-wide{grid-column:1/-1}
+:root:root:root body .fx-sale-form textarea{resize:vertical;min-height:58px;font:inherit;padding:8px 10px;border:1px solid var(--fx-line,#e5e5e7);border-radius:7px;background:var(--fx-surface,#fff);color:var(--fx-ink,#2b2b2d)}
+:root:root:root body .fx-sale-form>button{grid-column:1/-1;justify-self:start}
+:root:root:root body .fx-table--sales .fx-sale-edit{grid-template-columns:1.4fr 1fr 1fr 170px!important}
+:root:root:root body .fx-sale-meta{display:block;margin-top:2px;font-size:12px;color:var(--fx-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root:root:root body .fx-goal .fx-boxhead h2{display:inline-flex;align-items:center;gap:7px}
+:root:root:root body .fx-goal-body,:root:root:root body .fx-goal-form{padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
+:root:root:root body .fx-goal-form label{display:flex;flex-direction:column;gap:5px;max-width:280px}
+:root:root:root body .fx-goal-numbers{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+:root:root:root body .fx-goal-numbers strong{font-size:22px;font-weight:700;color:var(--fx-ink,#2b2b2d)}
+:root:root:root body .fx-goal-numbers span{color:var(--fx-muted)}
+:root:root:root body .fx-goal-status{font-style:normal;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--fx-line,#e5e5e7)}
+:root:root:root body .fx-goal-status--done{color:#14653a;border-color:#9fd3b4;background:#ecf8f0}
+:root:root:root body .fx-goal-status--on_track{color:#1f4f99;border-color:#a9c3ec;background:#eef4fd}
+:root:root:root body .fx-goal-status--behind{color:#9a5b00;border-color:#e8c27a;background:#fff6e3}
+:root:root:root body .fx-goal-bar{position:relative;height:10px;border-radius:999px;background:color-mix(in srgb,var(--fx-ink,#2b2b2d) 9%,transparent);overflow:visible}
+:root:root:root body .fx-goal-bar>span{display:block;height:100%;border-radius:999px;background:var(--fx-accent,#5f00e6)}
+:root:root:root body .fx-goal-bar>i{position:absolute;top:-3px;width:2px;height:16px;background:var(--fx-ink,#2b2b2d);opacity:.55;transform:translateX(-1px)}
+:root:root:root body.dark .fx-goal-status--done{color:#8fe0b0;border-color:#2d5b40;background:#14261c}
+:root:root:root body.dark .fx-goal-status--on_track{color:#a9c8f5;border-color:#2c4468;background:#142033}
+:root:root:root body.dark .fx-goal-status--behind{color:#f3c370;border-color:#6b5124;background:#2e2414}
+@media(max-width:760px){
+  :root:root:root body .fx-sale-form{grid-template-columns:1fr}
+  :root:root:root body .fx-table--sales .fx-sale-edit{grid-template-columns:1fr!important}
+}

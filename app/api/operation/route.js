@@ -7,6 +7,7 @@ import {logInternal} from '../../../lib/workflow-security.mjs';
 import {buildContacts,parseCsv} from '../../../lib/contact-import.mjs';
 import {canDeleteRecord,canEditRecord,canEditSale,contactDeleteBlock} from '../../../lib/record-rules.mjs';
 import {isMissingReferralColumn,referralError,REFERRAL_PENDING_MESSAGE} from '../../../lib/referrals.mjs';
+import {saleExtras,monthRange,parseGoalTarget} from '../../../lib/sale-rules.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -124,7 +125,7 @@ export async function GET(request){
     'id,title,status,priority,due_date,due_time,created_at,created_by,assigned_to,completed_at,lead_id',
     'id,first_name,last_name,whatsapp,email,city,created_at',
     'id,title,description,type,start_at,end_at,status,location,created_at,lead_id',
-    'id,value,created_at,sale_date,lead_id,contact_id,seller_id,contact:contacts(id,first_name,last_name)'
+    'id,value,created_at,sale_date,lead_id,contact_id,seller_id,payment_method,product,notes,contact:contacts(id,first_name,last_name)'
   ];
   // Contatos e leads excluídos ficam na "lixeira" (deleted_at) e não aparecem em lugar nenhum.
   const live=(q,name)=>name==='leads'||name==='contacts'?q.is('deleted_at',null):q;
@@ -173,7 +174,23 @@ export async function GET(request){
     const byId=new Map((ref.data||[]).map(r=>[r.id,r.referred_by_contact_id]));
     data.leads=data.leads.map(l=>({...l,referred_by_contact_id:byId.get(l.id)||null}));
   }
-  return reply({data,counts:total,pipeline,pipelines:pipelineList,stages,all_stages:allStages,warnings,role:auth.role,referrals_ready:referralsReady,
+  // Meta do mês (faturamento): o realizado é somado no servidor sobre todas as vendas do mês,
+  // não só sobre as 250 carregadas na tela.
+  const range=monthRange();
+  let goal=null;
+  const [goalRes,monthSales]=await Promise.all([
+    admin.from('goals').select('id,target_value,start_date,end_date').eq('organization_id',orgId)
+      .eq('entity_type','org').eq('metric','revenue').eq('period','monthly').eq('start_date',range.start).is('user_id',null).limit(1),
+    admin.from('sales').select('value').eq('organization_id',orgId)
+      .or('and(sale_date.gte.'+range.fromIso+',sale_date.lt.'+range.toIso+'),and(sale_date.is.null,created_at.gte.'+range.fromIso+',created_at.lt.'+range.toIso+')').limit(20000)
+  ]);
+  if(goalRes.error){logInternal('GET meta',goalRes.error);warnings.push('meta do mês')}
+  if(monthSales.error){logInternal('GET vendas do mês',monthSales.error);warnings.push('vendas do mês')}
+  const achieved=monthSales.error?null:(monthSales.data||[]).reduce((sum,r)=>sum+Number(r.value||0),0);
+  const row=goalRes.error?null:(goalRes.data||[])[0];
+  goal={month:range.key,target:row?Number(row.target_value):null,achieved,sales_count:monthSales.error?null:(monthSales.data||[]).length,
+    from:range.fromIso,to:range.toIso,partial:!monthSales.error&&(monthSales.data||[]).length>=20000};
+  return reply({data,counts:total,pipeline,pipelines:pipelineList,stages,all_stages:allStages,warnings,role:auth.role,referrals_ready:referralsReady,goal,
     read_only:!canWriteOperation(auth.role),can_manage_pipeline:canManagePipeline(auth.role)});
 }
 
@@ -411,11 +428,13 @@ export async function POST(request){
   if(action==='sale_create'){
     const value=Number(payload?.value);
     if(!Number.isFinite(value)||value<=0||value>100000000)return fails('Informe um valor de venda válido.');
+    const extras=saleExtras(payload||{});
+    if(extras.error)return fails(extras.error);
     const link=await linkedLead();
     if(link.error)return fails(link.error,link.status);
     const {data,error}=await admin.from('sales').insert({
       organization_id:orgId,value,seller_id:auth.user.id,sale_date:new Date().toISOString(),
-      lead_id:link.lead?.id||null,contact_id:link.lead?.contact_id||null
+      lead_id:link.lead?.id||null,contact_id:link.lead?.contact_id||null,...extras.value
     }).select('id,value,created_at,lead_id').single();
     if(error)return dbFail('Falha ao registrar venda.',error);
     return reply({ok:true,message:'Venda registrada e indicadores atualizados.',item:data},201);
@@ -565,7 +584,9 @@ export async function POST(request){
     if(!canEditSale({role:auth.role,actorId:auth.user.id,sellerId:sale.seller_id}))return fails('Você só pode corrigir as suas próprias vendas.',403);
     const value=Number(payload?.value);
     if(!Number.isFinite(value)||value<=0||value>100000000)return fails('Informe um valor de venda válido.');
-    const patch={value,updated_at:new Date().toISOString()};
+    const extras=saleExtras(payload||{});
+    if(extras.error)return fails(extras.error);
+    const patch={value,...extras.value,updated_at:new Date().toISOString()};
     if('lead_id' in (payload||{})){
       if(!payload.lead_id){patch.lead_id=null;patch.contact_id=null}
       else{const link=await linkedLead();if(link.error)return fails(link.error,link.status);patch.lead_id=link.lead.id;patch.contact_id=link.lead.contact_id||null}
@@ -608,6 +629,29 @@ export async function POST(request){
     if(!data)return fails('Compromisso não encontrado nesta empresa.',404);
     await auditLog('appointment_update','appointment',data.id,null,{title,start_at:start});
     return reply({ok:true,message:'Compromisso atualizado.'});
+  }
+  if(action==='goal_set'){
+    // Meta de faturamento do mês da empresa. Só gestor/admin; a política RLS de goals repete a regra.
+    if(!canManagePipeline(auth.role))return fails('Só gestor ou administrador define a meta.',403);
+    const range=monthRange(payload?.month);
+    if(!range)return fails('Mês inválido.');
+    const keys={organization_id:orgId,entity_type:'org',metric:'revenue',period:'monthly',start_date:range.start};
+    const old=await admin.from('goals').select('id,target_value').match(keys).is('user_id',null);
+    if(old.error)return dbFail('Falha ao consultar a meta.',old.error);
+    const before=(old.data||[])[0]||null;
+    if(payload?.target===null||payload?.target===''){
+      if(before){const del=await admin.from('goals').delete().eq('id',before.id).eq('organization_id',orgId);if(del.error)return dbFail('Falha ao remover a meta.',del.error)}
+      await auditLog('goal_clear','goal',before?.id||null,before,null);
+      return reply({ok:true,message:'Meta do mês removida.'});
+    }
+    const target=parseGoalTarget(payload?.target);
+    if(target===null)return fails('Informe uma meta válida (maior que zero).');
+    const res=before
+      ?await admin.from('goals').update({target_value:target}).eq('id',before.id).eq('organization_id',orgId).select('id').single()
+      :await admin.from('goals').insert({...keys,user_id:null,target_value:target,end_date:range.end}).select('id').single();
+    if(res.error)return dbFail('Falha ao salvar a meta.',res.error);
+    await auditLog('goal_set','goal',res.data.id,before?{target_value:before.target_value}:null,{target_value:target,month:range.key});
+    return reply({ok:true,message:'Meta do mês salva.'});
   }
   if(action==='contacts_import'){
     // O servidor refaz a leitura e a validação; a prévia do navegador é só conferência.
