@@ -12,6 +12,7 @@ import {codeLabel,matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
 import {formatPhoneBR} from '../lib/format.mjs';
 import {parseBRL} from '../lib/shell-rules.mjs';
 import ConfirmButton from './ConfirmButton';
+import NexusProposal from './NexusProposal';
 
 const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Contato sem nome';
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
@@ -92,7 +93,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
       {!readonly&&<button type="button" onClick={()=>setTab('retorno')} className="nx13-action-muted"><CalendarPlus size={17}/> Criar retorno</button>}
     </div>
     <div className="nx13-detail-tabs" role="tablist" aria-label="Informações do contato">
-      {[['detalhes','Informações'],...(readonly?[]:[['retorno','Retorno']]),['atividade','Atividade']].map(([id,l])=><button key={id} role="tab" aria-selected={tab===id} className={tab===id?'is-active':''} type="button" onClick={()=>setTab(id)}>{l}</button>)}
+      {[['detalhes','Informações'],...(readonly?[]:[['retorno','Retorno'],['proposta','Proposta']]),['atividade','Atividade']].map(([id,l])=><button key={id} role="tab" aria-selected={tab===id} className={tab===id?'is-active':''} type="button" onClick={()=>setTab(id)}>{l}</button>)}
     </div>
     <div className="nx13-detail-body">
       {message&&<div role="status" className="nx13-feedback success"><Check size={16}/>{message}</div>}
@@ -140,6 +141,10 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
           </form>}
           {editError&&<p className="nx13-error" role="alert">{editError}</p>}
         </div>
+      </div>}
+      {tab==='proposta'&&!readonly&&<div role="tabpanel">
+        <NexusProposal lead={lead} person={person} phone={phone} onOperation={onOperation}
+          onGenerated={()=>setTimeline(t=>({...t,status:'idle'}))}/>
       </div>}
       {tab==='retorno'&&!readonly&&<div role="tabpanel" className="nx13-followup">
         <h3>Novo retorno</h3><p>Crie uma tarefa para a equipe acompanhar este contato.</p>

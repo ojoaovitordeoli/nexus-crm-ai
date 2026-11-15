@@ -182,3 +182,12 @@ body.dark .nx13-workspace{
 .nx13-event--note>span{background:var(--n-secondary)}
 .nx13-inline-retry{background:none;border:0;padding:0;margin-left:6px;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
 .nx13-inline-retry:focus-visible{outline:2px solid var(--n-accent);outline-offset:2px}
+/* V38: aba Proposta da ficha do lead */
+.nx13-proposal-line{border:1px solid var(--n-line);border-radius:8px;padding:12px;margin:0;display:grid;gap:10px;min-width:0}
+.nx13-proposal-summary{margin:0 0 12px;display:grid;gap:8px;font-size:12px}
+.nx13-proposal-summary>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--n-line);padding-bottom:8px}
+.nx13-proposal-summary dt{min-width:0;color:var(--n-ink)}.nx13-proposal-summary dt small{display:block;color:var(--n-secondary);margin-top:2px}
+.nx13-proposal-summary dd{margin:0;font-weight:650;white-space:nowrap}
+.nx13-proposal-summary .is-total{border-bottom:0;font-size:14px}.nx13-proposal-summary .is-total dt{font-weight:710}
+.nx13-proposal-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.nx13-proposal-actions .nx13-submit{padding:0 14px}
