@@ -87,3 +87,24 @@ test('rollback remove tudo e a migração pode ser reaplicada',async()=>{
   const again=await db.query(`select count(*)::int n from pg_class where relname like 'prospecting_%' and relkind='r'`);
   assert.equal(again.rows[0].n,2);
 });
+
+test('V35 totais: somente servidor, uma linha por empresa e canal, trava de token e rollback',async()=>{
+  const db=await fresh();
+  await db.exec(file('20261115_prospeccao_totais.sql'));
+  const row=(org,tok,ch='email')=>`insert into prospecting_channel_totals(organization_id,channel,sent,measured_at,token_id) values ('${org}','${ch}',10,now(),${tok?`'${tok}'`:'null'})`;
+  await db.exec(row(A,'10000000-0000-4000-8000-000000000000'));
+  await assert.rejects(db.exec(row(A,null)),/duplicate key|pkey/);
+  await assert.rejects(db.exec(row(B,'10000000-0000-4000-8000-000000000000')),/outra organização/);
+  await assert.rejects(db.exec(`insert into prospecting_channel_totals(organization_id,channel,sent,measured_at) values ('${A}','whatsapp',-1,now())`));
+  await assert.rejects(db.exec(`insert into prospecting_channel_totals(organization_id,channel,measured_at) values ('${A}','sms',now())`));
+  for(const role of ['anon','authenticated']){
+    const r=await as(db,role,'select * from prospecting_channel_totals');
+    assert.equal(r.ok,false);assert.match(r.error,/permission denied/);
+  }
+  await db.exec(file('20261115_prospeccao_totais_rollback.sql'));
+  const n=await db.query(`select count(*)::int n from pg_class where relname='prospecting_channel_totals'`);
+  assert.equal(n.rows[0].n,0);
+  const alerts=await db.query(`select count(*)::int n from pg_class where relname='prospecting_alerts'`);
+  assert.equal(alerts.rows[0].n,1,'rollback da V35 não mexe na V34');
+  await db.exec(file('20261115_prospeccao_totais.sql'));
+});

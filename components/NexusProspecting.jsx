@@ -9,10 +9,13 @@ const STATUS_FILTERS=[['open','Em aberto'],['novo','Novos'],['em_atendimento','E
 const CHANNEL_FILTERS=[['all','Todos os canais'],['email','E-mail'],['whatsapp','WhatsApp']];
 const STATUS_OPTIONS=[['novo','Novo'],['em_atendimento','Em atendimento'],['resolvido','Resolvido'],['descartado','Descartado']];
 const when=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+const num=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
+const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
+const pct=(a,b)=>b>0?Math.round(a*100/b)+'%':'';
 const phoneLabel=p=>{const d=String(p||'');return d.startsWith('55')&&d.length>=12?'('+d.slice(2,4)+') '+d.slice(4,-4)+'-'+d.slice(-4):d};
 
 export default function NexusProspecting({organizationId,canSee}){
-  const [state,setState]=useState({status:'loading',alerts:[],connection:null});
+  const [state,setState]=useState({status:'loading',alerts:[],connection:null,totals:null});
   const [statusFilter,setStatusFilter]=useState('open');const [channel,setChannel]=useState('all');
   const [error,setError]=useState('');const [notice,setNotice]=useState('');const [busy,setBusy]=useState('');
   const [newToken,setNewToken]=useState('');
@@ -33,7 +36,7 @@ export default function NexusProspecting({organizationId,canSee}){
     setState(s=>({...s,status:s.status==='ready'?'refreshing':'loading'}));
     try{
       const r=await call('GET',null,'&status='+statusFilter+'&channel='+channel);
-      setState({status:'ready',alerts:r.alerts||[],connection:r.connection||null});setError('');
+      setState({status:'ready',alerts:r.alerts||[],connection:r.connection||null,totals:r.totals||null});setError('');
     }catch(e){setState(s=>({...s,status:e.code==='not_installed'?'not_installed':e.status===403?'denied':'error'}));setError(e.message)}
   },[call,organizationId,canSee,statusFilter,channel]);
   useEffect(()=>{load()},[load]);
@@ -70,6 +73,23 @@ export default function NexusProspecting({organizationId,canSee}){
     {notice&&<div className="fx-alert fx-alert--ok" role="status">{notice}</div>}
 
     {state.status==='not_installed'&&<div className="fx-empty" role="status"><strong>Ainda não ativado</strong><p>As notificações da prospecção dependem de uma atualização do banco que ainda não foi aplicada nesta instalação.</p></div>}
+
+    {state.totals?.available&&<section className="fx-box fx-prosp-board" aria-labelledby="fx-prosp-board-title">
+      <div className="fx-boxhead"><h2 id="fx-prosp-board-title">Números da prospecção</h2>
+        <span className="fx-muted fx-prosp-board-when">{state.totals.lines.some(l=>l.measured_at)?'Atualizado '+when(state.totals.lines.map(l=>l.measured_at).filter(Boolean).sort().pop()):'Aguardando o primeiro envio do vigia'}</span></div>
+      <div className="fx-prosp-board-wrap"><table className="fx-prosp-board-table">
+        <thead><tr><th scope="col">Origem</th><th scope="col">Contatados</th><th scope="col">Responderam</th><th scope="col">Interessados</th><th scope="col">Vendas</th><th scope="col">Vendido</th></tr></thead>
+        <tbody>{[...state.totals.lines,state.totals.total].map(l=><tr key={l.channel} className={l.channel==='total'?'is-total':''}>
+          <th scope="row">{l.label}</th>
+          <td data-label="Contatados">{num(l.sent)}</td>
+          <td data-label="Responderam">{num(l.replied)}{pct(l.replied,l.sent)&&<small>{pct(l.replied,l.sent)}</small>}</td>
+          <td data-label="Interessados">{num(l.interested)}</td>
+          <td data-label="Vendas">{num(l.sales)}</td>
+          <td data-label="Vendido">{brl(l.revenue)}</td>
+        </tr>)}</tbody>
+      </table></div>
+      <p className="fx-muted fx-prosp-board-note">Venda que começou no e-mail e fechou no WhatsApp conta para o e-mail. Valores informados pelo agente na hora do fechamento.</p>
+    </section>}
 
     {state.status!=='not_installed'&&<section className="fx-box fx-prosp-conn" aria-labelledby="fx-prosp-conn-title">
       <div className="fx-boxhead"><h2 id="fx-prosp-conn-title"><KeyRound size={16}/> Ligação com o vigia</h2>
