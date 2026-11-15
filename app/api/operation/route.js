@@ -7,6 +7,7 @@ import {logInternal} from '../../../lib/workflow-security.mjs';
 import {buildContacts,parseCsv} from '../../../lib/contact-import.mjs';
 import {canDeleteRecord,canEditRecord,canEditSale,contactDeleteBlock} from '../../../lib/record-rules.mjs';
 import {isMissingReferralColumn,referralError,REFERRAL_PENDING_MESSAGE} from '../../../lib/referrals.mjs';
+import {buildProposal,catalogItems,normalizeManualItems,proposalNote} from '../../../lib/proposal.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -535,6 +536,38 @@ export async function POST(request){
     if(!data)return fails('Lead não encontrado nesta empresa.',404);
     await auditLog('lead_update','lead',data.id,null,patch);
     return reply({ok:true,message:'Lead atualizado.'});
+  }
+  // ---------- Proposta comercial (V38) ----------
+  // Dados do lead, contato, empresa e itens vêm do banco desta empresa; o navegador só manda
+  // validade, condições, observações e (opcional) itens digitados. Fica registrada como nota do lead.
+  if(action==='proposal_build'){
+    if(!validId(payload?.lead_id))return fails('Lead inválido.');
+    const manual=normalizeManualItems(payload?.items);
+    if(manual.error)return fails(manual.error);
+    const leadRes=await admin.from('leads').select('id,contact_id,estimated_value')
+      .eq('id',payload.lead_id).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
+    if(leadRes.error)return dbFail('Falha ao carregar o lead.',leadRes.error);
+    if(!leadRes.data)return fails('Lead não encontrado nesta empresa.',404);
+    const lead=leadRes.data;
+    const [contactRes,orgRes,sellerRes,lpRes,prRes]=await Promise.all([
+      lead.contact_id?admin.from('contacts').select('first_name,last_name,whatsapp,email,city').eq('id',lead.contact_id).eq('organization_id',orgId).maybeSingle():Promise.resolve({data:null}),
+      admin.from('organizations').select('name').eq('id',orgId).maybeSingle(),
+      admin.from('profiles').select('full_name').eq('id',auth.user.id).maybeSingle(),
+      manual.items.length?Promise.resolve({data:[]}):admin.from('lead_products').select('product_id,quantity').eq('lead_id',lead.id).eq('organization_id',orgId),
+      manual.items.length?Promise.resolve({data:[]}):admin.from('products').select('id,name,price,unit').eq('organization_id',orgId)
+    ]);
+    for(const [name,res] of [['contato',contactRes],['empresa',orgRes]])if(res.error)return dbFail('Falha ao carregar '+name+' da proposta.',res.error);
+    // Catálogo é opcional (instalação sem produtos): falha aqui só vira "sem itens do catálogo".
+    if(lpRes.error)logInternal('proposta lead_products',lpRes.error);
+    if(prRes.error)logInternal('proposta products',prRes.error);
+    const items=manual.items.length?manual.items:catalogItems(lpRes.data||[],prRes.data||[]);
+    const built=buildProposal({organizationName:orgRes.data?.name,sellerName:sellerRes.data?.full_name,lead,contact:contactRes.data,
+      items,estimatedValue:lead.estimated_value,validityDays:payload?.validity_days,conditions:payload?.conditions,notes:payload?.notes});
+    if(built.error)return fails(built.error,422);
+    const note=await admin.from('notes').insert({organization_id:orgId,lead_id:lead.id,contact_id:lead.contact_id||null,user_id:auth.user.id,content:proposalNote(built.proposal)});
+    if(note.error)logInternal('proposta nota',note.error);
+    await auditLog('proposal_build','lead',lead.id,null,{number:built.proposal.number,total:built.proposal.total,items:built.proposal.items.length});
+    return reply({ok:true,message:'Proposta '+built.proposal.number+' gerada'+(note.error?'.':' e registrada no histórico do lead.'),proposal:built.proposal,logged:!note.error});
   }
   if(action==='lead_delete'){
     if(!canDeleteRecord(auth.role))return noDelete();

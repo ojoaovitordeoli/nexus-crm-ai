@@ -1,6 +1,7 @@
 import {spawn} from 'node:child_process';
 import {mkdirSync} from 'node:fs';
 import {chromium} from 'playwright';
+import {buildProposal,normalizeManualItems} from '../lib/proposal.mjs';
 
 const host='http://127.0.0.1:3000';
 const app=spawn(process.execPath,['node_modules/next/dist/bin/next','start'],{
@@ -58,7 +59,7 @@ try{
       created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId}],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
       sale_date:new Date().toISOString(),lead_id:leadId,contact_id:contactId,seller_id:userId,contact}]
   };
-  let referralUpdates=0;
+  let referralUpdates=0;let proposalCalls=0;
   await page.route('https://qhizuqcdxivdvjtefofz.supabase.co/**',async route=>{
     const url=new URL(route.request().url());
     const table=url.pathname.split('/').pop();
@@ -84,6 +85,12 @@ try{
         ]})});
       }
       if(payload.action==='lead_update'&&'referred_by_contact_id' in payload)referralUpdates+=1;
+      if(payload.action==='proposal_build'){
+        proposalCalls+=1;
+        const built=buildProposal({organizationName:'Empresa de Teste',lead:{id:leadId},contact,items:normalizeManualItems(payload.items).items,
+          validityDays:payload.validity_days,conditions:payload.conditions,notes:payload.notes});
+        return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,message:'Proposta '+built.proposal.number+' gerada e registrada no histórico do lead.',proposal:built.proposal})});
+      }
       if(payload.action==='task_create')createdTasks+=1;
       if(payload.action==='task_create'&&payload.lead_id===leadId)linkedTasks+=1;
       if(payload.action==='task_status'&&payload.status==='completed')completedTasks+=1;
@@ -208,6 +215,25 @@ try{
       await page.getByRole('button',{name:'Novo lead'}).click();
       await page.getByRole('combobox',{name:'Contato que indicou este lead'}).waitFor({timeout:5000});
       await page.getByRole('button',{name:'Fechar',exact:true}).first().click();
+      // V38: proposta pela ficha (item digitado → resumo → página de impressão e WhatsApp com texto).
+      await detail.getByRole('tab',{name:'Proposta'}).click();
+      await detail.getByRole('button',{name:'Adicionar item'}).click();
+      await detail.getByRole('textbox',{name:'Descrição do item 1'}).fill('Lente multifocal');
+      await detail.getByRole('textbox',{name:'Quantidade do item 1'}).fill('2');
+      await detail.getByRole('textbox',{name:'Valor unitário do item 1'}).fill('890,50');
+      await detail.getByRole('textbox',{name:'Condições de pagamento'}).fill('Até 10x sem juros');
+      await detail.getByRole('button',{name:'Gerar proposta'}).click();
+      await detail.getByText('registrada no histórico do lead',{exact:false}).waitFor({timeout:5000});
+      if(proposalCalls!==1)throw new Error('Proposta não chamou a API');
+      if(!await detail.getByText('R$ 1.781,00').count())throw new Error('Total da proposta errado');
+      const waProposal=detail.getByRole('link',{name:'Enviar no WhatsApp'});
+      if(!(await waProposal.getAttribute('href')).startsWith('https://wa.me/5548999991111?text='))throw new Error('Link do WhatsApp da proposta errado');
+      const popupPromise=page.context().waitForEvent('page');
+      await detail.getByRole('button',{name:'Abrir para imprimir ou salvar PDF'}).click();
+      const printPage=await popupPromise;await printPage.waitForLoadState();
+      if(!await printPage.getByText('Lente multifocal').count()||!await printPage.getByText('Até 10x sem juros').count())throw new Error('Página de impressão incompleta');
+      await printPage.screenshot({path:'test-artifacts/proposta-impressao.png',fullPage:true});await printPage.close();
+      await page.screenshot({path:'test-artifacts/leads-v38-proposta.png',fullPage:true});
       await detail.getByRole('tab',{name:'Retorno'}).click();
       await detail.getByRole('textbox',{name:'O que precisa ser feito?'}).fill('Retornar orçamento');
       await detail.getByRole('button',{name:'Adicionar tarefa'}).click();
