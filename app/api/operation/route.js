@@ -278,7 +278,11 @@ export async function POST(request){
       .eq('id',payload.id).eq('organization_id',orgId).select('id,status').maybeSingle();
     if(error)return dbFail('Falha ao atualizar agendamento.',error);
     if(!data)return fails('Agendamento não encontrado.',404);
-    return reply({ok:true,message:'Agendamento atualizado.',item:data});
+    // Trilha da presença/falta (auditLog é declarado mais abaixo nesta função; aqui grava direto).
+    const audit=await admin.from('audit_logs').insert({user_id:auth.user.id,organization_id:orgId,action:'appointment_status',entity_type:'appointment',entity_id:data.id,before:null,after:{status}});
+    if(audit.error)logInternal('audit appointment_status',audit.error);
+    const msg={completed:'Presença registrada.',no_show:'Falta registrada.'}[status]||'Agendamento atualizado.';
+    return reply({ok:true,message:msg,item:data});
   }
   if(action==='lead_stage_requirements'||action==='lead_stage'){
     const gate=await loadStageGate(admin,orgId,payload);

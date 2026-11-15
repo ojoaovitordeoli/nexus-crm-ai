@@ -45,7 +45,7 @@ function AcePanel({ace,referralsReady}){
 
 const currency=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(Number(n)||0);
 const decimal=n=>new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:false}).format(Number(n)||0);
-const APPT_STATUS={scheduled:'Agendado',confirmed:'Confirmado',completed:'Concluído',cancelled:'Cancelado',canceled:'Cancelado',no_show:'Não compareceu'};
+const APPT_STATUS={scheduled:'Agendado',confirmed:'Confirmado',completed:'Compareceu',cancelled:'Cancelado',canceled:'Cancelado',no_show:'Não compareceu'};
 const integer=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const when=s=>s?new Date(s).toLocaleDateString('pt-BR'):'';
 const daysPeriod=(v,days)=>new Date(v||0).getTime()>=Date.now()-days*86400000;

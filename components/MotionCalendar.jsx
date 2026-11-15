@@ -9,7 +9,7 @@ const startOfMonth=d=>new Date(d.getFullYear(),d.getMonth(),1);
 const monthName=d=>d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
 const timeOf=s=>new Date(s).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const dateKey=s=>s?toKey(new Date(s)):'';
-const statuses={scheduled:'Agendado',confirmed:'Confirmado',completed:'Concluído',cancelled:'Cancelado',no_show:'Não compareceu'};
+const statuses={scheduled:'Agendado',confirmed:'Confirmado',completed:'Compareceu',cancelled:'Cancelado',no_show:'Não compareceu'};
 const dayNames=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
 export default function MotionCalendar({appointments=[],onPick,readonly=false}){

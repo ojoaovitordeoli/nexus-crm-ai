@@ -1106,3 +1106,20 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
   :root:root:root body .fx-prosp-board-table td::before{content:attr(data-label);display:block;font-size:11px;font-weight:500;color:var(--fx-muted)}
   :root:root:root body .fx-prosp-board-table td small{margin-left:4px}
 }
+
+/* V38 — presença em um clique e confirmação pelo WhatsApp na agenda */
+:root:root:root body .fx-apptrow{grid-template-columns:104px minmax(0,1fr) auto auto}
+:root:root:root body .fx-apptrow--attend{background:color-mix(in srgb,var(--fx-accent,#5f00e6) 5%,transparent)}
+:root:root:root body .fx-attend{display:inline-flex;gap:6px;align-items:center}
+:root:root:root body .fx-attend button{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px;border-radius:7px;font:600 12.5px var(--fx-font,inherit);cursor:pointer;border:1px solid var(--fx-line,#e5e5e7);background:var(--fx-surface,#fff);color:var(--fx-ink,#2b2b2d)}
+:root:root:root body .fx-attend .fx-attend-yes{border-color:#9fd3b4;color:#14653a;background:#ecf8f0}
+:root:root:root body .fx-attend .fx-attend-no{border-color:#eaa2a8;color:#a3202b;background:#fdecee}
+:root:root:root body.dark .fx-attend .fx-attend-yes{border-color:#2d5b40;color:#8fe0b0;background:#14261c}
+:root:root:root body.dark .fx-attend .fx-attend-no{border-color:#6d2a30;color:#f2a1a8;background:#2f1619}
+:root:root:root body .fx-attend button:disabled{opacity:.55;cursor:wait}
+:root:root:root body .fx-attend button:focus-visible{outline:2px solid var(--fx-accent-text,#5f00e6);outline-offset:2px}
+:root:root:root body .fx-appt-links{display:inline-flex;gap:12px;align-items:center;justify-content:flex-end}
+@media(max-width:760px){
+  :root:root:root body .fx-apptrow{grid-template-columns:92px minmax(0,1fr)}
+  :root:root:root body .fx-apptrow>.fx-attend,:root:root:root body .fx-apptrow>.fx-appt-links{grid-column:2;justify-self:start}
+}
