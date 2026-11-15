@@ -639,6 +639,21 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .fx-bars strong{font-size:13.5px;font-weight:650}
 :root:root:root body .fx-bars .fx-stage-bar{grid-column:1/-1}
 :root:root:root body .fx-bars-sub{color:var(--fx-muted);font-size:12.5px}
+/* V37: painel ACE (Atração → Conversão → Expansão) */
+:root:root:root body .fx-ace{margin-bottom:16px}
+:root:root:root body .fx-ace-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+:root:root:root body .fx-ace-step{position:relative;padding:16px 18px 14px;min-width:0}
+:root:root:root body .fx-ace-step+.fx-ace-step{border-left:1px solid var(--fx-border)}
+:root:root:root body .fx-ace-step+.fx-ace-step::before{content:'';position:absolute;left:-7px;top:26px;width:12px;height:12px;background:var(--fx-surface,#fff);border-top:1px solid var(--fx-border);border-right:1px solid var(--fx-border);transform:rotate(45deg)}
+:root:root:root body .fx-ace-kicker{display:block;font-size:12px;font-weight:650;letter-spacing:.02em;color:var(--fx-accent);margin-bottom:6px}
+:root:root:root body .fx-ace-big{font-size:28px;font-weight:700;line-height:1.1;margin-right:6px;font-variant-numeric:tabular-nums}
+:root:root:root body .fx-ace-unit{font-size:13px;color:var(--fx-muted)}
+:root:root:root body .fx-ace-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+:root:root:root body .fx-ace-list li{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--fx-muted)}
+:root:root:root body .fx-ace-list li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root:root:root body .fx-ace-list b{font-weight:650;color:var(--fx-text);white-space:nowrap;font-variant-numeric:tabular-nums}
+:root:root:root body .fx-ace-list b.fx-ace-warn{color:var(--fx-danger)}
+@media (max-width:880px){:root:root:root body .fx-ace-flow{grid-template-columns:1fr}:root:root:root body .fx-ace-step+.fx-ace-step{border-left:0;border-top:1px solid var(--fx-border)}:root:root:root body .fx-ace-step+.fx-ace-step::before{left:28px;top:-7px;transform:rotate(135deg)}}
 :root:root:root body .fx-page .fx-kv dd{font-size:14px;font-weight:650;overflow:hidden;text-overflow:ellipsis;max-width:65%}
 :root:root:root body .fx-theme-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px}
 :root:root:root body .fx-theme-choice button{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--fx-border-strong);border-radius:7px;background:var(--fx-surface);color:var(--fx-text);text-align:left;cursor:pointer;font:inherit;min-width:0}
