@@ -231,6 +231,20 @@ try{
       await hint.getByRole('button',{name:/Configurar funil/}).click();
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
+      // V37: card acionável — tempo na etapa visível e ficha abrindo por cima do quadro (sem trocar para a lista).
+      const card=page.locator('.nxp-kcard').first();
+      await card.waitFor({timeout:5000});
+      if(!(await card.locator('.nxp-kcard-age').innerText()).includes('2d'))throw new Error('Card sem tempo na etapa');
+      if(!await card.getByRole('link',{name:/Conversar/}).count())throw new Error('Card sem atalho de WhatsApp');
+      await page.waitForTimeout(1200);
+      await page.screenshot({path:'test-artifacts/leads-v37-kanban-card.png',fullPage:true});
+      await card.getByRole('button',{name:'Abrir ficha de Ana Teste'}).click();
+      const boardDetail=page.getByRole('dialog',{name:'Atendimento de Ana Teste'});
+      await boardDetail.waitFor({timeout:5000});
+      if(!await page.locator('.nxp-board').count())throw new Error('Abrir o card tirou o usuário do quadro');
+      await page.screenshot({path:'test-artifacts/leads-v37-board-detail.png',fullPage:true});
+      await boardDetail.getByRole('button',{name:'Fechar atendimento'}).click();
+      await boardDetail.waitFor({state:'detached',timeout:5000});
       await page.getByRole('button',{name:'Lista'}).click();
       await page.locator('.nx13-layout').waitFor({timeout:5000});
       await page.setViewportSize({width:390,height:844});
@@ -271,7 +285,8 @@ try{
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:'Prospecção'}).waitFor({timeout:12000});
+  // exact: "Números da prospecção" também contém a palavra e, se carregar junto, quebrava o modo estrito.
+  await page.getByRole('heading',{name:'Prospecção',exact:true}).waitFor({timeout:12000});
   await page.getByText('Ótica Exemplo').first().waitFor({timeout:8000});
   await page.getByRole('heading',{name:'Números da prospecção'}).waitFor({timeout:5000});
   if(!await page.getByText('R$ 1.591').count())throw new Error('Total vendido do quadro não aparece');
