@@ -2,6 +2,7 @@
 import {useMemo,useState} from 'react';
 import NexusCrmSettings from './NexusCrmSettings';
 import NexusTeam from './NexusTeam';
+import NexusLeadCapture from './NexusLeadCapture';
 import Link from 'next/link';
 import {CheckCircle2,Download,LockKeyhole,Moon,Sun} from 'lucide-react';
 import {referralRanking} from '../lib/referrals.mjs';
@@ -159,5 +160,6 @@ export function PremiumSettings({profile,session,role,organization,onTheme,dark,
     </div>
     {canManageTeam&&organization?.id&&<NexusTeam organizationId={organization.id}/>}
     <NexusCrmSettings organizationId={organization?.id}/>
+    {canManageTeam&&organization?.id&&<NexusLeadCapture organizationId={organization.id}/>}
   </div>;
 }
