@@ -44,14 +44,19 @@ try{
   const profile={id:userId,full_name:'Operador de Teste',is_super_admin:false,status:'active'};
   const organization={id:organizationId,name:'Empresa de Teste',status:'active',plan:'test'};
   const contact={id:contactId,first_name:'Ana',last_name:'Teste',whatsapp:'5548999991111',created_at:'2026-10-20T12:00:00Z'};
-  const lead={id:leadId,organization_id:organizationId,status:'new',source:'Instagram',
-    temperature:'warm',created_at:'2026-10-20T12:00:00Z',pipeline_stage_id:null,contact};
+  // V36: indicação. Bruno indicou a Ana; a venda vinculada ao lead entra no "Quem mais indica".
+  const referrerId='5f3a1c2e-8d4b-4c6a-9e7f-1a2b3c4d5e6f';
+  const referrer={id:referrerId,first_name:'Bruno',last_name:'Indicador',whatsapp:'5548999993333',created_at:'2026-10-10T12:00:00Z'};
+  const lead={id:leadId,organization_id:organizationId,status:'new',source:'Indicação',
+    temperature:'warm',created_at:new Date(Date.now()-2*86400000).toISOString(),pipeline_stage_id:null,contact,referred_by_contact_id:referrerId};
   const data={
-    leads:[lead],contacts:[contact],tasks:[{
+    leads:[lead],contacts:[contact,referrer],tasks:[{
       id:'92618c31-e9af-41a1-8b48-7e7dac9ae0ef',title:'Retornar para Ana',
       status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z'
-    }],appointments:[],sales:[]
+    }],appointments:[],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
+      sale_date:new Date().toISOString(),lead_id:leadId,contact_id:contactId,seller_id:userId,contact}]
   };
+  let referralUpdates=0;
   await page.route('https://qhizuqcdxivdvjtefofz.supabase.co/**',async route=>{
     const url=new URL(route.request().url());
     const table=url.pathname.split('/').pop();
@@ -76,13 +81,14 @@ try{
           {id:'lead-x',kind:'lead_created',at:'2026-10-20T12:00:00Z',title:'Lead cadastrado',detail:'Origem: Instagram'}
         ]})});
       }
+      if(payload.action==='lead_update'&&'referred_by_contact_id' in payload)referralUpdates+=1;
       if(payload.action==='task_create')createdTasks+=1;
       if(payload.action==='task_create'&&payload.lead_id===leadId)linkedTasks+=1;
       if(payload.action==='task_status'&&payload.status==='completed')completedTasks+=1;
       return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
     }
-    const response={data,counts:{leads:1,contacts:1,tasks:1,appointments:0,sales:0},
-      stages:[],warnings:[],read_only:false};
+    const response={data,counts:{leads:1,contacts:2,tasks:1,appointments:0,sales:1},
+      stages:[],warnings:[],read_only:false,referrals_ready:true};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
   });
   // Optional integrations are not provisioned in CI. Exercise their explicit
@@ -187,6 +193,19 @@ try{
       const download=await downloadPromise;
       if(!download.suggestedFilename().endsWith('.csv'))throw new Error('Export did not create CSV');
       const detail=page.getByRole('region',{name:'Ficha de Ana Teste'});
+      // V36: indicação na ficha, na edição e no formulário de novo lead.
+      await detail.getByText('Bruno Indicador').waitFor({timeout:5000});
+      await detail.getByRole('button',{name:'Editar valor, origem e indicação'}).click();
+      const refSelect=detail.getByRole('combobox',{name:'Indicado por'});
+      if(await refSelect.inputValue()!==referrerId)throw new Error('Edição não carregou quem indicou');
+      if(await refSelect.locator('option',{hasText:'Ana Teste'}).count())throw new Error('O próprio contato aparece como indicador');
+      await refSelect.selectOption('');
+      await detail.getByRole('button',{name:'Salvar'}).click();
+      for(let k=0;k<40&&!referralUpdates;k++)await sleep(100);
+      if(referralUpdates!==1)throw new Error('Edição da indicação não enviou referred_by_contact_id');
+      await page.getByRole('button',{name:'Novo lead'}).click();
+      await page.getByRole('combobox',{name:'Contato que indicou este lead'}).waitFor({timeout:5000});
+      await page.getByRole('button',{name:'Fechar',exact:true}).first().click();
       await detail.getByRole('tab',{name:'Retorno'}).click();
       await detail.getByRole('textbox',{name:'O que precisa ser feito?'}).fill('Retornar orçamento');
       await detail.getByRole('button',{name:'Adicionar tarefa'}).click();
@@ -219,6 +238,18 @@ try{
       await page.setViewportSize({width:1440,height:900});
     }
   }
+  await page.goto(host+'/reports',{waitUntil:'domcontentloaded'});
+  const refBox=page.getByRole('region',{name:'Quem mais indica'});
+  await refBox.waitFor({timeout:10000});
+  await refBox.getByText('Bruno Indicador').waitFor({timeout:5000});
+  if(!await refBox.getByText('1 virou venda',{exact:false}).count())throw new Error('Ranking de indicação sem a venda vinculada');
+  for(const [w,h,name] of [[768,1024,'tablet'],[390,844,'mobile']]){
+    await page.setViewportSize({width:w,height:h});await sleep(250);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+    if(overflow>1)throw new Error('Relatórios com rolagem horizontal em '+w+'px ('+overflow+'px)');
+    await page.screenshot({path:'test-artifacts/reports-indicacao-'+name+'.png',fullPage:true});
+  }
+  await page.setViewportSize({width:1440,height:900});
   for(const route of ['tasks','agenda','reports','settings','whatsapp','automations']){
     await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(550);

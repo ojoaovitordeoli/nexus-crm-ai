@@ -638,6 +638,7 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 :root:root:root body .fx-bars-name{font-size:13.5px;color:var(--fx-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 :root:root:root body .fx-bars strong{font-size:13.5px;font-weight:650}
 :root:root:root body .fx-bars .fx-stage-bar{grid-column:1/-1}
+:root:root:root body .fx-bars-sub{color:var(--fx-muted);font-size:12.5px}
 :root:root:root body .fx-page .fx-kv dd{font-size:14px;font-weight:650;overflow:hidden;text-overflow:ellipsis;max-width:65%}
 :root:root:root body .fx-theme-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px}
 :root:root:root body .fx-theme-choice button{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--fx-border-strong);border-radius:7px;background:var(--fx-surface);color:var(--fx-text);text-align:left;cursor:pointer;font:inherit;min-width:0}

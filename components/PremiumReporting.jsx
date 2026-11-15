@@ -4,6 +4,7 @@ import NexusCrmSettings from './NexusCrmSettings';
 import NexusTeam from './NexusTeam';
 import Link from 'next/link';
 import {CheckCircle2,Download,LockKeyhole,Moon,Sun} from 'lucide-react';
+import {referralRanking} from '../lib/referrals.mjs';
 
 const currency=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(Number(n)||0);
 const decimal=n=>new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:false}).format(Number(n)||0);
@@ -34,8 +35,11 @@ export function PremiumReports({data,counts,orgName,readonly}){
     const sales=data.sales.filter(s=>daysPeriod(s.sale_date||s.created_at,period));
     const grouped=new Map();
     leads.forEach(l=>{const key=l.source||'Não informada';grouped.set(key,(grouped.get(key)||0)+1)});
+    // Indicações dos leads do período; a venda conta mesmo que tenha saído depois (vínculo pelo lead).
+    const referrals=referralRanking({leads,sales:data.sales,contacts:data.contacts});
     return {leads,appointments,sales,sources:[...grouped.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8),
-      revenue:sales.reduce((total,s)=>total+Number(s.value||0),0)};
+      revenue:sales.reduce((total,s)=>total+Number(s.value||0),0),referrals,
+      referredLeads:referrals.reduce((t,r)=>t+r.leads,0)};
   },[data,period]);
   const rows=[
     // Antes a coluna "Valor" recebia a origem do lead e o tipo do agendamento; valor saía com ponto (1500.5).
@@ -80,6 +84,15 @@ export function PremiumReports({data,counts,orgName,readonly}){
         </dl>
       </section>
     </div>
+    {data.referrals_ready&&<section className="fx-box" aria-label="Quem mais indica">
+      <div className="fx-boxhead"><h2>Quem mais indica</h2><span className="fx-boxmeta">{integer(view.referredLeads)} de {integer(view.leads.length)} {view.referredLeads===1?'lead veio':'leads vieram'} de indicação</span></div>
+      {view.referrals.length?<ol className="fx-bars">{view.referrals.slice(0,10).map(r=><li key={r.contact_id}>
+          <span className="fx-bars-name">{r.name}<small className="fx-bars-sub"> · {integer(r.converted)} {r.converted===1?'virou venda':'viraram venda'}{r.value>0?' · '+currency(r.value):''}</small></span>
+          <strong aria-label={integer(r.leads)+' indicações'}>{integer(r.leads)}</strong>
+          <span className="fx-stage-bar"><span style={{width:Math.max(2,100*r.leads/Math.max(view.referrals[0].leads,1))+'%'}}/></span>
+        </li>)}</ol>
+        :<p className="fx-empty-small">Nenhuma indicação registrada no período. Na ficha do lead, use "Indicado por" para registrar quem trouxe o cliente.</p>}
+    </section>}
     <p className="fx-note">Para períodos mais longos ou relatórios financeiros completos, será necessária uma consulta paginada no servidor.</p>
   </div>;
 }
