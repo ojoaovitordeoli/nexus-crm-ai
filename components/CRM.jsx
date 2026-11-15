@@ -6,7 +6,7 @@ import { authErrorMessage } from '../lib/shell-rules.mjs';
 import AdminWorkspace from './AdminWorkspace';
 import StaffWorkspace from './StaffWorkspace';
 import Link from 'next/link';
-import { Layers3, LayoutDashboard, BriefcaseBusiness, ContactRound, ListTodo, ShieldCheck, LogOut, Moon, Sun, ChevronRight } from 'lucide-react';
+import { Layers3, LayoutDashboard, BriefcaseBusiness, ContactRound, ListTodo, ShieldCheck, LogOut, Moon, Sun, ChevronRight, Eye, EyeOff } from 'lucide-react';
 const title={dashboard:'Visão geral',admin:'Super Admin','minha-area':'Minha operação',leads:'Leads e contatos',tasks:'Tarefas'};
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
 function Alert({children,error=false}){return <div className={'notice '+(error?'error':'')} role="alert">{children}</div>}
@@ -15,7 +15,7 @@ export default function CRM({section}){
  const router=useRouter();
  const [session,setSession]=useState(null),[profile,setProfile]=useState(null),[isLoading,setIsLoading]=useState(true);
  const [dark,setDark]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
- const [email,setEmail]=useState(''),[pass,setPass]=useState(''),[submitting,setSubmitting]=useState(false),[forgot,setForgot]=useState(false);
+ const [email,setEmail]=useState(''),[pass,setPass]=useState(''),[submitting,setSubmitting]=useState(false),[forgot,setForgot]=useState(false),[showPass,setShowPass]=useState(false);
  const [authSwitching,setAuthSwitching]=useState(false);
  const authTimer=useRef(null);
  const emailInput=useRef(null);
@@ -115,7 +115,7 @@ export default function CRM({section}){
    <div className="eyebrow" style={{marginTop:32}}>ÁREA DE TRABALHO</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
    <form onSubmit={section==='reset-password'?changePassword:forgot?recover:signIn}>
    {section!=='reset-password'&&<label className="field">E-mail<input ref={emailInput} value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="seu@email.com" autoComplete="email" required/></label>}
-   {(!forgot||section==='reset-password')&&<label className="field">{section==='reset-password'?'Nova senha':'Senha'}<input value={pass} onChange={e=>setPass(e.target.value)} type="password" minLength={6} placeholder="Sua senha" autoComplete={section==='reset-password'?'new-password':'current-password'} required/></label>}
+   {(!forgot||section==='reset-password')&&<label className="field">{section==='reset-password'?'Nova senha':'Senha'}<span className="pass-wrap"><input value={pass} onChange={e=>setPass(e.target.value)} type={showPass?'text':'password'} minLength={6} placeholder="Sua senha" autoComplete={section==='reset-password'?'new-password':'current-password'} autoCapitalize="none" spellCheck={false} required/><button type="button" className="pass-toggle" onClick={()=>setShowPass(v=>!v)} aria-label={showPass?'Ocultar senha':'Mostrar senha'} aria-pressed={showPass} title={showPass?'Ocultar senha':'Mostrar senha'}>{showPass?<EyeOff size={18} aria-hidden="true"/>:<Eye size={18} aria-hidden="true"/>}</button></span></label>}
    {notice&&<div role="status" className="notice success">{notice}</div>}{error&&<Alert error>{error}</Alert>}
    <button disabled={submitting} type="submit" className="btn primary">{submitting?'Processando...':section==='reset-password'?'Salvar nova senha':forgot?'Enviar recuperação':'Entrar'}</button>
    </form>{section==='login'&&<p style={{textAlign:'center',marginTop:20}}><button className="linkbtn" type="button" onClick={toggleRecovery}>{forgot?'Voltar ao login':'Esqueci minha senha'}</button></p>}
