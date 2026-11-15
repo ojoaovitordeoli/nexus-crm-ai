@@ -15,7 +15,8 @@ import NexusStageGate from './NexusStageGate';
 import NexusContactImport from './NexusContactImport';
 import NexusContactEdit from './NexusContactEdit';
 import {exportContacts as downloadContactsCsv,exportFilteredLeads} from '../lib/exportFilteredLeads';
-import {matchesSearch,whatsappUrl} from '../lib/lead-view.mjs';
+import {matchesSearch,whatsappUrl,stageAge} from '../lib/lead-view.mjs';
+import NexusLeadDetail from './NexusLeadDetail';
 import {formatPhoneBR} from '../lib/format.mjs';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
@@ -356,14 +357,35 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
   const canDrag=!readonly&&hasStages&&stages.length>1&&!busy;
   // Função de renderização (não componente): um componente criado dentro do render era recriado
   // a cada renderização, remontando o card arrastado no meio do drag.
-  const renderCard=item=><div key={item.id} className={'nxp-lead-card'+(busy===item.id?' is-busy':'')} aria-busy={busy===item.id||undefined} draggable={canDrag} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
-    <button type="button" className="nxp-lead-card-main" onClick={()=>openInList(item.id)} aria-label={'Abrir lead '+display(item.contact)}>
-      <div className="nxp-lead-card-top"><Avatar value={display(item.contact)}/><span className="nxp-lead-date">{date(item.created_at)}</span></div>
-      <strong>{display(item.contact)}</strong><small>{formatPhoneBR(item.contact?.whatsapp)||'Telefone não informado'}</small>
-      <div className="nxp-lead-card-foot"><span>{item.source||'Origem não informada'}</span><ChevronRight size={16}/></div>
-    </button>
-    {wa(item.contact?.whatsapp)&&<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>}
-  </div>;
+  // Card denso como o da referência óptica: quem é, de onde veio, há quanto tempo está parado
+  // e as duas ações do dia a dia (conversar e mover) sem sair do quadro.
+  const canMove=!readonly&&hasStages&&stages.length>1;
+  const renderCard=item=>{
+    const name=display(item.contact);
+    const age=stageAge(item);
+    const here=colOf(item);
+    return <div key={item.id} className={'nxp-lead-card nxp-kcard'+(busy===item.id?' is-busy':'')} aria-busy={busy===item.id||undefined} draggable={canDrag} onDragStart={e=>{setDragging(item.id);e.dataTransfer.setData('text/plain',item.id)}} onDragEnd={()=>setDragging('')}>
+      <button type="button" className="nxp-lead-card-main nxp-kcard-main" onClick={()=>setSelected(item)} aria-label={'Abrir ficha de '+name}>
+        <span className="nxp-kcard-head"><strong>{name}</strong><span className="nxp-lead-date">{date(item.created_at)}</span></span>
+        <small>{formatPhoneBR(item.contact?.whatsapp)||'Telefone não informado'}</small>
+        <span className="nxp-kcard-tags">
+          <span className="nxp-kcard-tag">{item.source||'Sem origem'}</span>
+          {age&&<span className={'nxp-kcard-tag nxp-kcard-age nxp-kcard-age--'+age.level} title={age.text}><Clock3 size={12} aria-hidden="true"/> {age.short}<span className="nxp-sr"> — {age.text}</span></span>}
+        </span>
+      </button>
+      <div className="nxp-kcard-actions">
+        {wa(item.contact?.whatsapp)?<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>:<span className="nxp-kcard-nowa">Sem WhatsApp</span>}
+        {canMove&&<label className="nxp-kcard-move"><span className="nxp-sr">Mover {name} para outra etapa</span>
+          <select value="" disabled={Boolean(busy)} onChange={e=>{const next=e.target.value;e.target.value='';changeStage(item,next)}}>
+            <option value="">Mover para…</option>
+            {stages.filter(s=>s.id!==here).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+          </select></label>}
+      </div>
+    </div>;
+  };
+  const selectedLead=selected&&(leads.find(l=>l.id===selected.id)||selected);
+  const detail=mode==='board'&&selectedLead&&<NexusLeadDetail lead={selectedLead} stages={stages} readonly={readonly} pending={busy===selectedLead.id}
+    onStageChange={(lead,next)=>changeStage(lead,next)} onOperation={onOperation} onReload={onReload} onClose={()=>setSelected(null)}/>;
   const openCreate=()=>{setCreateOnList(true);setMode('list')};
   // Quadro e lista usam a mesma ficha: abrir um card leva à lista com o lead selecionado.
   const openInList=id=>{setFocusLead(id);setCreateOnList(false);setMode('list')};
@@ -404,7 +426,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
       </div>:<div className="nxp-list-scroll"><table className="nxp-table"><thead><tr><th>Contato</th><th>Etapa</th><th>Origem</th><th>Cadastro</th><th>Atendimento</th></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><button type="button" onClick={()=>setSelected(l)} className="nxp-person-btn" aria-label={'Abrir lead '+display(l.contact)}><Avatar value={display(l.contact)}/><div><strong>{display(l.contact)}</strong><small>{formatPhoneBR(l.contact?.whatsapp)||'Sem telefone'}</small></div></button></td><td><Pill value={stageLabel(l)}/></td><td>{l.source||'—'}</td><td>{date(l.created_at)}</td><td><WhatsLink phone={l.contact?.whatsapp}>Conversar</WhatsLink></td></tr>)}</tbody></table>{!filtered.length&&<Empty icon={UsersRound} title="Nenhum lead encontrado" detail="Tente modificar a busca ou o filtro de etapa."/>}</div>}
       <div className="nxp-footnote">{filtered.length} {filtered.length===1?'lead exibido':'leads exibidos'} · Até 250 registros recentes · {readonly?'Acesso somente leitura':hasStages?'Arraste os cards entre etapas ou altere a etapa nos detalhes':'Cadastre as etapas do funil para habilitar movimentações'}</div>
     </section>
-    {editor}{gateView}
+    {detail}{editor}{gateView}
   </div>;
 }
 
