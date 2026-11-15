@@ -109,7 +109,7 @@ Cada item entra como versão pequena, com teste e sem fingir integração.
 |---|---|---|
 | V38 ✅ | Card do Kanban: tempo na etapa, Conversar, Mover para…, ficha sobre o quadro | — |
 | V39 ✅ | Agenda com Compareceu / Não compareceu / Reagendar na linha | — |
-| V40 ✅ | Venda completa: forma, condição, parcelas, fonte, desconto + **Metas do mês** no painel | migração `goals` |
+| V40 ✅ | Venda completa: forma, condição, parcelas, fonte, desconto + **Metas do mês** no painel | — (usa colunas e tabela `goals` já existentes) |
 | V41 | **WhatsApp que envia** (texto, áudio, imagem) via WuzAPI, etapa e origem na conversa, contador de não lidas no menu e no card | WuzAPI homologada |
 | V42 | **Lembretes de agendamento** com a régua (3 dias, véspera, 08:00, 2h antes) e histórico de envios | V41 |
 | V43 | **Pós-venda automático** criado pela venda, régua editável 7→365 dias | V41 |
