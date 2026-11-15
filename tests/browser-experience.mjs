@@ -56,7 +56,10 @@ try{
       status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z'
     }],appointments:[{id:'3c2b1a09-8f7e-4d6c-9b5a-4e3d2c1b0a99',title:'Exame de vista — Ana',description:null,type:'meeting',
       start_at:new Date(Date.now()-86400000).toISOString(),end_at:null,status:'completed',location:null,
-      created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId}],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
+      created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId},
+      // V40: um compromisso que já passou e segue em aberto (pede presença) e outro futuro (pede confirmação).
+      {id:'4d3c2b1a-0f9e-4d8c-8b7a-5f4e3d2c1b0a',title:'Retorno da Ana',description:null,type:'followup',start_at:new Date(Date.now()-3600000).toISOString(),end_at:null,status:'scheduled',location:null,created_at:new Date(Date.now()-86400000).toISOString(),lead_id:leadId},
+      {id:'5e4d3c2b-1a0f-4e9d-9c8b-6a5f4e3d2c1b',title:'Entrega dos óculos',description:null,type:'visit',start_at:new Date(Date.now()+86400000*2).toISOString(),end_at:null,status:'scheduled',location:'Loja',created_at:new Date().toISOString(),lead_id:leadId}],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
       sale_date:new Date().toISOString(),lead_id:leadId,contact_id:contactId,seller_id:userId,contact}]
   };
   let referralUpdates=0;let proposalCalls=0;
@@ -71,7 +74,7 @@ try{
       table==='organizations'?[organization]:[];
     return route.fulfill({status:200,headers,body:JSON.stringify(rows)});
   });
-  let createdTasks=0;let completedTasks=0;let linkedTasks=0;let timelineCalls=0;
+  let createdTasks=0;let completedTasks=0;const apptStatus=[];let goalTarget=null;const saleCreates=[];const goalSets=[];let linkedTasks=0;let timelineCalls=0;
   await page.route('**/api/operation**',async route=>{
     if(route.request().method()==='POST'){
       const payload=route.request().postDataJSON();
@@ -91,13 +94,17 @@ try{
           validityDays:payload.validity_days,conditions:payload.conditions,notes:payload.notes});
         return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,message:'Proposta '+built.proposal.number+' gerada e registrada no histórico do lead.',proposal:built.proposal})});
       }
+      if(payload.action==='appointment_status')apptStatus.push(payload.status);
+      if(payload.action==='sale_create')saleCreates.push(payload);
+      if(payload.action==='goal_set'){goalSets.push(payload);goalTarget=payload.target;}
       if(payload.action==='task_create')createdTasks+=1;
       if(payload.action==='task_create'&&payload.lead_id===leadId)linkedTasks+=1;
       if(payload.action==='task_status'&&payload.status==='completed')completedTasks+=1;
       return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,message:'Tarefa criada com sucesso.',item:{id:'test-task'}})});
     }
     const response={data,counts:{leads:1,contacts:2,tasks:1,appointments:0,sales:1},
-      stages:[],warnings:[],read_only:false,referrals_ready:true};
+      stages:[],warnings:[],read_only:false,referrals_ready:true,
+      goal:{month:new Date().toISOString().slice(0,7),target:goalTarget,achieved:1500,sales_count:1,from:new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1,3)).toISOString(),to:new Date(Date.now()+20*86400000).toISOString(),partial:false}};
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
   });
   // Optional integrations are not provisioned in CI. Exercise their explicit
@@ -257,6 +264,20 @@ try{
       await hint.getByRole('button',{name:/Configurar funil/}).click();
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).waitFor({timeout:5000});
       await page.getByRole('dialog',{name:'Configurar funil de vendas'}).getByRole('button',{name:'Fechar',exact:true}).first().click();
+      // V39: card acionável — tempo na etapa visível e ficha abrindo por cima do quadro (sem trocar para a lista).
+      const card=page.locator('.nxp-kcard').first();
+      await card.waitFor({timeout:5000});
+      if(!(await card.locator('.nxp-kcard-age').innerText()).includes('2d'))throw new Error('Card sem tempo na etapa');
+      if(!await card.getByRole('link',{name:/Conversar/}).count())throw new Error('Card sem atalho de WhatsApp');
+      await page.waitForTimeout(1200);
+      await page.screenshot({path:'test-artifacts/leads-v37-kanban-card.png',fullPage:true});
+      await card.getByRole('button',{name:'Abrir ficha de Ana Teste'}).click();
+      const boardDetail=page.getByRole('dialog',{name:'Atendimento de Ana Teste'});
+      await boardDetail.waitFor({timeout:5000});
+      if(!await page.locator('.nxp-board').count())throw new Error('Abrir o card tirou o usuário do quadro');
+      await page.screenshot({path:'test-artifacts/leads-v37-board-detail.png',fullPage:true});
+      await boardDetail.getByRole('button',{name:'Fechar atendimento'}).click();
+      await boardDetail.waitFor({state:'detached',timeout:5000});
       await page.getByRole('button',{name:'Lista'}).click();
       await page.locator('.nx13-layout').waitFor({timeout:5000});
       await page.setViewportSize({width:390,height:844});
@@ -296,6 +317,39 @@ try{
     }
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
+  // V40: agenda mostra de quem é, pede presença do compromisso que passou e oferece confirmação do futuro.
+  await page.goto(host+'/agenda',{waitUntil:'domcontentloaded'});
+  await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).waitFor({timeout:8000});
+  await page.getByRole('button',{name:'Marcar que faltou: Retorno da Ana'}).waitFor({timeout:3000});
+  await page.getByRole('link',{name:'Confirmar pelo WhatsApp: Entrega dos óculos'}).waitFor({timeout:3000});
+  const confirmHref=await page.getByRole('link',{name:'Confirmar pelo WhatsApp: Entrega dos óculos'}).getAttribute('href');
+  if(!confirmHref.startsWith('https://wa.me/5548999991111?text='))throw new Error('Link de confirmação inválido: '+confirmHref);
+  if(!await page.getByText('Ana Teste',{exact:false}).first().count())throw new Error('Agenda não mostra de quem é o compromisso');
+  await page.waitForTimeout(600);
+  await page.screenshot({path:'test-artifacts/agenda-v38-presenca.png',fullPage:true});
+  await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).click();
+  for(let k=0;k<40&&!apptStatus.length;k++)await sleep(100);
+  if(apptStatus[0]!=='completed')throw new Error('Compareceu não enviou appointment_status completed: '+apptStatus.join(','));
+  // V41: venda com forma de pagamento/produto e meta do mês com progresso.
+  await page.goto(host+'/sales',{waitUntil:'domcontentloaded'});
+  const goalBox=page.getByRole('region',{name:'Meta do mês'});
+  await goalBox.getByRole('button',{name:'Definir meta'}).click();
+  await goalBox.getByRole('textbox',{name:'Meta de faturamento'}).fill('10.000,00');
+  await goalBox.getByRole('button',{name:'Salvar meta'}).click();
+  for(let k=0;k<40&&!goalSets.length;k++)await sleep(100);
+  if(goalSets[0]?.target!==10000)throw new Error('Meta não enviou o valor certo: '+JSON.stringify(goalSets));
+  await goalBox.getByRole('progressbar').waitFor({timeout:6000});
+  await page.getByRole('button',{name:'Registrar venda'}).click();
+  const saleForm=page.getByRole('form',{name:'Registrar venda'});
+  await saleForm.getByRole('textbox',{name:/Valor da venda/}).fill('1.250,00');
+  await saleForm.getByRole('combobox',{name:'Forma de pagamento'}).selectOption('pix');
+  await saleForm.getByRole('textbox',{name:/Produto ou serviço/}).fill('Óculos multifocal');
+  await page.waitForTimeout(500);
+  await page.screenshot({path:'test-artifacts/vendas-v39-meta.png',fullPage:true});
+  await saleForm.getByRole('button',{name:'Salvar venda'}).click();
+  for(let k=0;k<40&&!saleCreates.length;k++)await sleep(100);
+  const sc=saleCreates[0]||{};
+  if(sc.value!==1250||sc.payment_method!=='pix'||sc.product!=='Óculos multifocal')throw new Error('Venda não enviou os campos novos: '+JSON.stringify(sc));
   await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
   // exact: "Números da prospecção" também contém a palavra e, se carregar junto, quebrava o modo estrito.
   await page.getByRole('heading',{name:'Prospecção',exact:true}).waitFor({timeout:12000});
