@@ -83,7 +83,7 @@ export default function CRM({section}){
      withOrg('appointments').gte('created_at',since).select('id',{count:'exact',head:true}),
      withOrg('sales','id,value,created_at').gte('created_at',since),
      withOrg('tasks').gte('created_at',since).select('id',{count:'exact',head:true}),
-     withOrg('leads','id,source,status,temperature,created_at,contact:contacts(first_name,last_name,whatsapp)').order('created_at',{ascending:false}).limit(100),
+     withOrg('leads','id,source,status,temperature,created_at,contact:contacts!leads_contact_id_fkey(first_name,last_name,whatsapp)').order('created_at',{ascending:false}).limit(100),
      withOrg('tasks','id,title,status,priority,due_date,created_at').order('created_at',{ascending:false}).limit(100)
     ]);
     for(const item of [l,a,s,t,lr,tr])if(item.error)throw item.error;
