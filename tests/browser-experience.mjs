@@ -126,6 +126,15 @@ try{
   });
   // Avisos fictícios SÓ dentro do teste, para validar layout e ações da aba Prospecção (V34).
   let prospStatusCalls=0;
+  // V42: captura de leads em Configurações (chave fictícia SÓ no teste).
+  let captureRotations=0;
+  await page.route('**/api/lead-capture**',async route=>{
+    if(route.request().method()==='POST'){
+      captureRotations+=1;
+      return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,token:'nxl_'+'T'.repeat(43),hint:'TTTTTT',message:'Chave gerada. Copie agora: ela não aparece de novo.'})});
+    }
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(captureRotations?{active:true,hint:'TTTTTT',last_used_at:null}:{active:false,hint:'',last_used_at:null})});
+  });
   await page.route('**/api/prospecting-alerts**',async route=>{
     if(route.request().method()==='POST'){
       const payload=route.request().postDataJSON();
@@ -350,6 +359,21 @@ try{
   for(let k=0;k<40&&!saleCreates.length;k++)await sleep(100);
   const sc=saleCreates[0]||{};
   if(sc.value!==1250||sc.payment_method!=='pix'||sc.product!=='Óculos multifocal')throw new Error('Venda não enviou os campos novos: '+JSON.stringify(sc));
+  await page.goto(host+'/settings',{waitUntil:'domcontentloaded'});
+  const capture=page.getByRole('region',{name:/Captura de leads/});
+  await capture.waitFor({timeout:10000});
+  await capture.getByRole('button',{name:'Gerar chave'}).click();
+  await capture.getByText('nxl_TTTT',{exact:false}).waitFor({timeout:5000});
+  if(captureRotations!==1)throw new Error('Gerar chave de captura não chamou a API');
+  await capture.getByText('Como ligar o formulário').click();
+  if(!await capture.getByText('/api/leads/capture',{exact:false}).count())throw new Error('Endereço da captura não aparece');
+  for(const [w,h,name] of [[1440,900,'desktop'],[390,844,'mobile']]){
+    await page.setViewportSize({width:w,height:h});await sleep(250);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+    if(overflow>1)throw new Error('Configurações com rolagem horizontal em '+w+'px ('+overflow+'px)');
+    await capture.screenshot({path:'test-artifacts/captura-leads-'+name+'.png'});
+  }
+  await page.setViewportSize({width:1440,height:900});
   await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
   // exact: "Números da prospecção" também contém a palavra e, se carregar junto, quebrava o modo estrito.
   await page.getByRole('heading',{name:'Prospecção',exact:true}).waitFor({timeout:12000});
