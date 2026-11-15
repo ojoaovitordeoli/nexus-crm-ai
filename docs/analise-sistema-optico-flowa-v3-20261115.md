@@ -107,14 +107,14 @@ Cada item entra como versão pequena, com teste e sem fingir integração.
 ### Usuário (operação da empresa)
 | Ordem | Entrega | Depende de |
 |---|---|---|
-| V37 ✅ | Card do Kanban: tempo na etapa, Conversar, Mover para…, ficha sobre o quadro | — |
-| V38 | Agenda com Compareceu / Não compareceu / Reagendar na linha | — |
-| V39 | Venda completa: forma, condição, parcelas, fonte, desconto + **Metas do mês** no painel | migração `goals` |
-| V40 | **WhatsApp que envia** (texto, áudio, imagem) via WuzAPI, etapa e origem na conversa, contador de não lidas no menu e no card | WuzAPI homologada |
-| V41 | **Lembretes de agendamento** com a régua (3 dias, véspera, 08:00, 2h antes) e histórico de envios | V40 |
-| V42 | **Pós-venda automático** criado pela venda, régua editável 7→365 dias | V40 |
-| V43 | Repescagem (Kanban próprio + envio em massa com limite anti-bloqueio) | V40 |
-| V44 | Notificações escolhidas pelo usuário (novo lead, venda, agendamento, meta) | — |
+| V38 ✅ | Card do Kanban: tempo na etapa, Conversar, Mover para…, ficha sobre o quadro | — |
+| V39 ✅ | Agenda com Compareceu / Não compareceu / Reagendar na linha | — |
+| V40 ✅ | Venda completa: forma, condição, parcelas, fonte, desconto + **Metas do mês** no painel | migração `goals` |
+| V41 | **WhatsApp que envia** (texto, áudio, imagem) via WuzAPI, etapa e origem na conversa, contador de não lidas no menu e no card | WuzAPI homologada |
+| V42 | **Lembretes de agendamento** com a régua (3 dias, véspera, 08:00, 2h antes) e histórico de envios | V41 |
+| V43 | **Pós-venda automático** criado pela venda, régua editável 7→365 dias | V41 |
+| V44 | Repescagem (Kanban próprio + envio em massa com limite anti-bloqueio) | V41 |
+| V45 | Notificações escolhidas pelo usuário (novo lead, venda, agendamento, meta) | — |
 
 ### ADM (dono do NEXUS / super admin)
 | Ordem | Entrega |

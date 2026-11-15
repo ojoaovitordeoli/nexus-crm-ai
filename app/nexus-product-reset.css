@@ -332,7 +332,7 @@ body .nxp-premium .nxp-sales-empty strong{font:670 13px var(--product-font)!impo
 body .nxp-premium .nxp-sales-empty p{font:480 12px var(--product-font)!important;color:var(--p-muted)!important}
 @media(max-width:660px){body .nxp-premium .nxp-sales-metrics{grid-template-columns:1fr!important}body .nxp-premium .nxp-sales-metrics article{min-height:96px!important;border-right:0!important;border-bottom:1px solid var(--p-border)!important}body .nxp-premium .nxp-sales-metrics article:last-child{border-bottom:0!important}}
 
-/* V37 — card do Kanban acionável (tempo na etapa + Conversar + Mover para…) */
+/* V38 — card do Kanban acionável (tempo na etapa + Conversar + Mover para…) */
 .nxp-sr{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important}
 body .nxp-premium .nxp-kcard{display:flex!important;flex-direction:column!important;padding:0!important;overflow:hidden}
 body .nxp-premium .nxp-kcard-main{display:flex!important;flex-direction:column!important;gap:4px!important;padding:10px 11px 9px!important;text-align:left;background:transparent;border:0;width:100%;cursor:pointer;color:inherit}
