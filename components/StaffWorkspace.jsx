@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {dueDayKey,dueDate,contactSearchTerm} from '../lib/shell-rules.mjs';
-import {needsAttendance,confirmationLink} from '../lib/appointment-view.mjs';
+import {needsAttendance,confirmationLink,awaitingAttendance} from '../lib/appointment-view.mjs';
 import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
 import NexusExecutiveHome from './NexusExecutiveHome';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
@@ -615,6 +615,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           const todays=data.appointments.filter(a=>a.start_at&&keyOf(a.start_at)===todayKey).sort((a,b)=>new Date(a.start_at)-new Date(b.start_at));
           const upcoming=data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&keyOf(a.start_at)!==todayKey&&!['cancelled','completed'].includes(a.status))).sort((a,b)=>new Date(a.start_at||0)-new Date(b.start_at||0));
           const leadById=new Map(data.leads.map(l=>[l.id,l]));
+          // V45: compromissos de dias anteriores sem presença/falta registrada (antes ficavam escondidos).
+          const awaiting=awaitingAttendance(data.appointments);
           const hour=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
           const localInput=v=>{if(!v)return '';const d=new Date(v);return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-')+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
           const row=(a,showDay)=>editApptId===a.id?<form className="fx-row fx-apptrow fx-appt-edit" key={a.id} onSubmit={e=>saveApptEdit(e,a)} aria-label="Reagendar compromisso">
@@ -663,6 +665,10 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           </form>}
           <div className="fx-agenda-grid">
             <div className="fx-agenda-main">
+              {awaiting.length>0&&<section className="fx-box fx-box--attend" aria-label="Aguardando presença">
+                <div className="fx-boxhead"><h2>Aguardando presença</h2><span className="fx-boxmeta">{readonly?'Compromissos que já passaram sem registro':'Marque quem compareceu ou faltou'}</span><span className="fx-groupcount">{awaiting.length}</span></div>
+                {awaiting.map(a=>row(a,true))}
+              </section>}
               <section className="fx-box">
                 <div className="fx-boxhead"><h2>Hoje</h2><span className="fx-boxmeta">{now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</span><span className="fx-groupcount">{todays.length}</span></div>
                 {todays.length?todays.map(a=>row(a,false)):<p className="fx-empty-small">Nenhum compromisso hoje.</p>}

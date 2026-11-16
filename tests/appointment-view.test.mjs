@@ -32,3 +32,19 @@ test('confirmação: sem telefone, sem data ou já resolvido não gera link', ()
   assert.equal(confirmationLink({ status: 'scheduled' }, { whatsapp: '48999991111' }), '');
   assert.equal(confirmationLink({ start_at: at(1), status: 'completed' }, { whatsapp: '48999991111' }), '');
 });
+
+import { awaitingAttendance } from '../lib/appointment-view.mjs';
+test('aguardando presença: só dias anteriores em aberto, mais recente primeiro', () => {
+  const list = [
+    { id: 'hoje', start_at: at(0, 8), status: 'scheduled' },
+    { id: 'ontem', start_at: at(-1), status: 'scheduled' },
+    { id: 'semana', start_at: at(-6), status: 'confirmed' },
+    { id: 'feito', start_at: at(-2), status: 'completed' },
+    { id: 'faltou', start_at: at(-3), status: 'no_show' },
+    { id: 'cancelado', start_at: at(-4), status: 'cancelled' },
+    { id: 'futuro', start_at: at(2), status: 'scheduled' },
+    { id: 'semdata', status: 'scheduled' },
+  ];
+  assert.deepEqual(awaitingAttendance(list, NOW).map((a) => a.id), ['ontem', 'semana']);
+  assert.deepEqual(awaitingAttendance([], NOW), []);
+});

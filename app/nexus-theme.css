@@ -1152,3 +1152,9 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
   :root:root:root body .fx-sale-form{grid-template-columns:1fr}
   :root:root:root body .fx-table--sales .fx-sale-edit{grid-template-columns:1fr!important}
 }
+
+/* V45 — bloco "Aguardando presença" na agenda */
+:root:root:root body .fx-box--attend{border-color:#e8c27a}
+:root:root:root body .fx-box--attend .fx-boxhead{background:#fff8e8}
+:root:root:root body.dark .fx-box--attend{border-color:#6b5124}
+:root:root:root body.dark .fx-box--attend .fx-boxhead{background:#2a2113}
