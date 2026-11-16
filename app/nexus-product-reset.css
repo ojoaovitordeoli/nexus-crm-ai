@@ -360,3 +360,7 @@ body .auth .pass-toggle{position:absolute;right:4px;top:50%;transform:translateY
 body .auth .pass-toggle:hover{color:var(--p-text,#2b2b2d);background:rgba(0,0,0,.05)}
 body.dark .auth .pass-toggle:hover,.dark .auth .pass-toggle:hover{background:rgba(255,255,255,.08)}
 body .auth .pass-toggle:focus-visible{outline:2px solid var(--fx-accent-text,#5f00e6);outline-offset:1px}
+
+/* V45 — "Mover" do card não corta em coluna estreita */
+body .nxp-premium .nxp-kcard-move select{text-overflow:ellipsis;white-space:nowrap;min-width:0}
+body .nxp-premium .nxp-kcard-actions>*{min-width:0}

@@ -69,6 +69,8 @@ try{
       created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId},
       // V40: um compromisso que já passou e segue em aberto (pede presença) e outro futuro (pede confirmação).
       {id:'4d3c2b1a-0f9e-4d8c-8b7a-5f4e3d2c1b0a',title:'Retorno da Ana',description:null,type:'followup',start_at:new Date(Date.now()-3600000).toISOString(),end_at:null,status:'scheduled',location:null,created_at:new Date(Date.now()-86400000).toISOString(),lead_id:leadId},
+      // V45: compromisso de dois dias atrás ainda em aberto → bloco "Aguardando presença".
+      {id:'6f5e4d3c-2b1a-4f0e-8d9c-7b6a5f4e3d2c',title:'Revisão pendente',description:null,type:'followup',start_at:new Date(Date.now()-2*86400000).toISOString(),end_at:null,status:'scheduled',location:null,created_at:new Date(Date.now()-3*86400000).toISOString(),lead_id:leadId},
       {id:'5e4d3c2b-1a0f-4e9d-9c8b-6a5f4e3d2c1b',title:'Entrega dos óculos',description:null,type:'visit',start_at:new Date(Date.now()+86400000*2).toISOString(),end_at:null,status:'scheduled',location:'Loja',created_at:new Date().toISOString(),lead_id:leadId}],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
       sale_date:new Date().toISOString(),lead_id:leadId,contact_id:contactId,seller_id:userId,contact}]
   };
@@ -293,6 +295,7 @@ try{
       await card.getByRole('button',{name:'Abrir ficha de Ana Teste'}).click();
       const boardDetail=page.getByRole('dialog',{name:'Atendimento de Ana Teste'});
       await boardDetail.waitFor({timeout:5000});
+      await boardDetail.getByText('+55 (48) 99999-1111').first().waitFor({timeout:3000});
       if(!await page.locator('.nxp-board').count())throw new Error('Abrir o card tirou o usuário do quadro');
       await page.screenshot({path:'test-artifacts/leads-v37-board-detail.png',fullPage:true});
       await boardDetail.getByRole('button',{name:'Fechar atendimento'}).click();
@@ -339,6 +342,9 @@ try{
   // V40: agenda mostra de quem é, pede presença do compromisso que passou e oferece confirmação do futuro.
   await page.goto(host+'/agenda',{waitUntil:'domcontentloaded'});
   await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).waitFor({timeout:8000});
+  const awaitingBox=page.getByRole('region',{name:'Aguardando presença'});
+  await awaitingBox.getByRole('button',{name:'Marcar que faltou: Revisão pendente'}).waitFor({timeout:3000});
+  if(await awaitingBox.getByText('Retorno da Ana').count())throw new Error('Compromisso de hoje não deveria ir para Aguardando presença');
   await page.getByRole('button',{name:'Marcar que faltou: Retorno da Ana'}).waitFor({timeout:3000});
   await page.getByRole('link',{name:'Confirmar pelo WhatsApp: Entrega dos óculos'}).waitFor({timeout:3000});
   const confirmHref=await page.getByRole('link',{name:'Confirmar pelo WhatsApp: Entrega dos óculos'}).getAttribute('href');
