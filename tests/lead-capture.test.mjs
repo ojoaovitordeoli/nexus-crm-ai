@@ -12,8 +12,9 @@ function memoryStore(){
   const store={
     async findActiveToken(hash){const t=db.tokens.find(x=>x.token_hash===hash&&!x.revoked_at);return t?{id:t.id,organization_id:t.organization_id}:null},
     async touchToken(tid){const t=db.tokens.find(x=>x.id===tid);if(t)t.last_used_at='agora'},
-    async findContact(org,{whatsapp,email}){
-      return db.contacts.find(c=>c.organization_id===org&&((whatsapp&&(c.whatsapp===whatsapp||'55'+c.whatsapp===whatsapp))||(email&&c.email===email)))||null},
+    async findContact(org,{whatsapp,email,instagram}){
+      return db.contacts.find(c=>c.organization_id===org&&((whatsapp&&(c.whatsapp===whatsapp||'55'+c.whatsapp===whatsapp))||(email&&c.email===email)||(instagram&&c.instagram===instagram)))||null},
+    async fillContact(org,cid,patch){const c=db.contacts.find(x=>x.id===cid&&x.organization_id===org);if(c&&!c.instagram)Object.assign(c,patch)},
     async createContact(org,row){const c={id:id('ct'),organization_id:org,...row};db.contacts.push(c);return {id:c.id}},
     async findOpenLead(org,cid){return db.leads.find(l=>l.organization_id===org&&l.contact_id===cid&&!l.closed_at)||null},
     async firstStage(org){return db.pipelines[org]},
@@ -62,7 +63,7 @@ test('qualificação: quente, morno e frio pela regra; temperatura do formulári
   const f=qualify(v({email:'a@b.co',temperature:'quente'}));
   assert.equal(f.temperature,'hot');assert.match(f.reasons.join(),/enviada pelo formulário/);
   assert.match(validateCapture({email:'a@b.co',temperature:'fervendo'}).error,/quente, morno ou frio/);
-  assert.match(validateCapture({name:'Sem contato'}).error,/whatsapp ou email/);
+  assert.match(validateCapture({name:'Sem contato'}).error,/whatsapp, email ou instagram/);
 });
 
 test('cria contato e lead na 1ª etapa com UTM/anúncio, nota com o porquê e trilha',async()=>{
@@ -102,4 +103,23 @@ test('chave revogada, ausente ou errada não cria nada; empresa sem funil recebe
   const b=await rotateCaptureToken({store:m.store,access:ADMIN,orgId:m.B,actorId:'u2'});
   const r=await captureLead({store:m.store,authorization:'Bearer '+b.body.token,body:{email:'a@b.co'}});
   assert.equal(r.status,409);
+});
+
+test('Instagram: comenta a palavra cria lead só com o @, sem duplicar e completando contato existente',async()=>{
+  const m=await withToken();
+  assert.match(validateCapture({instagram:'nome com espaço'}).error,/instagram inválido/);
+  const r=await captureLead({store:m.store,authorization:m.auth,body:{instagram:'@Otica.Visao',keyword:'EXAME',post_url:'https://www.instagram.com/p/X1/',source:'Instagram: comentou EXAME'}});
+  assert.equal(r.status,201);
+  assert.equal(m.db.contacts[0].instagram,'otica.visao');
+  assert.equal(m.db.contacts[0].first_name,'@otica.visao');
+  assert.equal(r.body.temperature,'cold'); // 10 (Instagram) + 15 (comentou) = 25
+  assert.match(m.db.notes[0].content,/Instagram: @otica\.visao \(https:\/\/www\.instagram\.com\/otica\.visao\/\) · comentou "EXAME"/);
+  // mesma pessoa manda depois o WhatsApp pelo direct: mesmo lead, esquenta
+  const r2=await captureLead({store:m.store,authorization:m.auth,body:{instagram:'otica.visao',whatsapp:'48999990000',answers:{urgencia:'hoje'}}});
+  assert.equal(r2.body.status,'existing');assert.equal(m.db.leads.length,1);assert.equal(m.db.leads[0].temperature,'hot');
+  // contato que já existia pelo WhatsApp ganha o @
+  const m2=await withToken();
+  await captureLead({store:m2.store,authorization:m2.auth,body:{whatsapp:'48911112222'}});
+  await captureLead({store:m2.store,authorization:m2.auth,body:{whatsapp:'48911112222',instagram:'cliente.antigo'}});
+  assert.equal(m2.db.contacts.length,1);assert.equal(m2.db.contacts[0].instagram,'cliente.antigo');
 });
