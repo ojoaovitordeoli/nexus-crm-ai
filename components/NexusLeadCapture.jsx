@@ -74,8 +74,8 @@ export default function NexusLeadCapture({organizationId}){
           <p>Envie <code>POST</code> para <code>{endpoint}</code> com o cabeçalho <code>Authorization: Bearer &lt;chave&gt;</code> e o corpo em JSON:</p>
           <pre style={{whiteSpace:'pre-wrap',wordBreak:'break-word',fontSize:12,background:'var(--fx-subtle)',border:'1px solid var(--fx-border)',borderRadius:8,padding:10,margin:'8px 0'}}>{EXAMPLE}</pre>
           <button type="button" className="fx-btn" onClick={()=>copy(EXAMPLE,'Exemplo copiado.')}><Copy size={15}/> Copiar exemplo</button>
-          <p>Classificação: WhatsApp +25, e-mail +10, urgência "hoje/esta semana" +40 ou "este mês" +20, orçamento +15, mensagem +10. Quente a partir de 65, morno de 35 a 64, frio abaixo de 35. Se o formulário mandar <code>"temperature": "quente"</code>, vale o que veio. O porquê fica anotado no histórico do lead.</p>
-          <p>Contato que já existe é reaproveitado; se ele já tem atendimento aberto, a nova entrada vira uma nota e o lead só esquenta (nunca esfria sozinho).</p>
+          <p>Classificação: WhatsApp +25, e-mail +10, Instagram +10, comentou a palavra-chave +15, urgência "hoje/esta semana" +40 ou "este mês" +20, orçamento +15, mensagem +10. Quente a partir de 65, morno de 35 a 64, frio abaixo de 35. Se o formulário mandar <code>"temperature": "quente"</code>, vale o que veio. O porquê fica anotado no histórico do lead.</p>
+          <p>Aceita também só o @ do Instagram (<code>"instagram": "@perfil"</code>, <code>"keyword": "EXAME"</code>) para o "comenta a palavra" do ManyChat. Contato que já existe é reaproveitado; se ele já tem atendimento aberto, a nova entrada vira uma nota e o lead só esquenta (nunca esfria sozinho).</p>
         </details>
         {notice&&<p role="status" className="fx-muted">{notice}</p>}
         {error&&<p role="alert" className="nx13-error">{error}</p>}
