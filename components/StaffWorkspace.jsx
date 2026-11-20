@@ -25,6 +25,7 @@ import PremiumSales from './PremiumSales';
 import ConfirmButton from './ConfirmButton';
 import NexusAssistant from './NexusAssistant';
 import NexusProspecting from './NexusProspecting';
+import {daysLate,lateLabel} from '../lib/sales-attribution.mjs';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -355,6 +356,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     // "Em aberto" segue a mesma regra do contador (openTasks): canceladas não são pendências.
     return matches&&(taskFilter==='all'||(taskFilter==='done'?done:!done&&!cancelled));
   });
+  const leadsById=useMemo(()=>new Map(data.leads.map(l=>[l.id,l])),[data.leads]);
   const lateTaskCount=useMemo(()=>{const todayKey=localDayKey(new Date());return openTasks.filter(t=>{const k=dueKey(t);return k&&k<todayKey}).length},[openTasks]);
   const taskGroups=useMemo(()=>{
     const todayKey=localDayKey(new Date());const keyOf=dueKey;
@@ -600,8 +602,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <div className="fx-subhead"><h3>{label}</h3><span className="fx-groupcount">{items.length}</span></div>
               {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());if(editTaskId===t.id)return <form key={t.id} className='fx-row fx-taskline fx-task-edit' onSubmit={e=>saveTaskEdit(e,t)} aria-label='Editar tarefa'><input aria-label='Título da tarefa' required minLength={2} maxLength={190} value={editTask.title} onChange={e=>setEditTask(v=>({...v,title:e.target.value}))} autoFocus/><input type='date' aria-label='Prazo' value={editTask.due_date} onChange={e=>setEditTask(v=>({...v,due_date:e.target.value}))}/><select aria-label='Prioridade' value={editTask.priority} onChange={e=>setEditTask(v=>({...v,priority:e.target.value}))}><option value='low'>Baixa</option><option value='medium'>Normal</option><option value='high'>Alta</option><option value='urgent'>Urgente</option></select><span className='fx-row-actions'><button type='submit' className='fx-btn fx-btn--primary' disabled={saving}>Salvar</button><button type='button' className='fx-btn' onClick={()=>setEditTaskId('')}>Cancelar</button><ConfirmButton onConfirm={()=>deleteTask(t)} disabled={saving}/></span></form>;return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
                 <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+(t.title||'tarefa')}><Check size={14}/></button>
-                <div><strong className={done?'fx-done':''}>{t.title||'Tarefa sem título'}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}</div>
-                <span className={id==='late'?'fx-late':'fx-due'}>{dueKey(t)?(id==='today'?'Hoje':dueDate(t.due_date).toLocaleDateString('pt-BR')):'Sem prazo'}</span>
+                <div><strong className={done?'fx-done':''}>{t.title||'Tarefa sem título'}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}{(()=>{const lead=t.lead_id&&leadsById.get(t.lead_id);if(!lead)return null;const who=nameOf(lead.contact);return <small className="fx-task-lead">Lead: <Link href={'/leads?q='+encodeURIComponent(who)}>{who}</Link>{lead.source?' · '+lead.source:''}</small>})()}</div>
+                {(()=>{const shown=dueKey(t)?dueDate(t.due_date).toLocaleDateString('pt-BR'):'';const late=id==='late'?lateLabel(daysLate(dueKey(t),localDayKey(new Date()))):'';return <span className={id==='late'?'fx-late':'fx-due'} title={shown?'Prazo '+shown:undefined}>{shown?(id==='today'?'Hoje':late||shown):'Sem prazo'}</span>})()}
               {!readonly&&<button type='button' className='nx13-linkbutton fx-task-editlink' onClick={()=>startTaskEdit(t)} aria-label={'Editar '+(t.title||'tarefa')}>Editar</button>}</div>})}
             </div>)}
             {!filteredTasks.length&&<div className="fx-empty"><strong>{search?'Nenhuma tarefa encontrada':taskFilter==='done'?'Nenhuma tarefa concluída':'Nada pendente'}</strong><p>{search?'Ajuste a busca ou o filtro.':taskFilter==='open'&&!readonly?'Use “Adicionar tarefa” para registrar a próxima atividade.':'Altere o filtro para ver outras tarefas.'}</p></div>}
