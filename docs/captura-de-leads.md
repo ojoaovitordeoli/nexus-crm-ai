@@ -53,7 +53,7 @@ Quente ≥ 65 · Morno 35–64 · Frio < 35. Se vier `temperature` (quente/morno
 O motivo da classificação fica numa nota no histórico do lead.
 
 ## O que acontece
-1. Contato da mesma empresa com o mesmo WhatsApp (com ou sem 55), e-mail ou @ do Instagram é **reaproveitado** (e ganha o @ se ainda não tinha); senão, é criado.
+1. Contato da mesma empresa com o mesmo WhatsApp (com ou sem 55), e-mail ou @ do Instagram é **reaproveitado** e ganha o que faltava na ficha (WhatsApp, e-mail ou @). O que já estava preenchido nunca é trocado; senão, é criado.
 2. Se esse contato já tem **atendimento aberto** no funil padrão: nada é duplicado. A entrada vira uma nota, `last_interaction_at` é atualizado e a temperatura **só sobe** (frio → morno → quente).
 3. Senão: lead novo na **primeira etapa ativa do funil padrão**, com UTM, campanha, conjunto, anúncio, formulário, temperatura, pontuação e valor; trilha de etapa e nota com as respostas.
 4. Tudo vai para `audit_logs`.
@@ -86,7 +86,7 @@ Quem comenta normalmente só tem o @. A captura aceita:
 }
 ```
 - `instagram` aceita `@usuario`, `usuario` ou o link do perfil. É gravado sem @, em minúsculas (`contacts.instagram`, único por empresa).
-- Só com o @ e a palavra, o lead entra **frio** (10 + 15). Quando a pessoa manda o WhatsApp no direct e o fluxo reenvia com `instagram` + `whatsapp`, é o **mesmo lead** e ele esquenta.
+- Só com o @ e a palavra, o lead entra **frio** (10 + 15). Quando a pessoa manda o WhatsApp no direct e o fluxo reenvia com `instagram` + `whatsapp`, é o **mesmo lead**, ele esquenta e o WhatsApp vai para a ficha do contato (V49).
 - A nota do histórico traz o link do perfil, a palavra e o post.
 
 ### ManyChat → NEXUS (sem n8n)
