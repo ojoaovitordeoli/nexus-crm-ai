@@ -14,7 +14,7 @@ function memoryStore(){
     async touchToken(tid){const t=db.tokens.find(x=>x.id===tid);if(t)t.last_used_at='agora'},
     async findContact(org,{whatsapp,email,instagram}){
       return db.contacts.find(c=>c.organization_id===org&&((whatsapp&&(c.whatsapp===whatsapp||'55'+c.whatsapp===whatsapp))||(email&&c.email===email)||(instagram&&c.instagram===instagram)))||null},
-    async fillContact(org,cid,patch){const c=db.contacts.find(x=>x.id===cid&&x.organization_id===org);if(c&&!c.instagram)Object.assign(c,patch)},
+    async fillContact(org,cid,patch){const c=db.contacts.find(x=>x.id===cid&&x.organization_id===org);if(c)for(const [k,v] of Object.entries(patch))if(!c[k])c[k]=v},
     async createContact(org,row){const c={id:id('ct'),organization_id:org,...row};db.contacts.push(c);return {id:c.id}},
     async findOpenLead(org,cid){return db.leads.find(l=>l.organization_id===org&&l.contact_id===cid&&!l.closed_at)||null},
     async firstStage(org){return db.pipelines[org]},
@@ -122,4 +122,19 @@ test('Instagram: comenta a palavra cria lead só com o @, sem duplicar e complet
   await captureLead({store:m2.store,authorization:m2.auth,body:{whatsapp:'48911112222'}});
   await captureLead({store:m2.store,authorization:m2.auth,body:{whatsapp:'48911112222',instagram:'cliente.antigo'}});
   assert.equal(m2.db.contacts.length,1);assert.equal(m2.db.contacts[0].instagram,'cliente.antigo');
+});
+
+test('Contato achado pelo @ ganha o WhatsApp e o e-mail que faltavam, sem sobrescrever',async()=>{
+  const m=await withToken();
+  await captureLead({store:m.store,authorization:m.auth,body:{instagram:'@ana.teste',keyword:'EXAME'}});
+  assert.equal(m.db.contacts[0].whatsapp??null,null);
+  const r=await captureLead({store:m.store,authorization:m.auth,body:{instagram:'ana.teste',whatsapp:'(48) 99999-4747',email:'ana@exemplo.com'}});
+  assert.equal(r.body.status,'existing');
+  assert.equal(m.db.contacts.length,1);
+  assert.ok(m.db.contacts[0].whatsapp.endsWith('48999994747'));
+  assert.equal(m.db.contacts[0].email,'ana@exemplo.com');
+  // Já preenchido não muda
+  await captureLead({store:m.store,authorization:m.auth,body:{instagram:'ana.teste',whatsapp:'48911110000',email:'outro@exemplo.com'}});
+  assert.ok(m.db.contacts[0].whatsapp.endsWith('48999994747'));
+  assert.equal(m.db.contacts[0].email,'ana@exemplo.com');
 });
