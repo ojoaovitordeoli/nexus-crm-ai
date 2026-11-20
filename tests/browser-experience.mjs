@@ -63,7 +63,7 @@ try{
   const data={
     leads:[lead],contacts:[contact,referrer],tasks:[{
       id:'92618c31-e9af-41a1-8b48-7e7dac9ae0ef',title:'Retornar para Ana',
-      status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z'
+      status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z',lead_id:leadId
     }],appointments:[{id:'3c2b1a09-8f7e-4d6c-9b5a-4e3d2c1b0a99',title:'Exame de vista — Ana',description:null,type:'meeting',
       start_at:new Date(Date.now()-86400000).toISOString(),end_at:null,status:'completed',location:null,
       created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId},
@@ -338,6 +338,20 @@ try{
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count()){
       throw new Error('Client exception on extended route: '+route);
     }
+    if(route==='reports'){
+      // V21: origem até a venda (lead de Indicação com venda de R$ 1.500 vinculada).
+      const row=page.locator('.fx-table--sources .fx-tr',{hasText:'Indicação'});
+      await row.waitFor({timeout:5000});
+      const text=(await row.innerText()).replace(/\s+/g,' ');
+      if(!/100%/.test(text)||!/1\.500/.test(text))throw new Error('Source funnel row wrong: '+text);
+    }
+    if(route==='tasks'){
+      const line=page.locator('.fx-taskline.is-late',{hasText:'Retornar para Ana'});
+      await line.waitFor({timeout:5000});
+      const text=await line.innerText();
+      if(!/Lead: Ana Teste/.test(text))throw new Error('Task does not show linked lead: '+text);
+      if(!/Vencida há \d+ dias?/.test(text))throw new Error('Task does not show days late: '+text);
+    }
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   // V40: agenda mostra de quem é, pede presença do compromisso que passou e oferece confirmação do futuro.
@@ -408,6 +422,12 @@ try{
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     if(overflow>1)throw new Error('Prospecção com rolagem horizontal em '+w+'px ('+overflow+'px)');
     await page.screenshot({path:'test-artifacts/prospeccao-'+name+'.png',fullPage:true});
+  }
+  for(const route of ['reports','tasks']){
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(550);
+    await page.screenshot({path:'test-artifacts/'+route+'-mobile.png',fullPage:true});
   }
   await page.setViewportSize({width:1440,height:900});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
