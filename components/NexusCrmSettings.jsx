@@ -130,8 +130,8 @@ function StagesTab({data,canManage,run,busy}){
   </div>;
 }
 
-export default function NexusCrmSettings({organizationId}){
-  const [tab,setTab]=useState('stages');
+export default function NexusCrmSettings({organizationId,initialTab='stages'}){
+  const [tab,setTab]=useState(initialTab);
   const [data,setData]=useState(null);const [error,setError]=useState('');const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);const inFlight=useRef(false);
   const load=useCallback(async()=>{
     if(!organizationId)return;

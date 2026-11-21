@@ -31,6 +31,16 @@ try{
   page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('Console: '+m.text())});
   await page.goto(host+'/login',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'Bem-vindo de volta'}).waitFor();
+  // V43: olho para mostrar/ocultar a senha.
+  const passBox=page.getByPlaceholder('Sua senha');
+  await passBox.fill('senha-teste');
+  if(await passBox.getAttribute('type')!=='password')throw new Error('Senha deveria começar oculta');
+  await page.getByRole('button',{name:'Mostrar senha'}).click();
+  if(await passBox.getAttribute('type')!=='text')throw new Error('Mostrar senha não revelou o texto');
+  await page.screenshot({path:'test-artifacts/login-v42-mostrar-senha.png'});
+  await page.getByRole('button',{name:'Ocultar senha'}).click();
+  if(await passBox.getAttribute('type')!=='password')throw new Error('Ocultar senha não escondeu o texto');
+  await passBox.fill('');
   await page.getByRole('button',{name:'Esqueci minha senha'}).click();
   await page.getByRole('heading',{name:'Recuperar acesso'}).waitFor({timeout:5000});
   await page.getByRole('button',{name:'Voltar ao login'}).click();
@@ -53,12 +63,19 @@ try{
   const data={
     leads:[lead],contacts:[contact,referrer],tasks:[{
       id:'92618c31-e9af-41a1-8b48-7e7dac9ae0ef',title:'Retornar para Ana',
-      status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z'
+      status:'pending',priority:'medium',due_date:'2026-11-04',created_at:'2026-10-25T12:00:00Z',lead_id:leadId
     }],appointments:[{id:'3c2b1a09-8f7e-4d6c-9b5a-4e3d2c1b0a99',title:'Exame de vista — Ana',description:null,type:'meeting',
       start_at:new Date(Date.now()-86400000).toISOString(),end_at:null,status:'completed',location:null,
       created_at:new Date(Date.now()-86400000*2).toISOString(),lead_id:leadId},
       // V40: um compromisso que já passou e segue em aberto (pede presença) e outro futuro (pede confirmação).
+<<<<<<< HEAD
       {id:'4d3c2b1a-0f9e-4d8c-8b7a-5f4e3d2c1b0a',title:'Retorno da Ana',description:null,type:'followup',start_at:new Date(Date.now()-3600000).toISOString(),end_at:null,status:'scheduled',location:null,created_at:new Date(Date.now()-86400000).toISOString(),lead_id:leadId},
+=======
+      // "Retorno da Ana" é de HOJE mesmo logo após a meia-noite (1h atrás, mas nunca antes de 00:00:30).
+      {id:'4d3c2b1a-0f9e-4d8c-8b7a-5f4e3d2c1b0a',title:'Retorno da Ana',description:null,type:'followup',start_at:new Date(Math.max(Date.now()-3600000,new Date().setHours(0,0,30,0))).toISOString(),end_at:null,status:'scheduled',location:null,created_at:new Date(Date.now()-86400000).toISOString(),lead_id:leadId},
+      // V45: compromisso de dois dias atrás ainda em aberto → bloco "Aguardando presença".
+      {id:'6f5e4d3c-2b1a-4f0e-8d9c-7b6a5f4e3d2c',title:'Revisão pendente',description:null,type:'followup',start_at:new Date(Date.now()-2*86400000).toISOString(),end_at:null,status:'scheduled',location:null,created_at:new Date(Date.now()-3*86400000).toISOString(),lead_id:leadId},
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
       {id:'5e4d3c2b-1a0f-4e9d-9c8b-6a5f4e3d2c1b',title:'Entrega dos óculos',description:null,type:'visit',start_at:new Date(Date.now()+86400000*2).toISOString(),end_at:null,status:'scheduled',location:'Loja',created_at:new Date().toISOString(),lead_id:leadId}],sales:[{id:'7e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f',value:1500,created_at:new Date().toISOString(),
       sale_date:new Date().toISOString(),lead_id:leadId,contact_id:contactId,seller_id:userId,contact}]
   };
@@ -119,6 +136,16 @@ try{
       contact_categories:{kind:'contact_categories',installed:false,items:[]},company_sectors:{kind:'company_sectors',installed:false,items:[]}},
       fields:[],pipelines:[],stages:[],requirements:[]})});
   });
+  // V51/V53: "Minhas telas" (sem telas fixadas no teste; vocabulário geral).
+  await page.route('**/api/views**',async route=>{
+    if(route.request().method()==='GET')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({telas:[],vocab:{ramo:'geral',rotulo:'Geral',sugestoes:[]}})});
+    // V55: "Ver prévia" no Personalizar devolve uma tela fictícia SÓ no teste.
+    const body=JSON.parse(route.request().postData()||'{}');
+    if(body.acao==='abrir')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({tela:{titulo:'Leads por etapa',descricao:'Leads · por etapa',geradoEm:new Date().toISOString(),
+      spec:{tipo:'grafico',estilo:'pizza',medida:'quantidade'},grupos:[{grupo:'Novo',quantidade:5,valor:0},{grupo:'Proposta',quantidade:3,valor:0},{grupo:'Fechamento',quantidade:1,valor:0}],total:{quantidade:9,valor:0}}})});
+    if(body.acao==='salvar')return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({tela:{id:'00000000-0000-4000-8000-0000000000aa',nome:'Leads por etapa',spec:body.spec}})});
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true})});
+  });
   await page.route('**/api/team**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({members:[
       {id:'m1',user_id:userId,role:'AGENCY_ADMIN',role_label:'Admin da agência',status:'active',full_name:'Operador de Teste',email:'test@example.invalid',is_me:true,editable:false}
@@ -126,6 +153,15 @@ try{
   });
   // Avisos fictícios SÓ dentro do teste, para validar layout e ações da aba Prospecção (V34).
   let prospStatusCalls=0;
+  // V42: captura de leads em Configurações (chave fictícia SÓ no teste).
+  let captureRotations=0;
+  await page.route('**/api/lead-capture**',async route=>{
+    if(route.request().method()==='POST'){
+      captureRotations+=1;
+      return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({ok:true,token:'nxl_'+'T'.repeat(43),hint:'TTTTTT',message:'Chave gerada. Copie agora: ela não aparece de novo.'})});
+    }
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(captureRotations?{active:true,hint:'TTTTTT',last_used_at:null}:{active:false,hint:'',last_used_at:null})});
+  });
   await page.route('**/api/prospecting-alerts**',async route=>{
     if(route.request().method()==='POST'){
       const payload=route.request().postDataJSON();
@@ -192,6 +228,21 @@ try{
   await page.getByRole('button',{name:'Concluir Retornar para Ana'}).click();
   for(let k=0;k<40&&completedTasks!==1;k++)await sleep(100);
   if(completedTasks!==1)throw new Error('Dashboard did not complete the task through the operation API');
+  // V55: Personalizar — montar uma tela por menus (sem IA), ver a prévia e salvar.
+  await page.goto(host+'/personalizar',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Personalizar'}).waitFor({timeout:8000});
+  await page.getByRole('radio',{name:'Pizza'}).click();
+  await page.getByRole('button',{name:'Ver prévia'}).click();
+  await page.locator('.nx-view-pie').waitFor({timeout:5000});
+  await page.screenshot({path:'test-artifacts/personalizar-v55-desktop.png',fullPage:true});
+  await page.getByRole('button',{name:'Salvar tela'}).click();
+  await page.getByText('Tela salva',{exact:false}).waitFor({timeout:5000});
+  for(const aba of ['Campos extras','Automações','Ramo'])await page.getByRole('tab',{name:aba}).waitFor({timeout:3000});
+  await page.setViewportSize({width:390,height:844});
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Personalizar'}).waitFor({timeout:8000});
+  await page.screenshot({path:'test-artifacts/personalizar-v55-mobile.png',fullPage:true});
+  await page.setViewportSize({width:1440,height:900});
   for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
     await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(500);
@@ -274,6 +325,10 @@ try{
       await card.getByRole('button',{name:'Abrir ficha de Ana Teste'}).click();
       const boardDetail=page.getByRole('dialog',{name:'Atendimento de Ana Teste'});
       await boardDetail.waitFor({timeout:5000});
+<<<<<<< HEAD
+=======
+      await boardDetail.getByText('+55 (48) 99999-1111').first().waitFor({timeout:3000});
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
       if(!await page.locator('.nxp-board').count())throw new Error('Abrir o card tirou o usuário do quadro');
       await page.screenshot({path:'test-artifacts/leads-v37-board-detail.png',fullPage:true});
       await boardDetail.getByRole('button',{name:'Fechar atendimento'}).click();
@@ -315,11 +370,31 @@ try{
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count()){
       throw new Error('Client exception on extended route: '+route);
     }
+    if(route==='reports'){
+      // V21: origem até a venda (lead de Indicação com venda de R$ 1.500 vinculada).
+      const row=page.locator('.fx-table--sources .fx-tr',{hasText:'Indicação'});
+      await row.waitFor({timeout:5000});
+      const text=(await row.innerText()).replace(/\s+/g,' ');
+      if(!/100%/.test(text)||!/1\.500/.test(text))throw new Error('Source funnel row wrong: '+text);
+    }
+    if(route==='tasks'){
+      const line=page.locator('.fx-taskline.is-late',{hasText:'Retornar para Ana'});
+      await line.waitFor({timeout:5000});
+      const text=await line.innerText();
+      if(!/Lead: Ana Teste/.test(text))throw new Error('Task does not show linked lead: '+text);
+      if(!/Vencida há \d+ dias?/.test(text))throw new Error('Task does not show days late: '+text);
+    }
     await page.screenshot({path:'test-artifacts/'+route+'-desktop.png',fullPage:true});
   }
   // V40: agenda mostra de quem é, pede presença do compromisso que passou e oferece confirmação do futuro.
   await page.goto(host+'/agenda',{waitUntil:'domcontentloaded'});
   await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).waitFor({timeout:8000});
+<<<<<<< HEAD
+=======
+  const awaitingBox=page.getByRole('region',{name:'Aguardando presença'});
+  await awaitingBox.getByRole('button',{name:'Marcar que faltou: Revisão pendente'}).waitFor({timeout:3000});
+  if(await awaitingBox.getByText('Retorno da Ana').count())throw new Error('Compromisso de hoje não deveria ir para Aguardando presença');
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
   await page.getByRole('button',{name:'Marcar que faltou: Retorno da Ana'}).waitFor({timeout:3000});
   await page.getByRole('link',{name:'Confirmar pelo WhatsApp: Entrega dos óculos'}).waitFor({timeout:3000});
   const confirmHref=await page.getByRole('link',{name:'Confirmar pelo WhatsApp: Entrega dos óculos'}).getAttribute('href');
@@ -350,6 +425,24 @@ try{
   for(let k=0;k<40&&!saleCreates.length;k++)await sleep(100);
   const sc=saleCreates[0]||{};
   if(sc.value!==1250||sc.payment_method!=='pix'||sc.product!=='Óculos multifocal')throw new Error('Venda não enviou os campos novos: '+JSON.stringify(sc));
+<<<<<<< HEAD
+=======
+  await page.goto(host+'/settings',{waitUntil:'domcontentloaded'});
+  const capture=page.getByRole('region',{name:/Captura de leads/});
+  await capture.waitFor({timeout:10000});
+  await capture.getByRole('button',{name:'Gerar chave'}).click();
+  await capture.getByText('nxl_TTTT',{exact:false}).waitFor({timeout:5000});
+  if(captureRotations!==1)throw new Error('Gerar chave de captura não chamou a API');
+  await capture.getByText('Como ligar o formulário').click();
+  if(!await capture.getByText('/api/leads/capture',{exact:false}).count())throw new Error('Endereço da captura não aparece');
+  for(const [w,h,name] of [[1440,900,'desktop'],[390,844,'mobile']]){
+    await page.setViewportSize({width:w,height:h});await sleep(250);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+    if(overflow>1)throw new Error('Configurações com rolagem horizontal em '+w+'px ('+overflow+'px)');
+    await capture.screenshot({path:'test-artifacts/captura-leads-'+name+'.png'});
+  }
+  await page.setViewportSize({width:1440,height:900});
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
   await page.goto(host+'/prospeccao',{waitUntil:'domcontentloaded'});
   // exact: "Números da prospecção" também contém a palavra e, se carregar junto, quebrava o modo estrito.
   await page.getByRole('heading',{name:'Prospecção',exact:true}).waitFor({timeout:12000});
@@ -367,6 +460,12 @@ try{
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     if(overflow>1)throw new Error('Prospecção com rolagem horizontal em '+w+'px ('+overflow+'px)');
     await page.screenshot({path:'test-artifacts/prospeccao-'+name+'.png',fullPage:true});
+  }
+  for(const route of ['reports','tasks']){
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(550);
+    await page.screenshot({path:'test-artifacts/'+route+'-mobile.png',fullPage:true});
   }
   await page.setViewportSize({width:1440,height:900});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});

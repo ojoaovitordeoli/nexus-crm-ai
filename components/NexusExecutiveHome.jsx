@@ -2,6 +2,7 @@
 
 import {useMemo,useState} from 'react';
 import Link from 'next/link';
+import NexusHomeTelas from './NexusHomeTelas';
 import {normalizeLeadSearch,getSnapshotCoverage} from '../lib/dashboard-snapshot.mjs';
 import {dueDate,contactSearchTerm} from '../lib/shell-rules.mjs';
 import {
@@ -24,7 +25,7 @@ const whatsapp=value=>{const n=String(value||'').replace(/\D/g,'');return n.leng
 const taskOpen=t=>!['done','completed','cancelled','canceled'].includes(String(t.status||'').toLowerCase());
 function Initial({name}){return <span className="fx-avatar" aria-hidden="true">{name.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()}</span>}
 function Title({title,link,href,children}){return <div className="fx-boxhead"><h2>{title}</h2>{children}{href&&<Link href={href} className="fx-link">{link||'Ver todos'}</Link>}</div>}
-export default function NexusExecutiveHome({data,counts,organizationName,onOperation,onReload,readonly=false,loading,openTasks=[],overdueTasks=[],pipelineStages=[],pipelines=[],activePipelineId='',onPipelineChange,lastSync}) {
+export default function NexusExecutiveHome({organizationId='',data,counts,organizationName,onOperation,onReload,readonly=false,loading,openTasks=[],overdueTasks=[],pipelineStages=[],pipelines=[],activePipelineId='',onPipelineChange,lastSync}) {
   const d=data||{},leads=d.leads||[],sales=d.sales||[],tasks=d.tasks||[],appointments=d.appointments||[];
   const pending=Array.isArray(openTasks)?openTasks:tasks.filter(taskOpen);
   const latestMs=Date.now()-30*86400000,leads30=leads.filter(x=>toDate(x.created_at)?.getTime()>=latestMs);
@@ -121,6 +122,7 @@ export default function NexusExecutiveHome({data,counts,organizationName,onOpera
       <button type="submit" disabled={readonly||submitting||!newTask.trim()}>Criar</button>
       <button type="button" className="fx-btn-text" onClick={()=>setCompose(false)}>Cancelar</button>
     </form>}
+    {organizationId&&<NexusHomeTelas organizationId={organizationId}/>}
     <section className="fx-funnel" aria-label="Funil de vendas">
       <div className="fx-funnel-head"><h2>Funil</h2>{pipelines.length>1&&<select className="fx-funnel-select" aria-label="Escolher funil" value={activePipelineId} onChange={e=>onPipelineChange?.(e.target.value)}>{pipelines.map(p=><option key={p.id} value={p.id}>{p.name}{p.is_default?' (padrão)':''}</option>)}</select>}<span>{loading?'—':int(funnelTotal)} {funnelTotal===1?'lead':'leads'}{coverage.leads?' · amostra carregada':''}</span><Link href="/leads" className="fx-link">Ver quadro</Link></div>
       {funnel.length?<ol className="fx-funnel-track">{funnel.map(g=><li key={g.id} className={'fx-stage'+(g.won?' fx-stage--won':'')+(g.lost?' fx-stage--lost':'')}>

@@ -6,13 +6,17 @@ import Link from 'next/link';
 import {
   Activity,ArrowRight,ArrowUpRight,Bell,BriefcaseBusiness,CalendarDays,Compass,
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
-  LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,Sparkles,
+  LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,SlidersHorizontal,Sparkles,
   Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
   ReceiptText,Radar,UserRound,UsersRound,X,Zap
 } from 'lucide-react';
 import {db} from '../lib/supabase';
 import {dueDayKey,dueDate,contactSearchTerm} from '../lib/shell-rules.mjs';
+<<<<<<< HEAD
 import {needsAttendance,confirmationLink} from '../lib/appointment-view.mjs';
+=======
+import {needsAttendance,confirmationLink,awaitingAttendance} from '../lib/appointment-view.mjs';
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
 import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
 import NexusExecutiveHome from './NexusExecutiveHome';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
@@ -24,7 +28,9 @@ import NexusAIInsights from './NexusAIInsights';
 import PremiumSales from './PremiumSales';
 import ConfirmButton from './ConfirmButton';
 import NexusAssistant from './NexusAssistant';
+import NexusPersonalizar from './NexusPersonalizar';
 import NexusProspecting from './NexusProspecting';
+import {daysLate,lateLabel} from '../lib/sales-attribution.mjs';
 
 const MENU=[
   {path:'dashboard',label:'Visão geral',icon:LayoutDashboard},
@@ -34,6 +40,7 @@ const MENU=[
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'prospeccao',label:'Prospecção',icon:Radar},
   {path:'automations',label:'Automações',icon:Workflow},
+  {path:'personalizar',label:'Personalizar',icon:SlidersHorizontal},
 
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
@@ -44,9 +51,9 @@ const MENU=[
 const NAV_GROUPS=[
   {title:'Comercial',paths:['dashboard','leads','sales','contacts']},
   {title:'Atendimento',paths:['prospeccao','whatsapp','agenda','tasks']},
-  {title:'Gestão',paths:['reports','automations','settings','minha-area']}
+  {title:'Gestão',paths:['reports','personalizar','automations','settings','minha-area']}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',prospeccao:'Prospecção',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',prospeccao:'Prospecção',automations:'Automações',personalizar:'Personalizar',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -355,6 +362,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     // "Em aberto" segue a mesma regra do contador (openTasks): canceladas não são pendências.
     return matches&&(taskFilter==='all'||(taskFilter==='done'?done:!done&&!cancelled));
   });
+  const leadsById=useMemo(()=>new Map(data.leads.map(l=>[l.id,l])),[data.leads]);
   const lateTaskCount=useMemo(()=>{const todayKey=localDayKey(new Date());return openTasks.filter(t=>{const k=dueKey(t);return k&&k<todayKey}).length},[openTasks]);
   const taskGroups=useMemo(()=>{
     const todayKey=localDayKey(new Date());const keyOf=dueKey;
@@ -501,7 +509,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
         {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)} style={companySelectStyle}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id} style={companySelectStyle}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin)&&(item.path!=='prospeccao'||canSeeProspecting)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
+        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin||canManagePipeline)&&(item.path!=='prospeccao'||canSeeProspecting)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
@@ -557,7 +565,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           {error&&<button type="button" className="fx-btn" onClick={()=>load()}>Tentar novamente</button>}
         </div>}
         {ready&&section==='dashboard'&&<NexusExecutiveHome
-          data={data} counts={counts} loading={loading}
+          organizationId={validOrg?organizationId:''} data={data} counts={counts} loading={loading}
           organizationName={orgName} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages} pipelines={pipelines} activePipelineId={dashPipeline?.id||''} onPipelineChange={setDashPipelineId}
           onOperation={operation} onReload={load} readonly={readonly}
@@ -576,6 +584,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='automations'&&<NexusAutomations
           organizationId={organizationId} stages={stages} readonly={readonly}
         />}
+        {section==='personalizar'&&validOrg&&<NexusPersonalizar organizationId={organizationId} stages={stages} canManage={isSuperAdmin||canManagePipeline} readonly={readonly}/>}
         {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
 
         {ready&&section==='reports'&&<PremiumReports data={data} counts={counts} orgName={orgName} readonly={readonly}/>}
@@ -600,8 +609,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <div className="fx-subhead"><h3>{label}</h3><span className="fx-groupcount">{items.length}</span></div>
               {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());if(editTaskId===t.id)return <form key={t.id} className='fx-row fx-taskline fx-task-edit' onSubmit={e=>saveTaskEdit(e,t)} aria-label='Editar tarefa'><input aria-label='Título da tarefa' required minLength={2} maxLength={190} value={editTask.title} onChange={e=>setEditTask(v=>({...v,title:e.target.value}))} autoFocus/><input type='date' aria-label='Prazo' value={editTask.due_date} onChange={e=>setEditTask(v=>({...v,due_date:e.target.value}))}/><select aria-label='Prioridade' value={editTask.priority} onChange={e=>setEditTask(v=>({...v,priority:e.target.value}))}><option value='low'>Baixa</option><option value='medium'>Normal</option><option value='high'>Alta</option><option value='urgent'>Urgente</option></select><span className='fx-row-actions'><button type='submit' className='fx-btn fx-btn--primary' disabled={saving}>Salvar</button><button type='button' className='fx-btn' onClick={()=>setEditTaskId('')}>Cancelar</button><ConfirmButton onConfirm={()=>deleteTask(t)} disabled={saving}/></span></form>;return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
                 <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+(t.title||'tarefa')}><Check size={14}/></button>
-                <div><strong className={done?'fx-done':''}>{t.title||'Tarefa sem título'}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}</div>
-                <span className={id==='late'?'fx-late':'fx-due'}>{dueKey(t)?(id==='today'?'Hoje':dueDate(t.due_date).toLocaleDateString('pt-BR')):'Sem prazo'}</span>
+                <div><strong className={done?'fx-done':''}>{t.title||'Tarefa sem título'}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}{(()=>{const lead=t.lead_id&&leadsById.get(t.lead_id);if(!lead)return null;const who=nameOf(lead.contact);return <small className="fx-task-lead">Lead: <Link href={'/leads?q='+encodeURIComponent(who)}>{who}</Link>{lead.source?' · '+lead.source:''}</small>})()}</div>
+                {(()=>{const shown=dueKey(t)?dueDate(t.due_date).toLocaleDateString('pt-BR'):'';const late=id==='late'?lateLabel(daysLate(dueKey(t),localDayKey(new Date()))):'';return <span className={id==='late'?'fx-late':'fx-due'} title={shown?'Prazo '+shown:undefined}>{shown?(id==='today'?'Hoje':late||shown):'Sem prazo'}</span>})()}
               {!readonly&&<button type='button' className='nx13-linkbutton fx-task-editlink' onClick={()=>startTaskEdit(t)} aria-label={'Editar '+(t.title||'tarefa')}>Editar</button>}</div>})}
             </div>)}
             {!filteredTasks.length&&<div className="fx-empty"><strong>{search?'Nenhuma tarefa encontrada':taskFilter==='done'?'Nenhuma tarefa concluída':'Nada pendente'}</strong><p>{search?'Ajuste a busca ou o filtro.':taskFilter==='open'&&!readonly?'Use “Adicionar tarefa” para registrar a próxima atividade.':'Altere o filtro para ver outras tarefas.'}</p></div>}
@@ -615,6 +624,11 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           const todays=data.appointments.filter(a=>a.start_at&&keyOf(a.start_at)===todayKey).sort((a,b)=>new Date(a.start_at)-new Date(b.start_at));
           const upcoming=data.appointments.filter(a=>appointmentFilter==='all'||(a.start_at&&new Date(a.start_at).getTime()>=Date.now()&&keyOf(a.start_at)!==todayKey&&!['cancelled','completed'].includes(a.status))).sort((a,b)=>new Date(a.start_at||0)-new Date(b.start_at||0));
           const leadById=new Map(data.leads.map(l=>[l.id,l]));
+<<<<<<< HEAD
+=======
+          // V45: compromissos de dias anteriores sem presença/falta registrada (antes ficavam escondidos).
+          const awaiting=awaitingAttendance(data.appointments);
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
           const hour=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
           const localInput=v=>{if(!v)return '';const d=new Date(v);return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-')+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
           const row=(a,showDay)=>editApptId===a.id?<form className="fx-row fx-apptrow fx-appt-edit" key={a.id} onSubmit={e=>saveApptEdit(e,a)} aria-label="Reagendar compromisso">
@@ -663,6 +677,10 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           </form>}
           <div className="fx-agenda-grid">
             <div className="fx-agenda-main">
+              {awaiting.length>0&&<section className="fx-box fx-box--attend" aria-label="Aguardando presença">
+                <div className="fx-boxhead"><h2>Aguardando presença</h2><span className="fx-boxmeta">{readonly?'Compromissos que já passaram sem registro':'Marque quem compareceu ou faltou'}</span><span className="fx-groupcount">{awaiting.length}</span></div>
+                {awaiting.map(a=>row(a,true))}
+              </section>}
               <section className="fx-box">
                 <div className="fx-boxhead"><h2>Hoje</h2><span className="fx-boxmeta">{now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</span><span className="fx-groupcount">{todays.length}</span></div>
                 {todays.length?todays.map(a=>row(a,false)):<p className="fx-empty-small">Nenhum compromisso hoje.</p>}

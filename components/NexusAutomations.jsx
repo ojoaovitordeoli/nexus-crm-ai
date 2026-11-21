@@ -23,6 +23,7 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
   const [notice,setNotice]=useState('');
   const [name,setName]=useState('');
   const [stage,setStage]=useState('');
+  const [trigger,setTrigger]=useState('lead_stage_changed'); // V55: etapa, faltou ou compareceu
   const [title,setTitle]=useState('Retornar ao lead');
   const [days,setDays]=useState('1');
   const [formOpen,setFormOpen]=useState(false);
@@ -58,8 +59,8 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
     e.preventDefault();if(busy||readonly||!canManage)return;
     setBusy(true);setError('');setNotice('');
     try{
-      const response=await request({action:'create',name,stage_id:stage,task_title:title,delay_days:Number(days)});
-      setNotice(response.message);setName('');setStage('');setTitle('Retornar ao lead');setFormOpen(false);
+      const response=await request({action:'create',name,trigger_type:trigger,...(trigger==='lead_stage_changed'?{stage_id:stage}:{}),task_title:title,delay_days:Number(days)});
+      setNotice(response.message);setName('');setStage('');setTrigger('lead_stage_changed');setTitle('Retornar ao lead');setFormOpen(false);
       await load();
     }catch(e){failure(e)}finally{setBusy(false)}
   }
@@ -103,7 +104,7 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
         <div><h2 id="fx-auto-off">Automações ainda não ativadas</h2>
           <p>O administrador da sua empresa precisa ativar este recurso. Enquanto isso, nenhuma regra é executada e nenhuma tarefa é criada automaticamente.</p></div>
       </div>
-      <p className="fx-boxfoot">Depois de ativadas, as automações criam tarefas de retorno quando um lead muda de etapa no funil.</p>
+      <p className="fx-boxfoot">Depois de ativadas, as automações criam tarefas quando um lead muda de etapa, quando alguém falta ou quando comparece ao agendamento.</p>
     </section>:<>
       {!loading&&!editable&&<div className="fx-alert fx-alert--info"><ShieldCheck size={16}/> {readonly?'Seu perfil é somente leitura. Você pode acompanhar as regras, mas não alterá-las.':'Apenas administradores e gerentes podem criar ou alterar automações.'}</div>}
 
@@ -111,13 +112,14 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
         <div className="fx-boxhead"><h2>Nova automação</h2><span className="fx-boxmeta">A regra é criada pausada e só executa depois de ativada.</span></div>
         <form onSubmit={create} className="fx-auto-form">
           <label>Nome<input value={name} maxLength={100} minLength={3} required placeholder="Ex.: Retorno dos interessados" onChange={e=>setName(e.target.value)}/></label>
-          <label>Quando o lead entrar na etapa<select id="nx-workflow-stage" value={stage} required onChange={e=>setStage(e.target.value)}><option value="">Selecione uma etapa...</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+          <label>Quando<select value={trigger} onChange={e=>setTrigger(e.target.value)}><option value="lead_stage_changed">O lead entrar numa etapa</option><option value="appointment_no_show">Alguém faltar ao agendamento</option><option value="appointment_completed">Alguém comparecer ao agendamento</option></select></label>
+          {trigger==='lead_stage_changed'&&<label>Etapa<select id="nx-workflow-stage" value={stage} required onChange={e=>setStage(e.target.value)}><option value="">Selecione uma etapa...</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}
           <label>Criar a tarefa<input id="nx-workflow-task" value={title} maxLength={180} minLength={3} required onChange={e=>setTitle(e.target.value)}/></label>
           <label>Prazo da tarefa<select value={days} onChange={e=>setDays(e.target.value)}>{Array.from({length:15},(_,i)=>i).map(n=><option key={n} value={n}>{n===0?'Hoje':n===1?'Em 1 dia':'Em '+n+' dias'}</option>)}</select></label>
-          <div className="fx-auto-preview"><span>Prévia</span><NexusAutomationGraph stageName={stages.find(x=>x.id===stage)?.name} taskTitle={title} delayDays={days}/></div>
+          <div className="fx-auto-preview"><span>Prévia</span><NexusAutomationGraph stageName={trigger==='appointment_no_show'?'Faltou ao agendamento':trigger==='appointment_completed'?'Compareceu':stages.find(x=>x.id===stage)?.name} taskTitle={title} delayDays={days}/></div>
           <div className="fx-auto-submit">
-            {!stages.length&&<small>Nenhuma etapa de funil disponível para usar como gatilho.</small>}
-            <button type="submit" disabled={busy||loading||!stage} className="fx-btn fx-btn--primary">{busy?'Salvando...':'Criar regra'}</button>
+            {trigger==='lead_stage_changed'&&!stages.length&&<small>Nenhuma etapa de funil disponível para usar como gatilho.</small>}
+            <button type="submit" disabled={busy||loading||(trigger==='lead_stage_changed'&&!stage)} className="fx-btn fx-btn--primary">{busy?'Salvando...':'Criar regra'}</button>
           </div>
         </form>
       </section>}
@@ -128,7 +130,7 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
           <div className="fx-thead" role="row"><span role="columnheader">Regra</span><span role="columnheader">Quando entrar em</span><span role="columnheader">Tarefa criada</span><span role="columnheader">Prazo</span><span role="columnheader" className="fx-cell-end">Ações</span></div>
           {rules.map(rule=><div className="fx-tr" role="row" key={rule.id}>
             <span role="cell"><strong>{rule.name}</strong><span className={'fx-int-status '+(rule.enabled?'is-on':'is-off')}>{rule.enabled?'Ativa':'Pausada'}</span></span>
-            <span role="cell" className="fx-muted">{stageLabel(rule.stage_id)}</span>
+            <span role="cell" className="fx-muted">{rule.trigger_type==='appointment_no_show'?'Quando faltar ao agendamento':rule.trigger_type==='appointment_completed'?'Quando comparecer ao agendamento':stageLabel(rule.stage_id)}</span>
             <span role="cell">{rule.task_title}</span>
             <span role="cell" className="fx-muted">{rule.delay_days===0?'No mesmo dia':'+'+rule.delay_days+' dia(s)'}</span>
             <span role="cell" className="fx-cell-end fx-auto-actions">

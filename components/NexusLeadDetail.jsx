@@ -6,6 +6,8 @@ import {
   Mail,MessageCircle,Phone,ShieldCheck,UserRound,X
 } from 'lucide-react';
 import {codeLabel,whatsappUrl} from '../lib/lead-view.mjs';
+import {formatPhoneBR} from '../lib/format.mjs';
+import NexusLeadFields from './NexusLeadFields';
 
 const formatDate=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}):'Não informado';
 const label=v=>codeLabel(v);
@@ -65,7 +67,7 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
   },[tab,leadId,onOperation,timeline.status]);
   useEffect(()=>()=>{request.current++},[leadId]);
   if(!lead)return null;
-  const firstPhone=lead.contact?.whatsapp||'Telefone não informado';
+  const firstPhone=formatPhoneBR(lead.contact?.whatsapp)||lead.contact?.whatsapp||'Telefone não informado';
   const createTask=async e=>{
     e.preventDefault();
     if(readonly||submitting||!onOperation)return;
@@ -117,9 +119,10 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
           </section>
           <section className="v11-detail-section"><h3>Contato</h3>
             <SummaryRow title="Nome" value={name}/>
-            <SummaryRow title="Telefone" value={lead.contact?.whatsapp}/>
+            <SummaryRow title="Telefone" value={formatPhoneBR(lead.contact?.whatsapp)||lead.contact?.whatsapp}/>
             <SummaryRow title="E-mail" value={lead.contact?.email}/>
           </section>
+          <NexusLeadFields leadId={lead.id} readonly={readonly} onOperation={onOperation}/>
         </>}
         {tab==='retorno'&&!readonly&&<section className="v11-detail-section">
           <h3>Agendar um retorno</h3>

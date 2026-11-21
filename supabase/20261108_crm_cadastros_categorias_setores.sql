@@ -2,6 +2,7 @@
 -- Aditiva: cria 2 tabelas e 2 colunas opcionais em contacts. Nenhuma linha existente é alterada.
 -- Leitura/escrita pela API do servidor (service role) com checagem de empresa e papel.
 -- Rollback no fim do arquivo.
+-- APLICADA no Supabase qhizuqcdxivdvjtefofz em 08/11/2026 (com autorização do usuário).
 
 create table if not exists public.contact_categories (
   id uuid primary key default gen_random_uuid(),
@@ -54,6 +55,8 @@ alter table public.company_sectors enable row level security;
 revoke all on public.contact_categories, public.company_sectors from anon;
 grant select on public.contact_categories, public.company_sectors to authenticated;
 grant all on public.contact_categories, public.company_sectors to service_role;
+-- Supabase concede escrita a authenticated em tabelas novas; aqui só leitura (RLS + API do servidor).
+revoke insert, update, delete, truncate, references, trigger on public.contact_categories, public.company_sectors from authenticated;
 
 drop policy if exists members_read_contact_categories on public.contact_categories;
 create policy members_read_contact_categories on public.contact_categories for select to authenticated

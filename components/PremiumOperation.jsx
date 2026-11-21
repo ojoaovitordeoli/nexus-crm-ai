@@ -377,7 +377,11 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
         {wa(item.contact?.whatsapp)?<WhatsLink phone={item.contact.whatsapp} className="nxp-lead-wa">Conversar</WhatsLink>:<span className="nxp-kcard-nowa">Sem WhatsApp</span>}
         {canMove&&<label className="nxp-kcard-move"><span className="nxp-sr">Mover {name} para outra etapa</span>
           <select value="" disabled={Boolean(busy)} onChange={e=>{const next=e.target.value;e.target.value='';changeStage(item,next)}}>
+<<<<<<< HEAD
             <option value="">Mover para…</option>
+=======
+            <option value="">Mover</option>
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
             {stages.filter(s=>s.id!==here).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
           </select></label>}
       </div>

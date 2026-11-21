@@ -13,6 +13,7 @@ import {formatPhoneBR} from '../lib/format.mjs';
 import {parseBRL} from '../lib/shell-rules.mjs';
 import ConfirmButton from './ConfirmButton';
 import NexusProposal from './NexusProposal';
+import NexusLeadFields from './NexusLeadFields';
 
 const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Contato sem nome';
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
@@ -142,6 +143,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
           {editError&&<p className="nx13-error" role="alert">{editError}</p>}
         </div>
       </div>}
+      {tab==='detalhes'&&<div className="nx13-leadfields"><NexusLeadFields leadId={lead.id} readonly={readonly} onOperation={onOperation}/></div>}
       {tab==='proposta'&&!readonly&&<div role="tabpanel">
         <NexusProposal lead={lead} person={person} phone={phone} onOperation={onOperation}
           onGenerated={()=>setTimeline(t=>({...t,status:'idle'}))}/>

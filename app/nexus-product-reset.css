@@ -352,3 +352,18 @@ body .nxp-premium .nxp-kcard-nowa{flex:1;display:flex;align-items:center;justify
 body .nxp-premium .nxp-kcard-move{flex:1;display:flex;border-left:1px solid var(--p-border)}
 body .nxp-premium .nxp-kcard-move select{width:100%;min-height:34px;border:0;background:transparent;color:var(--p-text);font:600 11px var(--product-font);padding:0 8px;cursor:pointer}
 body .nxp-premium .nxp-kcard-move select:focus-visible,body .nxp-premium .nxp-kcard-main:focus-visible{outline:2px solid var(--fx-accent-text,#5f00e6);outline-offset:-2px}
+<<<<<<< HEAD
+=======
+
+/* V43 — mostrar/ocultar senha no login */
+body .auth .pass-wrap{position:relative;display:block}
+body .auth .pass-wrap input{width:100%;padding-right:46px!important}
+body .auth .pass-toggle{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:transparent;color:var(--p-muted,#727274);cursor:pointer}
+body .auth .pass-toggle:hover{color:var(--p-text,#2b2b2d);background:rgba(0,0,0,.05)}
+body.dark .auth .pass-toggle:hover,.dark .auth .pass-toggle:hover{background:rgba(255,255,255,.08)}
+body .auth .pass-toggle:focus-visible{outline:2px solid var(--fx-accent-text,#5f00e6);outline-offset:1px}
+
+/* V45 — "Mover" do card não corta em coluna estreita */
+body .nxp-premium .nxp-kcard-move select{text-overflow:ellipsis;white-space:nowrap;min-width:0}
+body .nxp-premium .nxp-kcard-actions>*{min-width:0}
+>>>>>>> c14506f8ff07f6809a7377df531cd71ef8e3abc9
