@@ -1381,3 +1381,12 @@ body.dark{--nx-cat-1:#c27bea;--nx-cat-2:#3cc3ad;--nx-cat-3:#ff8a4c;--nx-cat-4:#6
   :root:root:root body .fx-taskline{grid-template-columns:28px minmax(0,1fr) auto}
   :root:root:root body .fx-taskline .fx-task-editlink{grid-column:3;grid-row:1}
 }
+
+/* V58 — foco do teclado sempre visível. Campos dentro de caixas de busca: o contorno vai na caixa
+   (:focus-within); demais controles: anel de 2px na cor de destaque. Clique com mouse não mostra anel. */
+:root:root:root body :is(a,button,input,select,textarea,summary,[tabindex]:not([tabindex="-1"])):focus-visible{outline:2px solid var(--fx-accent);outline-offset:2px}
+:root:root:root body :is(.fx-search,.nx13-search,.fx-bigsearch,.staff-global-search,.staff-search,.desk-search,.v14-search,.nxp-search,.nx-inbox-search,.adm-search,.nxp-filter-select,.nx13-filterline):focus-within{outline:2px solid var(--fx-accent);outline-offset:1px}
+:root:root:root body :is(.fx-search,.nx13-search,.fx-bigsearch,.staff-global-search,.staff-search,.desk-search,.v14-search,.nxp-search,.nx-inbox-search,.adm-search,.nxp-filter-select,.nx13-filterline,.nexus-command-input-wrap) :is(input,select):focus-visible{outline:0}
+/* V58 — tema escuro: o campo de busca do topo não mostra fundo próprio (aparecia um retângulo claro) */
+:root:root:root body .staff-global-search input[type="search"]{background:transparent!important;-webkit-appearance:none;appearance:none}
+:root:root:root body .staff-global-search input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}
