@@ -42,3 +42,5 @@ create policy user_views_delete_own on public.user_views for delete to authentic
 
 revoke all on public.user_views from anon;
 grant select, insert, update, delete on public.user_views to authenticated;
+-- O Supabase dá por padrão TRUNCATE/REFERENCES/TRIGGER a authenticated; TRUNCATE passaria por cima do RLS.
+revoke truncate, references, trigger on public.user_views from authenticated;
