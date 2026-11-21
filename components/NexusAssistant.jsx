@@ -1,7 +1,7 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
-import {Check,LayoutGrid,Maximize2,MessageSquare,Minimize2,Send,Sparkles,X} from 'lucide-react';
+import {Check,LayoutGrid,Maximize2,MessageSquare,Minimize2,Pin,Send,Sparkles,X} from 'lucide-react';
 import {db} from '../lib/supabase';
 import NexusViewCanvas from './NexusViewCanvas';
 
@@ -25,11 +25,12 @@ export default function NexusAssistant({organizationId,organizationName,readonly
   const [text,setText]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const [aba,setAba]=useState('conversa'),[largo,setLargo]=useState(false);
   const [minhas,setMinhas]=useState({carregado:false,lista:[],aviso:'',erro:''});
+  const [vocab,setVocab]=useState(null); // V53: palavras do ramo da empresa
   const [aberta,setAberta]=useState(null); // {id,nome,tela,estado,erro}
   const listRef=useRef(null),inputRef=useRef(null);
   useEffect(()=>setMounted(true),[]);
   // Conversa e telas são por empresa: trocar de empresa começa do zero.
-  useEffect(()=>{setMessages([]);setError('');setMinhas({carregado:false,lista:[],aviso:'',erro:''});setAberta(null)},[organizationId]);
+  useEffect(()=>{setMessages([]);setError('');setMinhas({carregado:false,lista:[],aviso:'',erro:''});setAberta(null);setVocab(null)},[organizationId]);
   useEffect(()=>{
     if(!open||status.checked)return;
     fetch('/api/assistant').then(r=>r.json()).then(j=>setStatus({checked:true,configured:Boolean(j?.configured)})).catch(()=>setStatus({checked:true,configured:false}));
@@ -71,6 +72,12 @@ export default function NexusAssistant({organizationId,organizationName,readonly
         const json=await res.json().catch(()=>null);
         if(!res.ok)throw new Error(json?.error||'Não consegui criar o campo.');
         r={message:(json?.message||'Campo criado.')+' Já aparece em "Campos extras" na ficha do lead.'};
+      }else if(proposal.payload?.action==='segment_save'){
+        // V53: ramo da empresa — /api/crm-settings (só gerente/admin).
+        const res=await fetch('/api/crm-settings',{method:'POST',headers:await authHeaders(),body:JSON.stringify({org_id:organizationId,action:'segment_save',ramo:proposal.payload.ramo})});
+        const json=await res.json().catch(()=>null);
+        if(!res.ok)throw new Error(json?.error||'Não consegui salvar o ramo.');
+        r={message:json?.message||'Ramo salvo.'};setMinhas(m=>({...m,carregado:false}));
       }else r=await onOperation(proposal.payload);
       set('done',r?.message||'Feito.');onChanged?.();
     }
@@ -97,9 +104,20 @@ export default function NexusAssistant({organizationId,organizationName,readonly
       const json=await res.json().catch(()=>null);
       if(!res.ok)throw new Error(json?.error||'Não consegui carregar suas telas.');
       setMinhas({carregado:true,lista:json.telas||[],aviso:json.indisponivel?json.aviso:'',erro:''});
+      if(json?.vocab)setVocab(json.vocab);
     }catch(e){setMinhas({carregado:true,lista:[],aviso:'',erro:e.message})}
   },[organizationId]);
-  useEffect(()=>{if(open&&aba==='telas'&&!minhas.carregado)carregarMinhas()},[open,aba,minhas.carregado,carregarMinhas]);
+  // Carrega ao abrir o painel: traz as telas salvas e as palavras do ramo (sugestões no tom do negócio).
+  useEffect(()=>{if(open&&!minhas.carregado)carregarMinhas()},[open,minhas.carregado,carregarMinhas]);
+  async function fixar(item){
+    const quer=!item.inicio;
+    setMinhas(s=>({...s,erro:'',lista:s.lista.map(t=>t.id===item.id?{...t,inicio:quer}:t)}));
+    try{
+      const res=await fetch('/api/views',{method:'POST',headers:await authHeaders(),body:JSON.stringify({org_id:organizationId,acao:'fixar',id:item.id,inicio:quer})});
+      const json=await res.json().catch(()=>null);
+      if(!res.ok)throw new Error(json?.error||'Não consegui fixar.');
+    }catch(e){setMinhas(s=>({...s,erro:e.message,lista:s.lista.map(t=>t.id===item.id?{...t,inicio:!quer}:t)}))}
+  }
 
   async function abrirSalva(item){
     setAberta({...item,tela:null,estado:'carregando',erro:''});setLargo(true);
@@ -123,7 +141,7 @@ export default function NexusAssistant({organizationId,organizationName,readonly
   const conversa=<>
     {!messages.length&&<div className="nx-ai-welcome">
       <p>Peça o que quiser ver de <strong>{organizationName}</strong> e eu monto a tela: lista, quadro, gráfico ou número. {readonly?'Seu perfil é somente leitura: posso montar telas e consultar, mas não alterar.':'Toda ação aparece para você confirmar antes de ser salva.'}</p>
-      <div className="nx-ai-chips">{SUGGESTIONS.map(s=><button type="button" key={s} onClick={()=>ask(s)} disabled={busy||!status.checked}>{s}</button>)}</div>
+      <div className="nx-ai-chips">{(vocab?.sugestoes?.length?[...vocab.sugestoes,'O que eu tenho pra hoje?'].filter((x,i,a)=>a.indexOf(x)===i).slice(0,5):SUGGESTIONS).map(s=><button type="button" key={s} onClick={()=>ask(s)} disabled={busy||!status.checked}>{s}</button>)}</div>
     </div>}
     {messages.map((m,i)=><div key={i} className={'nx-ai-msg nx-ai-msg--'+m.role}>
       <p>{m.content}</p>
@@ -151,7 +169,9 @@ export default function NexusAssistant({organizationId,organizationName,readonly
       {minhas.erro&&<div className="fx-alert fx-alert--error" role="alert">{minhas.erro}</div>}
       {minhas.aviso&&<p className="nx-view-warn" role="status">{minhas.aviso}</p>}
       {minhas.carregado&&!minhas.lista.length&&!minhas.aviso&&!minhas.erro&&<div className="nx-ai-welcome"><p>Você ainda não salvou nenhuma tela. Peça uma na conversa ("monta um quadro dos meus leads por etapa") e clique em <strong>Salvar nas minhas telas</strong>.</p></div>}
-      <ul className="nx-ai-telas-lista">{minhas.lista.map(t=><li key={t.id}><button type="button" onClick={()=>abrirSalva(t)}><LayoutGrid size={15}/><span>{t.nome}</span><small>{t.spec?.tipo}</small></button></li>)}</ul>
+      {minhas.lista.length>0&&<p className="nx-ai-telas-dica">Fixe até 4 telas para elas aparecerem na sua Visão geral.</p>}
+      <ul className="nx-ai-telas-lista">{minhas.lista.map(t=><li key={t.id}><button type="button" onClick={()=>abrirSalva(t)}><LayoutGrid size={15}/><span>{t.nome}</span><small>{t.spec?.tipo}</small></button>
+        <button type="button" className="nx-ai-pin" aria-pressed={t.inicio===true} onClick={()=>fixar(t)} title={t.inicio?'Tirar da tela inicial':'Mostrar na tela inicial'}><Pin size={13}/>{t.inicio?'Na inicial':'Fixar'}</button></li>)}</ul>
     </>}
   </div>;
 
