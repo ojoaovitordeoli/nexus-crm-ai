@@ -31,6 +31,45 @@ function Grafico({tela}){
   </ul>;
 }
 
+// V55 — pizza (rosca) e linha. O número de cada grupo fica sempre escrito ao lado: não depende só da cor.
+const CORES=6;
+function Pizza({tela}){
+  const chave=usaValor(tela)?'valor':'quantidade';
+  let grupos=(tela.grupos||[]).filter(g=>g[chave]>0);
+  if(grupos.length>CORES){const resto=grupos.slice(CORES-1);grupos=[...grupos.slice(0,CORES-1),{grupo:'Outros ('+resto.length+')',quantidade:resto.reduce((s,g)=>s+g.quantidade,0),valor:resto.reduce((s,g)=>s+g.valor,0)}]}
+  const total=grupos.reduce((s,g)=>s+g[chave],0)||1;
+  let acum=0;
+  const fmt=g=>usaValor(tela)?brl(g.valor):num(g.quantidade);
+  return <div className="nx-view-pie">
+    <svg viewBox="0 0 120 120" role="img" aria-label={tela.titulo+': '+grupos.map(g=>g.grupo+' '+fmt(g)).join(', ')}>
+      <circle cx="60" cy="60" r="44" fill="none" className="nx-view-pie-bg" strokeWidth="18"/>
+      {grupos.map((g,i)=>{const p=g[chave]/total*100;const el=<circle key={g.grupo} cx="60" cy="60" r="44" fill="none" pathLength="100" strokeWidth="18"
+        className={'nx-cat-'+(i+1)} strokeDasharray={Math.max(0,p-0.6)+' '+(100-Math.max(0,p-0.6))} strokeDashoffset={-acum} transform="rotate(-90 60 60)"/>;acum+=p;return el})}
+      <text x="60" y="57" textAnchor="middle" className="nx-view-pie-total">{usaValor(tela)?brl(total):num(total)}</text>
+      <text x="60" y="72" textAnchor="middle" className="nx-view-pie-sub">total</text>
+    </svg>
+    <ul>{grupos.map((g,i)=><li key={g.grupo}><span className={'nx-view-dot nx-cat-bg-'+(i+1)} aria-hidden="true"/><span className="nx-view-pie-label">{g.grupo}</span><b>{fmt(g)}</b><small>{Math.round(g[chave]/total*100)}%</small></li>)}</ul>
+  </div>;
+}
+function Linha({tela}){
+  const chave=usaValor(tela)?'valor':'quantidade';
+  const grupos=(tela.grupos||[]).slice(-24);
+  const W=320,H=120,P=8,max=Math.max(1,...grupos.map(g=>g[chave]));
+  const x=i=>grupos.length<2?W/2:P+i*(W-2*P)/(grupos.length-1);
+  const y=v=>H-P-(v/max)*(H-2*P);
+  const pts=grupos.map((g,i)=>x(i)+','+y(g[chave])).join(' ');
+  const fmt=g=>usaValor(tela)?brl(g.valor):num(g.quantidade);
+  return <div className="nx-view-line">
+    <svg viewBox={'0 0 '+W+' '+(H+18)} preserveAspectRatio="none" role="img" aria-label={tela.titulo+': '+grupos.map(g=>g.grupo+' '+fmt(g)).join(', ')}>
+      <line x1={P} x2={W-P} y1={H-P} y2={H-P} className="nx-view-line-axis"/>
+      <polyline points={pts} fill="none" className="nx-view-line-path"/>
+      {grupos.map((g,i)=><circle key={g.grupo} cx={x(i)} cy={y(g[chave])} r="3" className="nx-view-line-dot"><title>{g.grupo+': '+fmt(g)}</title></circle>)}
+      {grupos.map((g,i)=>(grupos.length<=8||i%Math.ceil(grupos.length/8)===0||i===grupos.length-1)&&<text key={'t'+g.grupo} x={x(i)} y={H+12} textAnchor="middle" className="nx-view-line-label">{g.grupo}</text>)}
+    </svg>
+    <p className="nx-view-line-sum">Maior: <b>{fmt(grupos.reduce((a,g)=>g[chave]>a[chave]?g:a,grupos[0]||{quantidade:0,valor:0}))}</b> · Último: <b>{grupos.length?fmt(grupos[grupos.length-1]):'—'}</b></p>
+  </div>;
+}
+
 function Quadro({tela}){
   return <div className="nx-view-board" role="list" aria-label={tela.titulo}>
     {(tela.grupos||[]).map(g=><section key={g.grupo} className="nx-view-col" role="listitem" aria-label={g.grupo+': '+g.quantidade}>
@@ -80,7 +119,7 @@ export default function NexusViewCanvas({tela,estado,onSalvar,onAtualizar,onApag
       :vazio?<p className="nx-view-empty">Nada encontrado com esses filtros.</p>
       :tipo==='numero'?<Numero tela={tela}/>
       :tipo==='quadro'?<Quadro tela={tela}/>
-      :tipo==='grafico'?<Grafico tela={tela}/>
+      :tipo==='grafico'?(tela.spec?.estilo==='pizza'?<Pizza tela={tela}/>:tela.spec?.estilo==='linha'?<Linha tela={tela}/>:<Grafico tela={tela}/>)
       :<Lista tela={tela}/>}
     <footer className="nx-view-foot">Dados de agora · {new Date(tela.geradoEm||Date.now()).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</footer>
   </article>;
