@@ -1610,3 +1610,36 @@ body.dark .nx-toast button{color:#0d5c4b}
 :root:root:root body .nx62-ditos ul{margin:0;padding:6px 16px 14px 34px;display:flex;flex-direction:column;gap:8px}
 :root:root:root body .nx62-ditos li{font-size:14px;color:var(--fx-text);line-height:1.5}
 :root:root:root body .nx62-ditos li::marker{color:var(--fx-accent)}
+
+/* ===================== V63 — Visão da agência ===================== */
+:root:root:root body .nx63{max-width:1280px}
+:root:root:root body .nx63-lista{background:var(--fx-surface);border:1px solid var(--fx-border);border-radius:14px;overflow:hidden}
+:root:root:root body .nx63-head,:root:root:root body .nx63-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.6fr) auto;gap:18px;align-items:center;padding:0 18px}
+:root:root:root body .nx63-head{min-height:38px;background:var(--fx-subtle);border-bottom:1px solid var(--fx-border);font-size:12px;font-weight:600;color:var(--fx-faint)}
+:root:root:root body .nx63-row{min-height:72px;padding-top:12px;padding-bottom:12px}
+:root:root:root body .nx63-row+.nx63-row{border-top:1px solid var(--fx-border)}
+:root:root:root body .nx63-row:hover{background:var(--fx-subtle)}
+:root:root:root body .nx63-nome{display:flex;align-items:center;gap:12px;min-width:0}
+:root:root:root body .nx63-nome i{width:9px;height:9px;border-radius:50%;flex:none;background:var(--fx-success)}
+:root:root:root body .nx63-row.is-atencao .nx63-nome i{background:var(--fx-warning)}
+:root:root:root body .nx63-row.is-alerta .nx63-nome i{background:var(--fx-danger)}
+:root:root:root body .nx63-nome strong{display:block;font-size:15px;font-weight:700;color:var(--fx-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:root:root:root body .nx63-nome small{display:block;font-size:12.5px;color:var(--fx-faint)}
+:root:root:root body .nx63-nome span{min-width:0}
+:root:root:root body .nx63-mes{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--fx-faint);min-width:0}
+:root:root:root body .nx63-mes b{color:var(--fx-text);font-size:14.5px;font-weight:700}
+:root:root:root body .nx63-bar{position:relative;height:8px;border-radius:99px;background:var(--fx-border);display:block}
+:root:root:root body .nx63-bar span{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--fx-accent)}
+:root:root:root body .nx63-row.is-alerta .nx63-bar span{background:var(--fx-danger)}
+:root:root:root body .nx63-bar i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--fx-text);border-radius:2px}
+:root:root:root body .nx63-alertas{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+:root:root:root body .nx63-tag{font-size:12px;font-weight:650;padding:3px 9px;border-radius:99px;background:var(--fx-subtle);color:var(--fx-muted);white-space:nowrap}
+:root:root:root body .nx63-tag.is-alerta{background:var(--fx-danger-soft);color:var(--fx-danger)}
+:root:root:root body .nx63-tag.is-atencao{background:var(--fx-warning-soft);color:var(--fx-warning)}
+:root:root:root body .nx63-ok{font-size:13px;font-weight:600;color:var(--fx-success)}
+@media (max-width:900px){
+  :root:root:root body .nx63-head{display:none}
+  :root:root:root body .nx63-row{grid-template-columns:minmax(0,1fr) auto;gap:10px 12px}
+  :root:root:root body .nx63-mes,:root:root:root body .nx63-alertas{grid-column:1/-1}
+  :root:root:root body .nx63-row>div:last-child{grid-row:1;grid-column:2}
+}

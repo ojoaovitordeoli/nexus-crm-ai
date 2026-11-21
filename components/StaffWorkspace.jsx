@@ -25,6 +25,7 @@ import PremiumSales from './PremiumSales';
 import ConfirmButton from './ConfirmButton';
 import NexusAssistant from './NexusAssistant';
 import NexusPersonalizar from './NexusPersonalizar';
+import NexusAgencia from './NexusAgencia';
 import {dataCurta} from '../lib/formato.mjs';
 import {mapaFaltas,fraseAgenda,PERIODOS} from '../lib/agenda-faltas.mjs';
 import NexusProspecting from './NexusProspecting';
@@ -43,15 +44,16 @@ const MENU=[
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
   {path:'reports',label:'Relatórios',icon:Activity},
+  {path:'agencia',label:'Agência',icon:BriefcaseBusiness},
   {path:'settings',label:'Configurações',icon:ShieldCheck},
   {path:'minha-area',label:'Meu perfil',icon:UserRound}
 ]; 
 const NAV_GROUPS=[
   {title:'Comercial',paths:['dashboard','leads','sales','contacts']},
   {title:'Atendimento',paths:['prospeccao','whatsapp','agenda','tasks']},
-  {title:'Gestão',paths:['reports','personalizar','automations','settings','minha-area']}
+  {title:'Gestão',paths:['agencia','reports','personalizar','automations','settings','minha-area']}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',prospeccao:'Prospecção',automations:'Automações',personalizar:'Personalizar',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
+const PAGES={agencia:'Visão da agência',dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',prospeccao:'Prospecção',automations:'Automações',personalizar:'Personalizar',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -226,6 +228,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
   const canManagePipeline=['AGENCY_ADMIN','ORGANIZATION_ADMIN','MANAGER'].includes(role);
   // Mesma regra de lib/prospecting-alerts.mjs (canSeeProspecting); o servidor confere de novo.
   const canSeeProspecting=isSuperAdmin||role==='AGENCY_ADMIN'||role==='ORGANIZATION_ADMIN';
+  // V63: visão da agência para quem gerencia mais de uma empresa (o servidor confere de novo).
+  const canSeeAgency=isSuperAdmin||(organizations.filter(o=>o.status==='active').length>1&&['AGENCY_ADMIN','ORGANIZATION_ADMIN','MANAGER'].includes(role));
   const validOrg=Boolean(currentOrganization&&currentOrganization.status==='active'&&(isSuperAdmin||activeMember)&&session?.id&&profile?.status==='active');
   const roleLabel=ROLES[role]||'Colaborador';
   const page=PAGES[section]||'Visão geral';
@@ -507,7 +511,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
         {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)} style={companySelectStyle}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id} style={companySelectStyle}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin||canManagePipeline)&&(item.path!=='prospeccao'||canSeeProspecting)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
+        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin||canManagePipeline)&&(item.path!=='prospeccao'||canSeeProspecting)&&(item.path!=='agencia'||canSeeAgency)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
@@ -583,6 +587,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           organizationId={organizationId} stages={stages} readonly={readonly}
         />}
         {section==='personalizar'&&validOrg&&<NexusPersonalizar organizationId={organizationId} stages={stages} canManage={isSuperAdmin||canManagePipeline} readonly={readonly}/>}
+        {section==='agencia'&&<NexusAgencia onOpen={id=>{onOrganizationChange(id);router.push('/dashboard')}}/>}
         {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
 
         {ready&&section==='reports'&&<PremiumReports data={data} counts={counts} orgName={orgName} readonly={readonly}/>}
