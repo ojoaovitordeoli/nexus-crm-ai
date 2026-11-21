@@ -2,6 +2,7 @@ import {NextResponse} from 'next/server';
 import {adminSupabase,authorizeTenant} from '../../../lib/tenant-session';
 import {logInternal} from '../../../lib/workflow-security.mjs';
 import {CATALOGS,CATALOG_KINDS,AGENDOR_TEMPLATE,canConfigureCrm,isId,validateCatalogName,validateField,validateRequirements,missingNames,sameName} from '../../../lib/crm-catalogs.mjs';
+import {ramoValido,RAMOS} from '../../../lib/vocabulario.mjs';
 
 // Cadastros do funil (paridade com Agendor). Toda leitura/escrita é restrita à empresa
 // autorizada no servidor; escrita somente para gestão (canConfigureCrm).
@@ -109,6 +110,15 @@ export async function POST(request){
     return reply({ok:true,message:'Atualizado.'});
   }
 
+  if(action==='segment_save'){
+    // V53: ramo da empresa (palavras do negócio). Só valores da lista fixa; só esta empresa.
+    const ramo=ramoValido(body?.ramo);
+    if(!ramo)return fail('Ramo inválido.');
+    const {data,error}=await admin.from('organizations').update({segment:ramo,updated_at:new Date().toISOString()}).eq('id',orgId).select('id').maybeSingle();
+    if(error)return dbFail('Falha ao salvar o ramo.',error);
+    if(!data)return fail('Empresa não encontrada.',404);
+    return reply({ok:true,message:'Ramo salvo: '+RAMOS[ramo].rotulo+'.'});
+  }
   if(action==='field_save'){
     const v=validateField(body?.field);
     if(v.error)return fail(v.error);

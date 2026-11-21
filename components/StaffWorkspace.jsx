@@ -559,7 +559,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           {error&&<button type="button" className="fx-btn" onClick={()=>load()}>Tentar novamente</button>}
         </div>}
         {ready&&section==='dashboard'&&<NexusExecutiveHome
-          data={data} counts={counts} loading={loading}
+          organizationId={validOrg?organizationId:''} data={data} counts={counts} loading={loading}
           organizationName={orgName} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages} pipelines={pipelines} activePipelineId={dashPipeline?.id||''} onPipelineChange={setDashPipelineId}
           onOperation={operation} onReload={load} readonly={readonly}

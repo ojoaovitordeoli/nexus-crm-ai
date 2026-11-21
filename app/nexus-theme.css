@@ -1260,3 +1260,15 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
 .nx-lf-multi label{display:inline-flex;align-items:center;gap:5px;font-size:13px}
 @media (max-width:640px){.nx-lf-row{grid-template-columns:1fr}}
 .nx13-leadfields{padding:0 4px}
+
+/* ===== V53 · Telas fixadas na tela inicial ===== */
+.nx-home-telas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.nx-home-tela .nx-view{margin-top:0;height:100%}
+.nx-home-tela--quadro,.nx-home-tela--lista{grid-column:1 / -1}
+@media (max-width:860px){.nx-home-telas{grid-template-columns:1fr}}
+.nx-ai-telas-lista li{display:flex;gap:6px;align-items:stretch}
+.nx-ai-telas-lista li>button:first-child{flex:1}
+.nx-ai-telas-lista .nx-ai-pin{width:auto;flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--fx-border);background:var(--fx-surface);color:var(--fx-muted);border-radius:var(--fx-radius);padding:0 10px;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.nx-ai-telas-lista .nx-ai-pin[aria-pressed="true"]{color:var(--fx-accent-text);border-color:var(--fx-accent);background:var(--fx-accent-soft)}
+.nx-ai-pin:focus-visible{outline:2px solid var(--fx-accent);outline-offset:1px}
+.nx-ai-telas-dica{margin:0;font-size:12.5px;color:var(--fx-muted)}

@@ -132,6 +132,11 @@ try{
       contact_categories:{kind:'contact_categories',installed:false,items:[]},company_sectors:{kind:'company_sectors',installed:false,items:[]}},
       fields:[],pipelines:[],stages:[],requirements:[]})});
   });
+  // V51/V53: "Minhas telas" (sem telas fixadas no teste; vocabulário geral).
+  await page.route('**/api/views**',async route=>{
+    if(route.request().method()==='GET')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({telas:[],vocab:{ramo:'geral',rotulo:'Geral',sugestoes:[]}})});
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true})});
+  });
   await page.route('**/api/team**',async route=>{
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({members:[
       {id:'m1',user_id:userId,role:'AGENCY_ADMIN',role_label:'Admin da agência',status:'active',full_name:'Operador de Teste',email:'test@example.invalid',is_me:true,editable:false}
