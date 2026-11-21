@@ -14,7 +14,7 @@ import {db} from '../lib/supabase';
 import {dueDayKey,dueDate,contactSearchTerm} from '../lib/shell-rules.mjs';
 import {needsAttendance,confirmationLink,awaitingAttendance} from '../lib/appointment-view.mjs';
 import {PremiumLeads,PremiumContacts,PremiumWhatsApp} from './PremiumOperation';
-import NexusExecutiveHome from './NexusExecutiveHome';
+import NexusHoje from './NexusHoje';
 import {PremiumReports,PremiumSettings} from './PremiumReporting';
 import MotionCalendar from './MotionCalendar';
 import NexusCommandMenu from './NexusCommandMenu';
@@ -561,7 +561,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           <p>{error?'Não foi possível carregar os dados desta empresa.':'Carregando os dados de '+(orgName||'sua empresa')+'...'}</p>
           {error&&<button type="button" className="fx-btn" onClick={()=>load()}>Tentar novamente</button>}
         </div>}
-        {ready&&section==='dashboard'&&<NexusExecutiveHome
+        {ready&&section==='dashboard'&&<NexusHoje
           organizationId={validOrg?organizationId:''} data={data} counts={counts} loading={loading}
           organizationName={orgName} firstName={firstName}
           openTasks={openTasks} overdueTasks={overdueTasks} lastSync={lastSync} pipelineStages={dashboardStages} pipelines={pipelines} activePipelineId={dashPipeline?.id||''} onPipelineChange={setDashPipelineId}
