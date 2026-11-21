@@ -66,7 +66,7 @@ function Montador({organizationId,stages,campos,onSalvo}){
         <div className="nx-pz-seg" role="radiogroup" aria-label="Formato">{Object.keys(ROT.tipo).filter(t=>t!=='quadro'||r.fonte==='leads').map(t=><button type="button" key={t} role="radio" aria-checked={r.tipo===t} onClick={()=>set('tipo',t)}>{ROT.tipo[t]}</button>)}</div>
         {r.tipo==='grafico'&&<div className="nx-pz-seg" role="radiogroup" aria-label="Estilo do gráfico">{Object.keys(ROT.estilo).map(t=><button type="button" key={t} role="radio" aria-checked={r.estilo===t} onClick={()=>set('estilo',t)}>{ROT.estilo[t]}</button>)}</div>}
         {r.tipo!=='numero'&&<label>Agrupar por<select value={r.agrupar_por} onChange={e=>set('agrupar_por',e.target.value)}>{agruparOpcoes.map(a=><option key={a} value={a}>{ROT.agrupar[a]}</option>)}</select></label>}
-        {(r.agrupar_por==='campo'||r.tipo==='lista')&&camposDaFonte.length>0&&(r.fonte==='leads'||r.fonte==='contatos')&&<label>{r.agrupar_por==='campo'?'Campo extra':'Coluna extra (opcional)'}<select value={r.campo} required={r.agrupar_por==='campo'} onChange={e=>set('campo',e.target.value)}><option value="">{r.agrupar_por==='campo'?'Escolha...':'Nenhuma'}</option>{camposDaFonte.map(c=><option key={c.id} value={c.name}>{c.name}</option>)}</select></label>}
+        {(r.agrupar_por==='campo'||r.tipo==='lista')&&camposDaFonte.length>0&&(r.fonte==='leads'||r.fonte==='contatos')&&<label>{r.agrupar_por==='campo'?'Campo extra':'Coluna extra (opcional)'}<select value={r.campo} required={r.agrupar_por==='campo'} onChange={e=>set('campo',e.target.value)}><option value="">{r.agrupar_por==='campo'?'Escolha…':'Nenhuma'}</option>{camposDaFonte.map(c=><option key={c.id} value={c.name}>{c.name}</option>)}</select></label>}
         {cfg.medidas.length>1&&<label>Medir por<select value={r.medida} onChange={e=>set('medida',e.target.value)}><option value="quantidade">Quantidade</option><option value="valor">Valor (R$)</option></select></label>}
       </fieldset>
       <fieldset><legend>2. Filtros (opcional)</legend>
@@ -87,9 +87,9 @@ function Montador({organizationId,stages,campos,onSalvo}){
           <label>Até quantas linhas<select value={r.limite} onChange={e=>set('limite',e.target.value)}>{[10,30,50,LIMITE_MAX].map(n=><option key={n} value={n}>{n}</option>)}</select></label></>}
       </fieldset>
       <div className="nx-pz-actions">
-        <button type="submit" className="fx-btn" disabled={estado==='carregando'}><Eye size={15}/> {estado==='carregando'?'Montando...':'Ver prévia'}</button>
+        <button type="submit" className="fx-btn" disabled={estado==='carregando'}><Eye size={15}/> {estado==='carregando'?'Montando…':'Ver prévia'}</button>
         <label className="nx-pz-check"><input type="checkbox" checked={fixar} onChange={e=>setFixar(e.target.checked)}/> Fixar na Visão geral</label>
-        <button type="button" className="fx-btn fx-btn--primary" onClick={salvar} disabled={estado==='salvando'||estado==='salvo'}><Save size={15}/> {estado==='salvando'?'Salvando...':estado==='salvo'?'Salva':'Salvar tela'}</button>
+        <button type="button" className="fx-btn fx-btn--primary" onClick={salvar} disabled={estado==='salvando'||estado==='salvo'}><Save size={15}/> {estado==='salvando'?'Salvando…':estado==='salvo'?'Salva':'Salvar tela'}</button>
       </div>
       {erro&&<p className="nx-view-warn is-error" role="alert">{erro}</p>}
       {aviso&&<p className="nx-view-warn" role="status">{aviso}</p>}
@@ -108,7 +108,7 @@ function MinhasTelas({organizationId,versao}){
   const fixar=async t=>{try{await post({acao:'fixar',id:t.id,inicio:!t.inicio});carregar()}catch(e){setErro(e.message)}};
   const apagar=async t=>{try{const res=await fetch('/api/views?org_id='+encodeURIComponent(organizationId)+'&id='+t.id,{method:'DELETE',headers:await headers()});if(!res.ok)throw new Error('Não consegui apagar.');setAberta(null);carregar()}catch(e){setErro(e.message)}};
   const abrir=async t=>{setAberta({...t,tela:null});try{const j=await post({acao:'abrir',spec:t.spec});setAberta({...t,tela:{...j.tela,titulo:t.nome}})}catch(e){setErro(e.message)}};
-  if(!lista)return <p className="nx-view-empty">Carregando...</p>;
+  if(!lista)return <p className="nx-view-empty">Carregando…</p>;
   return <div className="nx-pz-mine">
     {erro&&<p className="nx-view-warn" role="status">{erro}</p>}
     {!lista.length&&<p className="nx-view-empty">Nenhuma tela salva ainda. Monte a primeira no formulário.</p>}
@@ -117,7 +117,7 @@ function MinhasTelas({organizationId,versao}){
       <button type="button" className="nx-ai-pin" aria-pressed={t.inicio===true} onClick={()=>fixar(t)}><Pin size={13}/>{t.inicio?'Na inicial':'Fixar'}</button>
       <ConfirmButton onConfirm={()=>apagar(t)} label="Apagar" confirmLabel="Confirmar" className="fx-btn nx-view-delete"/>
     </li>)}</ul>
-    {aberta&&(aberta.tela?<NexusViewCanvas tela={aberta.tela}/>:<p className="nx-view-empty">Abrindo...</p>)}
+    {aberta&&(aberta.tela?<NexusViewCanvas tela={aberta.tela}/>:<p className="nx-view-empty">Abrindo…</p>)}
   </div>;
 }
 
@@ -130,7 +130,7 @@ function Ramo({organizationId}){
     <p>O ramo muda as palavras que o NEXUS usa no Assistente e nas sugestões.</p>
     <div className="nx-pz-ramos" role="radiogroup" aria-label="Ramo da empresa">{Object.entries(RAMOS).map(([k,x])=><button type="button" key={k} role="radio" aria-checked={escolha===k} onClick={()=>setEscolha(k)}>{x.rotulo}</button>)}</div>
     <p className="nx-pz-ramo-ex">Vai falar: <b>{v.clientes}</b> · <b>{v.agendamentos}</b> · <b>{v.vendas}</b></p>
-    <button type="button" className="fx-btn fx-btn--primary" onClick={salvar} disabled={busy||escolha===atual}>{busy?'Salvando...':'Salvar ramo'}</button>
+    <button type="button" className="fx-btn fx-btn--primary" onClick={salvar} disabled={busy||escolha===atual}>{busy?'Salvando…':'Salvar ramo'}</button>
     {msg&&<p className="nx-view-warn" role="status">{msg}</p>}
   </div>;
 }

@@ -29,7 +29,7 @@ function Field({req,value,onChange,ctx,first}){
     const options=req.type==='lost_reason'?ctx.lostReasons:req.options;
     return <div className="nxg-field">{labelEl}
       <select {...common} value={value} onChange={e=>onChange(e.target.value)}>
-        <option value="">Selecione...</option>{options.map(o=><option key={o} value={o}>{o}</option>)}
+        <option value="">Selecione…</option>{options.map(o=><option key={o} value={o}>{o}</option>)}
       </select>
       {req.type==='lost_reason'&&!options.length&&<small className="nxg-help">Nenhum motivo de perda ativo cadastrado para a empresa.</small>}
       {req.type==='select'&&!options.length&&<small className="nxg-help">Este campo não tem opções cadastradas. Peça ao gestor para revisar o campo em Configurações.</small>}

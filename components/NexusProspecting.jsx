@@ -99,7 +99,7 @@ export default function NexusProspecting({organizationId,canSee}){
           ?<>Token terminado em <code>…{conn.hint}</code>. {conn.last_used_at?'Último envio: '+when(conn.last_used_at)+'.':'O vigia ainda não enviou nenhum aviso.'}</>
           :'Gere um token e coloque no vigia do computador para os avisos chegarem aqui.'}</p>
         <div className="fx-prosp-conn-actions">
-          <button type="button" className="fx-btn fx-btn--primary" disabled={!!busy} onClick={()=>tokenAction('rotate_token')}>{busy==='rotate_token'?'Gerando...':conn?.active?'Gerar token novo':'Gerar token'}</button>
+          <button type="button" className="fx-btn fx-btn--primary" disabled={!!busy} onClick={()=>tokenAction('rotate_token')}>{busy==='rotate_token'?'Gerando…':conn?.active?'Gerar token novo':'Gerar token'}</button>
           {conn?.active&&<button type="button" className="nx13-linkbutton" disabled={!!busy} onClick={()=>tokenAction('revoke_token')}>Desligar vigia</button>}
         </div>
         {newToken&&<div className="fx-prosp-token" role="group" aria-label="Token novo">
@@ -115,7 +115,7 @@ export default function NexusProspecting({organizationId,canSee}){
         <div className="fx-tabs" role="group" aria-label="Filtrar por situação">{STATUS_FILTERS.map(([id,label])=><button type="button" key={id} aria-pressed={statusFilter===id} className={statusFilter===id?'active':''} onClick={()=>setStatusFilter(id)}>{label}</button>)}</div>
         <select aria-label="Filtrar por canal" value={channel} onChange={e=>setChannel(e.target.value)}>{CHANNEL_FILTERS.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
       </div>
-      {state.status==='loading'&&<p className="fx-muted fx-prosp-wait" role="status">Carregando os avisos...</p>}
+      {state.status==='loading'&&<p className="fx-muted fx-prosp-wait" role="status">Carregando os avisos…</p>}
       {state.status==='error'&&<div className="fx-empty"><strong>Não foi possível carregar</strong><p>{error}</p><button type="button" className="fx-btn" onClick={load}>Tentar novamente</button></div>}
       {['ready','refreshing'].includes(state.status)&&!state.alerts.length&&<div className="fx-empty"><strong>{statusFilter==='open'?'Nenhum aviso em aberto':'Nenhum aviso neste filtro'}</strong>
         <p>{conn?.active?'Quando alguém responder o e-mail ou o agente avisar uma venda, aparece aqui.':'Os avisos só chegam depois de ligar o vigia acima.'}</p></div>}

@@ -120,14 +120,14 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
       {formOpen&&isSuperAdmin&&<form className="fx-panel fx-wa-setup" onSubmit={register} aria-label="Registrar Phone Number ID">
         <label>Phone Number ID<input required placeholder="Ex.: 112233445566778" pattern="[0-9]{6,24}" value={phoneId} onChange={e=>setPhoneId(e.target.value)}/></label>
         <label>Nome de exibição<input placeholder="Ex.: Atendimento principal" maxLength={100} value={displayName} onChange={e=>setDisplayName(e.target.value)}/></label>
-        <button className="fx-btn fx-btn--primary" type="submit" disabled={busy}>{busy?'Registrando...':'Registrar número'}</button>
+        <button className="fx-btn fx-btn--primary" type="submit" disabled={busy}>{busy?'Registrando…':'Registrar número'}</button>
         <p className="fx-wa-setup-note"><ShieldCheck size={15}/> Use o identificador numérico do painel Meta Developers; este cadastro não solicita nem armazena token. No Render, configure META_APP_SECRET e META_WEBHOOK_VERIFY_TOKEN. Na Meta, assine os eventos de mensagens para <code>https://nexus-crm-ai.onrender.com/api/webhooks/whatsapp</code>. O status é ativado quando o primeiro evento válido chegar.</p>
       </form>}
       {connections.map(c=><div className="fx-row fx-wa-conn" key={c.id}>
         <div><strong>{c.display_name}</strong><small>ID {c.phone_number_id}</small></div>
         <span className={'fx-int-status '+(c.status==='active'?'is-on':'is-off')}>{c.status==='active'?'Recebendo':'Aguardando Meta'}</span>
       </div>)}
-      {!connections.length&&<p className="fx-empty-small">{loading?'Carregando...':'Nenhum número conectado. O administrador conecta o número oficial da empresa para receber as mensagens aqui.'}</p>}
+      {!connections.length&&<p className="fx-empty-small">{loading?'Carregando…':'Nenhum número conectado. O administrador conecta o número oficial da empresa para receber as mensagens aqui.'}</p>}
       {isSuperAdmin&&<p className="fx-boxfoot">{serverReady?'Servidor pronto para receber webhooks assinados.':'A API da Meta ainda precisa ser configurada no Render.'}</p>}
     </section>
 
@@ -147,7 +147,7 @@ export default function NexusWhatsAppInbox({organizationId,contacts=[],isSuperAd
             <small>{localDate(m.occurred_at)}{m.delivery_status&&' · '+m.delivery_status}</small>
           </div>)}</div>
         </div>
-      </div>:<div className="fx-empty"><strong>{loading?'Carregando conversas...':filter?'Nenhuma conversa encontrada':'Nenhuma mensagem recebida'}</strong>{!loading&&<p>{filter?'Ajuste a busca.':'As mensagens recebidas pelo número oficial da empresa aparecerão aqui.'}</p>}</div>}
+      </div>:<div className="fx-empty"><strong>{loading?'Carregando conversas…':filter?'Nenhuma conversa encontrada':'Nenhuma mensagem recebida'}</strong>{!loading&&<p>{filter?'Ajuste a busca.':'As mensagens recebidas pelo número oficial da empresa aparecerão aqui.'}</p>}</div>}
       <p className="fx-boxfoot fx-boxfoot--note"><ShieldCheck size={14}/> Caixa de entrada somente leitura da API oficial da Meta. O NEXUS não envia mensagens; para responder, use o WhatsApp da empresa.</p>
     </section>
     </>}

@@ -25,6 +25,7 @@ import PremiumSales from './PremiumSales';
 import ConfirmButton from './ConfirmButton';
 import NexusAssistant from './NexusAssistant';
 import NexusPersonalizar from './NexusPersonalizar';
+import {dataCurta} from '../lib/formato.mjs';
 import NexusProspecting from './NexusProspecting';
 import {daysLate,lateLabel} from '../lib/sales-attribution.mjs';
 
@@ -53,7 +54,7 @@ const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Con
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
-const date=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR'):'—';
+const date=v=>dataCurta(v);
 const dayTime=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
 const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ')||'Contato sem nome';
 const normalizePhone=value=>String(value||'').replace(/\D/g,'');
@@ -520,7 +521,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         <div className="staff-topbar-right">
           <div className="staff-global-search">
             <Search size={16}/>
-            <input type="search" aria-label="Busca geral de leads, contatos e tarefas" placeholder="Buscar em sua operação..."
+            <input type="search" aria-label="Busca geral de leads, contatos e tarefas" placeholder="Buscar em sua operação…"
               value={globalSearch} onFocus={()=>setSearchOpen(true)}
               onChange={e=>{setGlobalSearch(e.target.value);setSearchOpen(true)}}/>
             <span className="staff-search-hint">Busca rápida</span>
@@ -596,7 +597,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <option value="low">Baixa</option><option value="medium">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
             </select></label>
             <label>Prazo<input type="date" value={taskDueDate} onChange={e=>setTaskDueDate(e.target.value)} aria-label="Prazo da tarefa"/></label>
-            <button disabled={saving||taskTitle.trim().length<2} type="submit" className="fx-btn fx-btn--primary">{saving?'Salvando...':'Salvar tarefa'}</button>
+            <button disabled={saving||taskTitle.trim().length<2} type="submit" className="fx-btn fx-btn--primary">{saving?'Salvando…':'Salvar tarefa'}</button>
           </form>}
           {readonly&&<div className="fx-alert fx-alert--info"><ShieldCheck size={16}/> Seu perfil é somente leitura. Você pode acompanhar tarefas, mas não editá-las.</div>}
           <section className="fx-box">
@@ -606,7 +607,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               {items.map(t=>{const done=['completed','done'].includes(String(t.status||'').toLowerCase());if(editTaskId===t.id)return <form key={t.id} className='fx-row fx-taskline fx-task-edit' onSubmit={e=>saveTaskEdit(e,t)} aria-label='Editar tarefa'><input aria-label='Título da tarefa' required minLength={2} maxLength={190} value={editTask.title} onChange={e=>setEditTask(v=>({...v,title:e.target.value}))} autoFocus/><input type='date' aria-label='Prazo' value={editTask.due_date} onChange={e=>setEditTask(v=>({...v,due_date:e.target.value}))}/><select aria-label='Prioridade' value={editTask.priority} onChange={e=>setEditTask(v=>({...v,priority:e.target.value}))}><option value='low'>Baixa</option><option value='medium'>Normal</option><option value='high'>Alta</option><option value='urgent'>Urgente</option></select><span className='fx-row-actions'><button type='submit' className='fx-btn fx-btn--primary' disabled={saving}>Salvar</button><button type='button' className='fx-btn' onClick={()=>setEditTaskId('')}>Cancelar</button><ConfirmButton onConfirm={()=>deleteTask(t)} disabled={saving}/></span></form>;return <div key={t.id} className={'fx-row fx-taskline'+(id==='late'?' is-late':'')}>
                 <button type="button" disabled={readonly||saving} className={'fx-check'+(done?' is-done':'')} onClick={()=>changeTask(t)} title={done?'Reabrir tarefa':'Concluir tarefa'} aria-label={(done?'Reabrir ':'Concluir ')+(t.title||'tarefa')}><Check size={14}/></button>
                 <div><strong className={done?'fx-done':''}>{t.title||'Tarefa sem título'}</strong>{t.priority&&['high','urgent'].includes(String(t.priority).toLowerCase())&&<small className="fx-prio">Prioridade {String(t.priority).toLowerCase()==='urgent'?'urgente':'alta'}</small>}{(()=>{const lead=t.lead_id&&leadsById.get(t.lead_id);if(!lead)return null;const who=nameOf(lead.contact);return <small className="fx-task-lead">Lead: <Link href={'/leads?q='+encodeURIComponent(who)}>{who}</Link>{lead.source?' · '+lead.source:''}</small>})()}</div>
-                {(()=>{const shown=dueKey(t)?dueDate(t.due_date).toLocaleDateString('pt-BR'):'';const late=id==='late'?lateLabel(daysLate(dueKey(t),localDayKey(new Date()))):'';return <span className={id==='late'?'fx-late':'fx-due'} title={shown?'Prazo '+shown:undefined}>{shown?(id==='today'?'Hoje':late||shown):'Sem prazo'}</span>})()}
+                {(()=>{const shown=dueKey(t)?dataCurta(dueDate(t.due_date)):'';const late=id==='late'?lateLabel(daysLate(dueKey(t),localDayKey(new Date()))):'';return <span className={id==='late'?'fx-late':'fx-due'} title={shown?'Prazo '+shown:undefined}>{shown?(id==='today'?'Hoje':late||shown):'Sem prazo'}</span>})()}
               {!readonly&&<button type='button' className='nx13-linkbutton fx-task-editlink' onClick={()=>startTaskEdit(t)} aria-label={'Editar '+(t.title||'tarefa')}>Editar</button>}</div>})}
             </div>)}
             {!filteredTasks.length&&<div className="fx-empty"><strong>{search?'Nenhuma tarefa encontrada':taskFilter==='done'?'Nenhuma tarefa concluída':'Nada pendente'}</strong><p>{search?'Ajuste a busca ou o filtro.':taskFilter==='open'&&!readonly?'Use “Adicionar tarefa” para registrar a próxima atividade.':'Altere o filtro para ver outras tarefas.'}</p></div>}
@@ -666,7 +667,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
               <option value="">Sem vínculo com lead</option>
               {(data.leads||[]).filter(l=>l.contact&&!l.closed_at&&l.status!=='won'&&l.status!=='lost').map(l=><option key={l.id} value={l.id}>{[l.contact.first_name,l.contact.last_name].filter(Boolean).join(' ')||'Contato sem nome'}</option>)}
             </select></label>
-            <button className="fx-btn fx-btn--primary" disabled={saving||!appointmentTitle.trim()||!appointmentStart} type="submit">{saving?'Salvando...':'Salvar compromisso'}</button>
+            <button className="fx-btn fx-btn--primary" disabled={saving||!appointmentTitle.trim()||!appointmentStart} type="submit">{saving?'Salvando…':'Salvar compromisso'}</button>
           </form>}
           <div className="fx-agenda-grid">
             <div className="fx-agenda-main">

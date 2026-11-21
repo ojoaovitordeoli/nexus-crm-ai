@@ -82,7 +82,7 @@ export default function NexusProposal({lead,person,phone,onOperation,onGenerated
       </div>
       <label>Condições de pagamento<textarea rows={2} maxLength={600} value={conditions} onChange={e=>setConditions(e.target.value)} placeholder="Ex.: até 10x sem juros no cartão ou 5% à vista no Pix"/></label>
       <label>Observações<textarea rows={3} maxLength={1200} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Ex.: prazo de entrega de 7 dias úteis após a aprovação"/></label>
-      <button type="submit" className="nx13-submit" disabled={busy}><FileText size={16}/> {busy?'Gerando...':'Gerar proposta'}</button>
+      <button type="submit" className="nx13-submit" disabled={busy}><FileText size={16}/> {busy?'Gerando…':'Gerar proposta'}</button>
       {error&&<p className="nx13-error" role="alert">{error}</p>}
     </form>
   </div>;

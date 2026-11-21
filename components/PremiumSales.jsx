@@ -2,11 +2,13 @@
 import {useMemo,useState} from 'react';
 import {CheckCircle2,Plus,Target,X} from 'lucide-react';
 import {parseBRL} from '../lib/shell-rules.mjs';
+import {dataCurta} from '../lib/formato.mjs';
 import {PAYMENT_METHODS,paymentLabel,goalProgress} from '../lib/sale-rules.mjs';
 import ConfirmButton from './ConfirmButton';
 
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n)||0);
-const date=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR'):'—';
+// V57: sale_date (AAAA-MM-DD) é dia local; new Date() mostrava o dia anterior no fuso de Brasília.
+const date=v=>dataCurta(v);
 // Data do negócio: sale_date quando existir; created_at para registros antigos.
 const saleWhen=s=>s?.sale_date||s?.created_at;
 const PERIODS=[['all','Todas'],[30,'30 dias'],[90,'90 dias']];
@@ -39,7 +41,7 @@ function GoalPanel({goal,canManage,readonly,onOperation,onReload}){
     {editing?<form className="fx-goal-form" onSubmit={save}>
       <label>Meta de faturamento<input inputMode="decimal" placeholder="Ex.: 50.000,00" value={draft} onChange={e=>setDraft(e.target.value)} autoFocus aria-describedby="goal-hint"/></label>
       <small id="goal-hint" className="fx-muted">Deixe em branco e salve para remover a meta deste mês.</small>
-      <span className="fx-row-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={busy}>{busy?'Salvando...':'Salvar meta'}</button><button type="button" className="fx-btn" onClick={()=>setEditing(false)}>Cancelar</button></span>
+      <span className="fx-row-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={busy}>{busy?'Salvando…':'Salvar meta'}</button><button type="button" className="fx-btn" onClick={()=>setEditing(false)}>Cancelar</button></span>
       {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
     </form>:p?<div className="fx-goal-body">
       <div className="fx-goal-numbers"><strong>{money(p.achieved)}</strong><span>de {money(p.target)}</span><em className={'fx-goal-status fx-goal-status--'+p.status}>{status[p.status]}</em></div>
@@ -120,8 +122,8 @@ export default function PremiumSales({sales=[],count=0,leads=[],goal=null,readon
       </select><small className="fx-muted">A venda entra na linha do tempo do lead.</small></label>
       <label>Data da venda<input type="date" value={saleDate} max={todayISO()} onChange={e=>setSaleDate(e.target.value)} aria-label="Data da venda"/></label>
       <label className="fx-sale-form-wide">Produto ou serviço (opcional)<input maxLength={160} placeholder="Ex.: Óculos multifocal + armação" value={product} onChange={e=>setProduct(e.target.value)}/></label>
-      <label className="fx-sale-form-wide">Observação (opcional)<textarea maxLength={600} rows={2} placeholder="Parcelas, desconto combinado, entrega..." value={notes} onChange={e=>setNotes(e.target.value)}/></label>
-      <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||!value.trim()}>{saving?'Registrando...':'Salvar venda'}</button>
+      <label className="fx-sale-form-wide">Observação (opcional)<textarea maxLength={600} rows={2} placeholder="Parcelas, desconto combinado, entrega…" value={notes} onChange={e=>setNotes(e.target.value)}/></label>
+      <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||!value.trim()}>{saving?'Registrando…':'Salvar venda'}</button>
     </form>}
     <GoalPanel goal={goal} canManage={canManage} readonly={readonly} onOperation={onOperation} onReload={onReload}/>
     <section className="fx-strip" aria-label="Resumo das vendas">

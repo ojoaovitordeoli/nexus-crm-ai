@@ -60,10 +60,10 @@ export default function NexusTeam({organizationId}){
       <label>E-mail<input required type="email" maxLength={254} value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
       <label>Função<select value={form.role} onChange={e=>setForm({...form,role:e.target.value})}>{state.roles.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}</select></label>
       <label>Senha inicial<input required minLength={12} maxLength={128} value={form.password} onChange={e=>setForm({...form,password:e.target.value})} spellCheck={false} autoComplete="off"/></label>
-      <button type="submit" className="fx-btn fx-btn--primary" disabled={busy==='invite'}>{busy==='invite'?'Cadastrando...':'Cadastrar'}</button>
+      <button type="submit" className="fx-btn fx-btn--primary" disabled={busy==='invite'}>{busy==='invite'?'Cadastrando…':'Cadastrar'}</button>
       <p className="fx-muted fx-team-hint">Anote a senha inicial e passe para a pessoa junto com o e-mail. Ela pode trocar depois em "Esqueci minha senha".</p>
     </form>}
-    {state.status==='loading'&&<p className="fx-muted fx-team-empty">Carregando a equipe...</p>}
+    {state.status==='loading'&&<p className="fx-muted fx-team-empty">Carregando a equipe…</p>}
     {state.status==='ready'&&<div className="fx-team-list">
       {active.map(m=><div className="fx-row fx-team-row" key={m.id}>
         <span className="fx-avatar">{m.full_name.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</span>

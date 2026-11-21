@@ -93,7 +93,7 @@ export default function NexusCommandMenu({
         autoFocus
         value={term}
         onValueChange={setTerm}
-        placeholder="Buscar uma pessoa, tarefa ou ação..."
+        placeholder="Buscar uma pessoa, tarefa ou ação…"
         aria-label="Buscar na Central de Comandos"/>
       <kbd className="nexus-command-esc">ESC</kbd>
     </div>

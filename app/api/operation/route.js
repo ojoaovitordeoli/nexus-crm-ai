@@ -131,8 +131,15 @@ export async function GET(request){
   ];
   // Contatos e leads excluídos ficam na "lixeira" (deleted_at) e não aparecem em lugar nenhum.
   const live=(q,name)=>name==='leads'||name==='contacts'?q.is('deleted_at',null):q;
-  const requestRows=names.map((name,i)=>live(admin.from(name).select(fields[i]).eq('organization_id',orgId),name)
-    .order(name==='appointments'?'start_at':'created_at',{ascending:name==='appointments'?true:false}).limit(250));
+  // V57: agenda carrega a janela útil (90 dias para trás em diante), do mais próximo ao mais distante.
+  // Antes vinha do mais ANTIGO de todos: com mais de 250 agendamentos, a Visão geral e a Agenda
+  // ficavam só com o passado distante.
+  const agendaDesde=new Date(Date.now()-90*86400000).toISOString();
+  const requestRows=names.map((name,i)=>{
+    let q=live(admin.from(name).select(fields[i]).eq('organization_id',orgId),name);
+    if(name==='appointments')q=q.gte('start_at',agendaDesde);
+    return q.order(name==='appointments'?'start_at':'created_at',{ascending:name==='appointments'?true:false}).limit(250);
+  });
   const requestCounts=names.map(name=>live(admin.from(name).select('id',{count:'exact',head:true}).eq('organization_id',orgId),name));
   const [rows,counts,pipelines]=await Promise.all([
     Promise.all(requestRows),Promise.all(requestCounts),
