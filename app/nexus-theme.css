@@ -1422,7 +1422,8 @@ body.dark .staff-sidebar .staff-nav-item--active{box-shadow:inset 2px 0 0 var(--
 body.dark{--nx-cat-1:#3fb48f;--nx-cat-2:#7ea6ee;--nx-cat-3:#ff8a4c;--nx-cat-4:#e2b04a;--nx-cat-5:#62c3db;--nx-cat-6:#a3aea9}
 /* V60: na Schibsted, algarismos tabulares abrem espaço em volta de ":", "," e "." ("08 : 45").
    Algarismos alinhados (lining) proporcionais ficam corretos; colunas de número alinham pela direita. */
-:root:root:root body,:root:root:root body *{font-variant-numeric:lining-nums!important;font-feature-settings:normal!important}
+/* V62: só font-feature-settings (o minificador juntava 'normal' com 'lnum' e a regra era descartada). */
+:root:root:root body,:root:root:root body *{font-feature-settings:"tnum" 0,"lnum" 1!important}
 
 /* ===================== V60 — tela Hoje ===================== */
 :root:root:root body .nx-hoje{max-width:1280px}
@@ -1594,3 +1595,18 @@ body.dark .nx-toast button{color:#0d5c4b}
 :root:root:root body .nx61-passo.is-alerta strong{color:var(--fx-danger)}
 :root:root:root body .nx61-passo p{margin:2px 0 0;font-size:13.5px;color:var(--fx-muted)}
 :root:root:root body .nx61-passo-acts{display:flex;flex-wrap:wrap;gap:6px}
+
+/* ===================== V62 — Agenda, Vendas e Relatórios no padrão Hoje ===================== */
+:root:root:root body .nx62-agenda-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+:root:root:root body .nx62-grade{width:calc(100% - 32px);margin:10px 16px 0;border-collapse:separate;border-spacing:4px;font-size:12.5px}
+:root:root:root body .nx62-grade th{font-weight:600;color:var(--fx-faint);text-align:center;padding:0 0 2px;font-size:12px}
+:root:root:root body .nx62-grade tbody th{text-align:left;width:38px}
+:root:root:root body .nx62-grade td{text-align:center;height:34px;border-radius:6px;font-weight:700;color:var(--fx-text);background:color-mix(in srgb,var(--fx-danger) calc(var(--f,0) * 60%),var(--fx-subtle))}
+:root:root:root body .nx62-grade td.is-vazio{background:transparent;color:var(--fx-faint);font-weight:500;border:1px dashed var(--fx-border)}
+:root:root:root body .nx62-faltas-frase{margin:10px 16px 14px;font-size:13px;color:var(--fx-muted)}
+:root:root:root body .nx62-meta-frase{margin:6px 0 0;font-size:14px;color:var(--fx-muted)}
+:root:root:root body .nx62-meta-frase b{color:var(--fx-text)}
+:root:root:root body .fx-goal .nx-chart{margin:12px 0 4px;max-width:560px}
+:root:root:root body .nx62-ditos ul{margin:0;padding:6px 16px 14px 34px;display:flex;flex-direction:column;gap:8px}
+:root:root:root body .nx62-ditos li{font-size:14px;color:var(--fx-text);line-height:1.5}
+:root:root:root body .nx62-ditos li::marker{color:var(--fx-accent)}

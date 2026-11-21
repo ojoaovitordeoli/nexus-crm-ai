@@ -65,6 +65,8 @@ function downloadCsv(rows,name){
   document.body.appendChild(anchor);anchor.click();anchor.remove();
   URL.revokeObjectURL(url);
 }
+import {funilJanela,origemVenda} from '../lib/hoje.mjs';
+import {mapaFaltas} from '../lib/agenda-faltas.mjs';
 export function PremiumReports({data,counts,orgName,readonly}){
   const [period,setPeriod]=useState(30);
   const [csvMessage,setCsvMessage]=useState('');
@@ -102,6 +104,11 @@ export function PremiumReports({data,counts,orgName,readonly}){
       <div className="fx-actions"><div className="fx-tabs" role="group" aria-label="Período">{[7,30,90].map(n=><button type="button" key={n} aria-pressed={n===period} className={n===period?'active':''} onClick={()=>{setPeriod(n);setCsvMessage('')}}>{n} dias</button>)}</div>
       {!readonly&&<button type="button" onClick={exportReport} className="fx-btn"><Download size={15}/> Exportar CSV</button>}</div>
     </header>
+    {(()=>{const d=data||{};const f=funilJanela({leads:d.leads||[],appointments:d.appointments||[],sales:d.sales||[]},{dias:period});
+      const o=origemVenda({leads:d.leads||[],sales:d.sales||[]},{dias:period});const m=mapaFaltas(d.appointments||[],{dias:period});
+      const ditos=[o.frase,f.nota?'O funil perde mais em '+f.nota.etapa+': '+f.nota.perdidos+' de "'+f.nota.de+'" não avançaram. '+f.nota.dica:null,m.frase].filter(Boolean);
+      return ditos.length?<section className="fx-box nx62-ditos" aria-label="O que os números dizem"><div className="fx-boxhead"><h2>O que os números dizem</h2><span className="fx-boxmeta">últimos {period} dias</span></div>
+        <ul>{ditos.map(t=><li key={t}>{t}</li>)}</ul></section>:null})()}
     {csvMessage&&<div role="status" className="fx-alert fx-alert--ok"><CheckCircle2 size={16}/>{csvMessage}<button type="button" aria-label="Fechar aviso" onClick={()=>setCsvMessage('')}>×</button></div>}
     <section className="fx-strip fx-strip--4" aria-label="Resumo do período">
       <div><span>Leads captados</span><strong>{integer(view.leads.length)}</strong></div>

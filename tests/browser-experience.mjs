@@ -244,6 +244,10 @@ try{
     await page.waitForTimeout(500);
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
     await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
+    if(route==='sales'){
+      // V62: meta com acumulado e projeção.
+      await page.locator('.fx-goal .nx-chart').waitFor({timeout:8000}).catch(()=>{throw new Error('Vendas sem o gráfico da meta')});
+    }
     if(route==='leads'){
       // V61: resumo que conclui, atalhos e o próximo passo na ficha.
       await page.locator('.nx61-resumo').waitFor({timeout:5000});
@@ -398,6 +402,9 @@ try{
   if(!await page.getByText('Ana Teste',{exact:false}).first().count())throw new Error('Agenda não mostra de quem é o compromisso');
   await page.waitForTimeout(600);
   await page.screenshot({path:'test-artifacts/agenda-v38-presenca.png',fullPage:true});
+  // V62: frase do dia e mapa de faltas na Agenda.
+  if(!await page.locator('.nx62-faltas').count())throw new Error('Agenda sem o mapa de faltas');
+  if(!/atendimento/.test(await page.locator('.fx-agenda .nx61-resumo').innerText()))throw new Error('Agenda sem a frase do dia');
   await page.getByRole('button',{name:'Marcar que compareceu: Retorno da Ana'}).click();
   for(let k=0;k<40&&!apptStatus.length;k++)await sleep(100);
   if(apptStatus[0]!=='completed')throw new Error('Compareceu não enviou appointment_status completed: '+apptStatus.join(','));

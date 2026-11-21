@@ -38,7 +38,7 @@ function Regua({regua}){
   </section>;
 }
 
-function GraficoMes({mes}){
+export function GraficoMes({mes}){
   const W=400,H=150,base=140;
   const topo=Math.max(1,mes.alvo||0,mes.projecao,mes.feito)*1.06;
   const x=d=>d/mes.diasMes*W,y=v=>base-(v/topo)*(base-6);
