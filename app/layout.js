@@ -32,4 +32,6 @@ import './nexus-stage-gate.css';
 import './nexus-crm-settings.css';
 import './nexus-theme.css';
 export const metadata = { title: 'NEXUS CRM', description: 'Gestão de clientes e vendas' };
+// V58: cor da barra do navegador no celular acompanha o tema do aparelho.
+export const viewport = { themeColor: [{ media: '(prefers-color-scheme: light)', color: '#f4f4f6' }, { media: '(prefers-color-scheme: dark)', color: '#0b0b0e' }] };
 export default function RootLayout({children}) {return <html lang="pt-BR"><body suppressHydrationWarning>{children}</body></html>}

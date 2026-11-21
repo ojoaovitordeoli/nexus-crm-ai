@@ -498,6 +498,35 @@ try{
   const bounds=await dialog.boundingBox();
   if(!bounds||bounds.x<0||bounds.x+bounds.width>400)throw new Error('Command dialog overflows mobile viewport');
   await page.screenshot({path:'test-artifacts/command-mobile.png'});
+  // V58: tema escuro conferido de verdade — liga o escuro salvo e fotografa as telas principais.
+  await page.evaluate(()=>localStorage.setItem('nexus-theme','dark'));
+  for(const [route,w,h,file] of [['dashboard',1440,900,'dark-dashboard-desktop'],['leads',1440,900,'dark-leads-desktop'],['sales',1440,900,'dark-sales-desktop'],['agenda',1440,900,'dark-agenda-desktop'],['tasks',1440,900,'dark-tasks-desktop'],['reports',1440,900,'dark-reports-desktop'],['personalizar',1440,900,'dark-personalizar-desktop'],['settings',1440,900,'dark-settings-desktop'],['dashboard',390,844,'dark-dashboard-mobile'],['leads',390,844,'dark-leads-mobile']]){
+    await page.setViewportSize({width:w,height:h});
+    await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.locator('h1').first().waitFor({timeout:8000});
+    await page.waitForTimeout(500);
+    if(!await page.evaluate(()=>document.body.classList.contains('dark')))throw new Error('Tema escuro não aplicado em '+route);
+    await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
+  }
+  await page.evaluate(()=>localStorage.setItem('nexus-theme','light'));
+  // V58: navegar com Tab sempre mostra onde está o foco (anel no elemento ou na caixa que o contém).
+  await page.setViewportSize({width:1440,height:900});
+  await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.mouse.click(5,450);
+  const semAnel=[];let focados=0;
+  for(let i=0;i<14;i++){
+    await page.keyboard.press('Tab');
+    const r=await page.evaluate(()=>{const el=document.activeElement;if(!el||el===document.body)return 'body';
+      const vis=e=>{const cs=getComputedStyle(e);return (cs.outlineStyle!=='none'&&parseFloat(cs.outlineWidth)>0)||/rgb/.test(cs.boxShadow)};
+      let ok=vis(el);for(let p=el.parentElement,k=0;!ok&&p&&k<3;p=p.parentElement,k++)ok=p.matches(':focus-within')&&vis(p);
+      return ok?null:(el.tagName+' '+(el.getAttribute('aria-label')||el.textContent||'').trim().slice(0,40));});
+    if(r!=='body')focados++;
+    if(r&&r!=='body')semAnel.push(r);
+    if(i===5)await page.screenshot({path:'test-artifacts/foco-teclado-v58.png'});
+  }
+  if(focados<8)throw new Error('Tab percorreu poucos elementos: '+focados);
+  if(semAnel.length)throw new Error('Foco sem contorno visível: '+semAnel.join(' | '));
   console.log('PASS: login transitions, authenticated dashboard, Ctrl+K, search, menu click, task shortcut, mobile dialog');
   if(errors.length)throw new Error(errors.join('\n').slice(0,2500));
 }catch(e){
