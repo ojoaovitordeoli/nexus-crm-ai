@@ -1,7 +1,8 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {runLeadStageAutomations} from '../../../lib/automation-runner';
-import {describeRequirement,evaluateRequirements,statusForStage} from '../../../lib/stage-requirements.mjs';
+import {describeRequirement,evaluateRequirements,normalizeAnswer,statusForStage} from '../../../lib/stage-requirements.mjs';
+import {comoRequisito} from '../../../lib/custom-fields-chat.mjs';
 import {buildLeadTimeline,canManagePipeline,canWriteOperation,localDateISO,parseDateTime,planPipelineStages,READ_ACTIONS,safeCalendarDate} from '../../../lib/operation-rules.mjs';
 import {logInternal} from '../../../lib/workflow-security.mjs';
 import {buildContacts,parseCsv} from '../../../lib/contact-import.mjs';
@@ -559,6 +560,44 @@ export async function POST(request){
     if(!data)return fails('Lead não encontrado nesta empresa.',404);
     await auditLog('lead_update','lead',data.id,null,patch);
     return reply({ok:true,message:'Lead atualizado.'});
+  }
+  // ---------- Campos extras na ficha do lead (V52) ----------
+  // Campos do lead (valor por lead) e do contato (valor por pessoa). Tudo conferido nesta empresa:
+  // o lead, o contato e o campo precisam ser da organização da sessão.
+  if(action==='lead_fields'||action==='lead_field_set'){
+    const leadId=payload?.lead_id;
+    if(!validId(leadId))return fails('Lead inválido.');
+    const lead=await admin.from('leads').select('id,contact_id').eq('id',leadId).eq('organization_id',orgId).is('deleted_at',null).maybeSingle();
+    if(lead.error)return dbFail('Falha ao carregar o lead.',lead.error);
+    if(!lead.data)return fails('Lead não encontrado nesta empresa.',404);
+    const entityOf=f=>f.entity_type==='contact'?lead.data.contact_id:lead.data.id;
+    if(action==='lead_fields'){
+      const fields=await admin.from('custom_fields').select('id,name,type,options,entity_type,position').eq('organization_id',orgId).order('position').limit(100);
+      if(fields.error)return dbFail('Falha ao carregar os campos.',fields.error);
+      const list=fields.data||[];
+      const ids=list.map(f=>f.id);
+      const entities=[lead.data.id,lead.data.contact_id].filter(Boolean);
+      const vals=ids.length&&entities.length?await admin.from('custom_field_values').select('custom_field_id,entity_id,value').in('custom_field_id',ids).in('entity_id',entities):{data:[]};
+      if(vals.error)return dbFail('Falha ao carregar os valores.',vals.error);
+      const byKey=new Map((vals.data||[]).map(v=>[v.custom_field_id+':'+v.entity_id,v.value]));
+      return reply({ok:true,fields:list.map(f=>({id:f.id,name:f.name,type:f.type,entity_type:f.entity_type||'lead',
+        options:Array.isArray(f.options)?f.options.map(String):[],value:byKey.get(f.id+':'+entityOf(f))??null}))});
+    }
+    if(!validId(payload?.field_id))return fails('Campo inválido.');
+    const field=await admin.from('custom_fields').select('id,name,type,options,entity_type').eq('id',payload.field_id).eq('organization_id',orgId).maybeSingle();
+    if(field.error)return dbFail('Falha ao carregar o campo.',field.error);
+    if(!field.data)return fails('Campo não encontrado nesta empresa.',404);
+    const entityId=entityOf(field.data);
+    if(!entityId)return fails('Este lead não tem contato vinculado para guardar um campo da pessoa.',422);
+    const norm=normalizeAnswer(comoRequisito(field.data),payload?.value);
+    if(!norm.ok)return fails('Valor inválido para "'+field.data.name+'".',422);
+    const before=await admin.from('custom_field_values').select('value').eq('custom_field_id',field.data.id).eq('entity_id',entityId).maybeSingle();
+    const saved=norm.value===null
+      ?await admin.from('custom_field_values').delete().eq('custom_field_id',field.data.id).eq('entity_id',entityId)
+      :await admin.from('custom_field_values').upsert({custom_field_id:field.data.id,entity_id:entityId,value:norm.value,updated_at:new Date().toISOString()},{onConflict:'custom_field_id,entity_id'});
+    if(saved.error)return dbFail('Falha ao salvar "'+field.data.name+'".',saved.error);
+    await auditLog('custom_field_set',field.data.entity_type==='contact'?'contact':'lead',entityId,{field:field.data.name,value:before.data?.value??null},{field:field.data.name,value:norm.value});
+    return reply({ok:true,message:'"'+field.data.name+'" salvo.',value:norm.value});
   }
   // ---------- Proposta comercial (V38) ----------
   // Dados do lead, contato, empresa e itens vêm do banco desta empresa; o navegador só manda

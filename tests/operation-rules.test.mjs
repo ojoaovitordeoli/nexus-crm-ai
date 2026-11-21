@@ -12,8 +12,9 @@ test('somente gestão altera a estrutura do funil',()=>{
     [true,true,true,false,false,false]);
 });
 
-test('linha do tempo é a única ação POST liberada para leitura',()=>{
-  assert.deepEqual([...READ_ACTIONS],['lead_timeline']);
+test('só linha do tempo e leitura dos campos extras (V52) são ações POST liberadas para leitura',()=>{
+  assert.deepEqual([...READ_ACTIONS],['lead_timeline','lead_fields']);
+  assert.equal(READ_ACTIONS.has('lead_field_set'),false,'gravar campo extra exige perfil que escreve');
 });
 
 test('linha do tempo usa apenas registros vinculados, ordenados do mais recente',()=>{

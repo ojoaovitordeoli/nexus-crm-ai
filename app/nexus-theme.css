@@ -1244,3 +1244,19 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
   .nx-view-bars li{grid-template-columns:1fr auto}
   .nx-view-bars-track{grid-column:1 / -1;order:3}
 }
+
+/* ===== V52 · Campos extras na ficha do lead ===== */
+.nx-lf-group{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.nx-lf-group h4{margin:6px 0 2px;font-size:12px;font-weight:600;color:var(--fx-muted);text-transform:none}
+.nx-lf-row{display:grid;grid-template-columns:minmax(110px,40%) 1fr;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--fx-border);font-size:13.5px}
+.nx-lf-label{color:var(--fx-muted)}
+.nx-lf-view,.nx-lf-edit{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.nx-lf-view strong{font-weight:600;color:var(--fx-text);overflow-wrap:anywhere}
+.nx-lf-view em{font-style:normal;font-weight:400;color:var(--fx-faint)}
+.nx-lf-input{flex:1;min-width:0;height:34px;border:1px solid var(--fx-border-strong);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px;background:var(--fx-surface);color:var(--fx-text)}
+.nx-lf-input:focus-visible{outline:2px solid var(--fx-accent);outline-offset:1px}
+.nx-lf-check{display:inline-flex;align-items:center;gap:6px;flex:1}
+.nx-lf-multi{display:flex;flex-wrap:wrap;gap:6px 12px;flex:1}
+.nx-lf-multi label{display:inline-flex;align-items:center;gap:5px;font-size:13px}
+@media (max-width:640px){.nx-lf-row{grid-template-columns:1fr}}
+.nx13-leadfields{padding:0 4px}

@@ -47,7 +47,10 @@ test('dates, numbers and products are validated strictly',()=>{
   assert.equal(normalizeAnswer(d,'2026-02-30').ok,false);
   assert.equal(normalizeAnswer(d,'2026-11-07').value,'2026-11-07');
   const n=describeRequirement({custom_field_id:P1},field(P1,'number'));
-  assert.equal(normalizeAnswer(n,'-1').ok,false);
+  // V52: campo extra de número aceita negativo (ex.: grau de miopia); dinheiro continua só positivo.
+  assert.equal(normalizeAnswer(n,'-1').value,-1);
+  assert.equal(normalizeAnswer(n,'abc').ok,false);
+  assert.equal(normalizeAnswer(describeRequirement({core_field:'estimated_value'}),'-1').ok,false);
   assert.equal(normalizeAnswer(n,'3').value,3);
   const prod=describeRequirement({core_field:'products'});
   assert.equal(normalizeAnswer(prod,[{product_id:P2,quantity:1}],{productIds:[P1]}).ok,false,'product from another company is rejected');

@@ -9,7 +9,7 @@ import NexusViewCanvas from './NexusViewCanvas';
 // Ações chegam como propostas; só são executadas quando a pessoa clica em Confirmar,
 // pela mesma API de operação (mesmas permissões e regras de etapa).
 // V51 "Sob Medida": o assistente também MONTA TELAS (lista, quadro, gráfico, número) e a pessoa salva em "Minhas telas".
-const SUGGESTIONS=['Monta um quadro dos meus leads por etapa','Gráfico das vendas por vendedor nos últimos 30 dias','Quais leads estão parados há 3 dias?','O que eu tenho pra hoje?','Quantos leads quentes eu tenho?'];
+const SUGGESTIONS=['Monta um quadro dos meus leads por etapa','Gráfico das vendas por vendedor nos últimos 30 dias','Quero guardar o convênio de cada cliente','Quais leads estão parados há 3 dias?','O que eu tenho pra hoje?'];
 const plain=t=>String(t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/^#+\s*/gm,'');
 
 async function authHeaders(){
@@ -63,7 +63,17 @@ export default function NexusAssistant({organizationId,organizationName,readonly
     const set=(state,note='')=>setMessages(m=>m.map((x,i)=>i!==msgIndex?x:{...x,proposals:x.proposals.map(p=>p.id===proposal.id?{...p,state,note}:p)}));
     if(!confirm){set('cancelled');return}
     set('running');
-    try{const r=await onOperation(proposal.payload);set('done',r?.message||'Feito.');onChanged?.()}
+    try{
+      let r;
+      if(proposal.payload?.action==='field_save'){
+        // V52: campo extra é configuração — vai para /api/crm-settings, que só aceita gerente/admin.
+        const res=await fetch('/api/crm-settings',{method:'POST',headers:await authHeaders(),body:JSON.stringify({org_id:organizationId,action:'field_save',field:proposal.payload.field})});
+        const json=await res.json().catch(()=>null);
+        if(!res.ok)throw new Error(json?.error||'Não consegui criar o campo.');
+        r={message:(json?.message||'Campo criado.')+' Já aparece em "Campos extras" na ficha do lead.'};
+      }else r=await onOperation(proposal.payload);
+      set('done',r?.message||'Feito.');onChanged?.();
+    }
     catch(e){
       const needsFields=Array.isArray(e.missing)&&e.missing.length;
       set('failed',needsFields?'Essa etapa pede campos obrigatórios. Abra o lead em Leads para preencher e mover.':(e.message||'Não foi possível concluir.'));
