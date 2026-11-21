@@ -570,7 +570,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {ready&&section==='leads'&&<PremiumLeads
           leads={data.leads} count={counts.leads} organizationId={organizationId} organizationName={orgName}
           readonly={readonly} canManagePipeline={canManagePipeline} stages={stages} pipeline={pipeline} pipelines={pipelines} allStages={allStages} contacts={data.contacts} onOperation={operation} onReload={load}
-          referralsReady={Boolean(data.referrals_ready)}
+          referralsReady={Boolean(data.referrals_ready)} tasks={data.tasks} appointments={data.appointments}
         />}
         {ready&&section==='sales'&&<PremiumSales sales={data.sales} count={counts.sales} leads={data.leads} goal={data.goal} readonly={readonly} canManage={canManagePipeline} userId={session?.id||''} onOperation={operation} onReload={load}/>}
         {ready&&section==='contacts'&&<PremiumContacts contacts={data.contacts} count={counts.contacts} readonly={readonly} canDelete={canManagePipeline} onOperation={operation} onReload={load}/>}

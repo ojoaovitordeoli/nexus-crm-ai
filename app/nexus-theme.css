@@ -1574,3 +1574,23 @@ body.dark .nx-toast button{color:#0d5c4b}
   :root:root:root body .nx-toast{bottom:80px;max-width:calc(100vw - 32px)}
 }
 @media (prefers-reduced-motion:reduce){:root:root:root body .nx-ev,:root:root:root body .nx-toast,:root:root:root body .nx-qi,:root:root:root body .nx-mini{transition:none}}
+
+/* ===================== V61 — Leads e ficha no padrão Hoje ===================== */
+:root:root:root body .nx61-resumo{margin:6px 0 0;color:var(--fx-muted);font-size:14.5px;max-width:70ch}
+:root:root:root body .nx61-atalhos{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 4px}
+:root:root:root body .nx61-atalhos button{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 10px;border-radius:99px;border:1px solid var(--fx-border-strong);background:var(--fx-surface);color:var(--fx-muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+:root:root:root body .nx61-atalhos button:hover{color:var(--fx-text);background:var(--fx-subtle)}
+:root:root:root body .nx61-atalhos button b{font-weight:750;color:var(--fx-text)}
+:root:root:root body .nx61-atalhos button.is-on{background:var(--fx-accent);border-color:var(--fx-accent);color:var(--fx-on-accent)}
+:root:root:root body .nx61-atalhos button.is-on b{color:var(--fx-on-accent)}
+:root:root:root body .nx61-hot{margin-left:6px;font-size:11px;font-weight:700;color:var(--fx-danger);background:var(--fx-danger-soft);padding:1px 6px;border-radius:99px}
+:root:root:root body .nx61-age{margin-left:6px;font-size:11px;font-weight:650;color:var(--fx-warning);background:var(--fx-warning-soft);padding:1px 6px;border-radius:99px;white-space:nowrap}
+:root:root:root body .nx61-passo{display:flex;flex-direction:column;gap:10px;margin:0 20px 14px;padding:12px 14px;border-radius:12px;background:var(--fx-subtle);border:1px solid var(--fx-border)}
+:root:root:root body .nx61-passo.is-alerta{background:var(--fx-danger-soft);border-color:transparent}
+:root:root:root body .nx61-passo.is-atencao{background:var(--fx-warning-soft);border-color:transparent}
+:root:root:root body .nx61-passo.is-bom{background:var(--fx-accent-soft);border-color:transparent}
+:root:root:root body .nx61-passo-k{display:block;font-size:12px;font-weight:600;color:var(--fx-faint)}
+:root:root:root body .nx61-passo strong{display:block;font-size:15px;font-weight:750;color:var(--fx-text);margin-top:1px}
+:root:root:root body .nx61-passo.is-alerta strong{color:var(--fx-danger)}
+:root:root:root body .nx61-passo p{margin:2px 0 0;font-size:13.5px;color:var(--fx-muted)}
+:root:root:root body .nx61-passo-acts{display:flex;flex-wrap:wrap;gap:6px}
