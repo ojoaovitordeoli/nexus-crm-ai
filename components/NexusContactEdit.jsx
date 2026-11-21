@@ -36,7 +36,7 @@ export default function NexusContactEdit({contact,readonly=false,canDelete=false
       <label>E-mail<input type="email" maxLength={200} value={form.email} onChange={set('email')} disabled={readonly}/></label>
       <label>Cidade<input maxLength={120} value={form.city} onChange={set('city')} disabled={readonly}/></label>
       {!readonly&&<div className="fx-contact-actions">
-        <button type="submit" className="fx-btn fx-btn--primary" disabled={busy}>{busy?'Salvando...':'Salvar'}</button>
+        <button type="submit" className="fx-btn fx-btn--primary" disabled={busy}>{busy?'Salvando…':'Salvar'}</button>
         {canDelete&&<ConfirmButton label="Excluir contato" onConfirm={remove} disabled={busy}/>}
       </div>}
     </form>

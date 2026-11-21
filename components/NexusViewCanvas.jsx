@@ -108,14 +108,14 @@ export default function NexusViewCanvas({tela,estado,onSalvar,onAtualizar,onApag
       <div className="nx-view-actions">
         {onAtualizar&&<button type="button" className="fx-iconbtn" onClick={onAtualizar} disabled={estado==='carregando'} aria-label="Atualizar dados" title="Atualizar dados"><RefreshCw size={15}/></button>}
         {onSalvar&&<button type="button" className="fx-btn" onClick={onSalvar} disabled={estado==='salvando'||estado==='salvo'}>
-          {estado==='salvo'?<><BookmarkCheck size={15}/> Salva</>:<><Bookmark size={15}/> {estado==='salvando'?'Salvando...':'Salvar nas minhas telas'}</>}
+          {estado==='salvo'?<><BookmarkCheck size={15}/> Salva</>:<><Bookmark size={15}/> {estado==='salvando'?'Salvando…':'Salvar nas minhas telas'}</>}
         </button>}
         {onApagar&&<ConfirmButton onConfirm={onApagar} label="Apagar tela" confirmLabel="Confirmar: apagar tela" className="fx-btn nx-view-delete"/>}
       </div>
     </header>
     {tela.aviso&&<p className="nx-view-warn" role="status">{tela.aviso}</p>}
     {erro&&<p className="nx-view-warn is-error" role="alert">{erro}</p>}
-    {estado==='carregando'?<p className="nx-view-empty">Atualizando...</p>
+    {estado==='carregando'?<p className="nx-view-empty">Atualizando…</p>
       :vazio?<p className="nx-view-empty">Nada encontrado com esses filtros.</p>
       :tipo==='numero'?<Numero tela={tela}/>
       :tipo==='quadro'?<Quadro tela={tela}/>

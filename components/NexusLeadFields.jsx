@@ -47,9 +47,9 @@ export default function NexusLeadFields({leadId,readonly=false,onOperation}){
   const grupos=[['lead','Deste atendimento'],['contact','Da pessoa (vale em todos os atendimentos)']];
   return <section className="v11-detail-section nx-lf" aria-busy={state.status==='loading'}>
     <h3>Campos extras</h3>
-    {state.status==='loading'&&<p className="v11-detail-help">Carregando...</p>}
+    {state.status==='loading'&&<p className="v11-detail-help">Carregando…</p>}
     {state.status==='error'&&<p className="v11-detail-error" role="alert">{state.error}</p>}
-    {state.status==='ready'&&!state.fields.length&&<p className="v11-detail-help">Nenhum campo extra ainda. Peça ao assistente, por exemplo: "quero guardar o convênio de cada cliente" (gerente ou administrador confirma).</p>}
+    {state.status==='ready'&&!state.fields.length&&<p className="v11-detail-help">Nenhum campo extra ainda. Gerente ou administrador cria em <a href="/personalizar">Personalizar → Campos extras</a> (sem custo) ou pede ao Assistente, por exemplo: “quero guardar o convênio de cada cliente”.</p>}
     {note&&<p className="v11-detail-help" role="status">{note}</p>}
     {grupos.map(([ent,titulo])=>{
       const fs=state.fields.filter(f=>f.entity_type===ent);

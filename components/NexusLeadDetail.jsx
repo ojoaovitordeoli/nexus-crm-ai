@@ -133,7 +133,7 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
               <label>Prazo<input type="date" value={due} onChange={e=>setDue(e.target.value)}/></label>
               <label>Prioridade<select value={priority} onChange={e=>setPriority(e.target.value)}><option value="low">Baixa</option><option value="medium">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
             </div>
-            <button className="v11-detail-save" disabled={readonly||submitting} type="submit">{submitting?'Salvando...':'Criar tarefa'} <ArrowRight size={17}/></button>
+            <button className="v11-detail-save" disabled={readonly||submitting} type="submit">{submitting?'Salvando…':'Criar tarefa'} <ArrowRight size={17}/></button>
             {readonly&&<p className="v11-detail-help">Seu perfil tem acesso apenas para leitura.</p>}
           </form>
           <div className="v11-detail-integrity"><ShieldCheck size={16}/><span>A tarefa fica vinculada a este lead e aparece na aba Atividade.</span></div>

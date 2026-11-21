@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
+import {dataCurta} from '../lib/formato.mjs';
 import {
   Activity,ArrowDownRight,ArrowRight,ArrowUpRight,BarChart3,Briefcase,
   CalendarDays,Check,CheckCheck,ChevronDown,ChevronRight,CircleCheck,
@@ -21,14 +22,8 @@ import {formatPhoneBR} from '../lib/format.mjs';
 
 const fmt=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const brl=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
-const date=v=>{
-  if(!v)return '—';
-  if(/^\d{4}-\d{2}-\d{2}$/.test(String(v))){
-    const [year,month,day]=String(v).split('-');
-    return day+'/'+month+'/'+year;
-  }
-  return !isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR'):'—';
-};
+// V57: um formato de data só ("19 de nov."), lendo AAAA-MM-DD como dia local.
+const date=v=>dataCurta(v);
 const display=(c)=>[c?.first_name,c?.last_name].filter(Boolean).join(' ')||'Contato sem nome';
 const label=v=>{
   const source=String(v||'Sem etapa').replace(/[_-]/g,' ').trim();
@@ -276,8 +271,8 @@ function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClos
     <section className="nxp-pipeline-modal" role="dialog" aria-modal="true" aria-label="Configurar funil de vendas">
       <div className="nxp-pipeline-head"><div><span className="nxp-kicker">CONFIGURAÇÃO COMERCIAL</span><h2>Configurar funil de vendas</h2><p>Crie modelos gerais e ative o fluxo que sua operação vai usar.</p></div><button type="button" onClick={onClose} aria-label="Fechar"><X size={20}/></button></div>
       <div className="nxp-pipeline-layout"><aside className="nxp-pipeline-presets"><span className="nxp-kicker">MODELOS</span><button type="button" className="nxp-preset active" onClick={()=>reset(standard)}><strong>Padrão</strong><small>Fluxo comercial completo</small></button><button type="button" className="nxp-preset" onClick={()=>reset([['Novo lead','#3b82f6',false,false],['Em atendimento','#06b6d4',false,false],['Ganho','#10b981',true,false],['Perdido','#ef4444',false,true]])}><strong>Em branco</strong><small>Começar com o essencial</small></button></aside>
-        <div className="nxp-pipeline-main"><label className="nxp-pipeline-name">Nome do modelo<input value={name} onChange={e=>setName(e.target.value)} placeholder="Ex.: Funil B2B, Funil Serviços..." maxLength={120}/></label><div className="nxp-pipeline-title"><div><span className="nxp-kicker">ETAPAS DO FUNIL</span><strong>{rows.length} etapas configuradas</strong></div><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setRows(old=>[...old,{name:'Nova etapa',color:palette[old.length%palette.length],is_won:false,is_lost:false}])}><Plus size={16}/> Adicionar etapa</button></div>
-        <div className="nxp-pipeline-rows">{rows.map((row,index)=><div className="nxp-pipeline-row" key={row.id||'new-'+index}><span className="nxp-pipeline-color" style={{background:row.color}}/><input aria-label={'Nome da etapa '+(index+1)} value={row.name} onChange={e=>update(index,'name',e.target.value)} maxLength={90}/><select aria-label={'Cor da etapa '+(index+1)} value={row.color} onChange={e=>update(index,'color',e.target.value)}>{palette.map(color=><option key={color} value={color}>{color}</option>)}</select><select aria-label={'Tipo da etapa '+(index+1)} value={row.is_won?'won':row.is_lost?'lost':'open'} onChange={e=>setRows(old=>old.map((entry,i)=>i===index?{...entry,is_won:e.target.value==='won',is_lost:e.target.value==='lost'}:entry))}><option value="open">Aberta</option><option value="won">Ganha</option><option value="lost">Perdida</option></select><button type="button" onClick={()=>move(index,-1)} disabled={index===0} aria-label="Mover etapa para cima"><ChevronRight size={16} style={{transform:'rotate(-90deg)'}}/></button><button type="button" onClick={()=>move(index,1)} disabled={index===rows.length-1} aria-label="Mover etapa para baixo"><ChevronRight size={16} style={{transform:'rotate(90deg)'}}/></button><button type="button" onClick={()=>setRows(old=>old.filter((_,i)=>i!==index))} disabled={rows.length<=2} aria-label="Remover etapa"><X size={16}/></button></div>)}</div>{error&&<div className="nxp-error" role="alert">{error}</div>}<p className="nxp-pipeline-note">Etapas com leads não são apagadas automaticamente; elas permanecem preservadas para não quebrar o histórico.</p><div className="nxp-pipeline-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={onClose}>Fechar</button><button type="button" className="nxp-button nxp-button--ghost" disabled={busy||!name.trim()} onClick={()=>save(false)}>Salvar rascunho</button><button type="button" className="nxp-button nxp-button--primary" disabled={busy||!name.trim()} onClick={()=>save(true)}>{busy?'Salvando...':'Salvar e ativar'}</button></div></div></div>
+        <div className="nxp-pipeline-main"><label className="nxp-pipeline-name">Nome do modelo<input value={name} onChange={e=>setName(e.target.value)} placeholder="Ex.: Funil B2B, Funil Serviços…" maxLength={120}/></label><div className="nxp-pipeline-title"><div><span className="nxp-kicker">ETAPAS DO FUNIL</span><strong>{rows.length} etapas configuradas</strong></div><button type="button" className="nxp-button nxp-button--ghost" onClick={()=>setRows(old=>[...old,{name:'Nova etapa',color:palette[old.length%palette.length],is_won:false,is_lost:false}])}><Plus size={16}/> Adicionar etapa</button></div>
+        <div className="nxp-pipeline-rows">{rows.map((row,index)=><div className="nxp-pipeline-row" key={row.id||'new-'+index}><span className="nxp-pipeline-color" style={{background:row.color}}/><input aria-label={'Nome da etapa '+(index+1)} value={row.name} onChange={e=>update(index,'name',e.target.value)} maxLength={90}/><select aria-label={'Cor da etapa '+(index+1)} value={row.color} onChange={e=>update(index,'color',e.target.value)}>{palette.map(color=><option key={color} value={color}>{color}</option>)}</select><select aria-label={'Tipo da etapa '+(index+1)} value={row.is_won?'won':row.is_lost?'lost':'open'} onChange={e=>setRows(old=>old.map((entry,i)=>i===index?{...entry,is_won:e.target.value==='won',is_lost:e.target.value==='lost'}:entry))}><option value="open">Aberta</option><option value="won">Ganha</option><option value="lost">Perdida</option></select><button type="button" onClick={()=>move(index,-1)} disabled={index===0} aria-label="Mover etapa para cima"><ChevronRight size={16} style={{transform:'rotate(-90deg)'}}/></button><button type="button" onClick={()=>move(index,1)} disabled={index===rows.length-1} aria-label="Mover etapa para baixo"><ChevronRight size={16} style={{transform:'rotate(90deg)'}}/></button><button type="button" onClick={()=>setRows(old=>old.filter((_,i)=>i!==index))} disabled={rows.length<=2} aria-label="Remover etapa"><X size={16}/></button></div>)}</div>{error&&<div className="nxp-error" role="alert">{error}</div>}<p className="nxp-pipeline-note">Etapas com leads não são apagadas automaticamente; elas permanecem preservadas para não quebrar o histórico.</p><div className="nxp-pipeline-actions"><button type="button" className="nxp-button nxp-button--ghost" onClick={onClose}>Fechar</button><button type="button" className="nxp-button nxp-button--ghost" disabled={busy||!name.trim()} onClick={()=>save(false)}>Salvar rascunho</button><button type="button" className="nxp-button nxp-button--primary" disabled={busy||!name.trim()} onClick={()=>save(true)}>{busy?'Salvando…':'Salvar e ativar'}</button></div></div></div>
     </section>
   </div>;
 }
@@ -408,7 +403,7 @@ export function PremiumLeads({leads:allLeads=[],count=0,organizationId,organizat
     </header>
     {bar}
     <section className="nxp-surface nxp-leads-workarea">
-      <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem..." value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
+      <div className="nxp-filterbar"><label className="nxp-search"><Search size={18}/><input placeholder="Pesquisar por nome, telefone ou origem…" value={query} onChange={e=>setQuery(e.target.value)} aria-label="Pesquisar leads"/></label>
       <div className="nxp-filter-actions"><label className="nxp-filter-select"><Filter size={16}/><select value={activeFilter} onChange={e=>setFilter(e.target.value)} aria-label="Filtrar etapa"><option value="all">Todas as etapas</option>{cols.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
       <div className="nxp-mode-switch"><button type="button" className={mode==='board'?'active':''} onClick={()=>setMode('board')} title="Quadro Kanban" aria-label="Quadro Kanban"><Columns3 size={18}/></button><button type="button" className={mode==='list'?'active':''} onClick={()=>setMode('list')} title="Lista" aria-label="Lista"><LayoutList size={18}/></button></div></div></div>
       {error&&<div className="nxp-error" role="alert">{error}</div>}
@@ -489,7 +484,7 @@ export function PremiumContacts({contacts=[],count=0,readonly=false,canDelete=fa
     {showCreate&&!readonly&&<form className="fx-panel" onSubmit={createContact} aria-label="Novo contato">
       <label>Nome<input type="text" placeholder="Nome do contato" minLength={2} maxLength={130} required value={newName} onChange={e=>setNewName(e.target.value)} autoFocus/></label>
       <label>WhatsApp com DDD<input type="tel" placeholder="(48) 99999-9999" value={newPhone} onChange={e=>setNewPhone(e.target.value)}/></label>
-      <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||newName.trim().length<2}>{saving?'Salvando...':'Salvar contato'}</button>
+      <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||newName.trim().length<2}>{saving?'Salvando…':'Salvar contato'}</button>
     </form>}
     <section className="fx-box">
       <div className="fx-searchbar">

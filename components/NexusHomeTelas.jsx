@@ -44,7 +44,7 @@ export default function NexusHomeTelas({organizationId}){
     {telas.map(t=><div key={t.id} className={'nx-home-tela nx-home-tela--'+(t.spec?.tipo||'lista')}>
       {t.tela?<NexusViewCanvas tela={t.tela} estado={t.estado} erro={t.erro} onAtualizar={()=>abrir(t)}/>
         :<article className="nx-view"><header className="nx-view-head"><div><h3>{t.nome}</h3></div></header>
-          <p className={t.erro?'nx-view-warn is-error':'nx-view-empty'} role={t.erro?'alert':'status'}>{t.erro||'Carregando...'}</p></article>}
+          <p className={t.erro?'nx-view-warn is-error':'nx-view-empty'} role={t.erro?'alert':'status'}>{t.erro||'Carregando…'}</p></article>}
     </div>)}
   </section>;
 }

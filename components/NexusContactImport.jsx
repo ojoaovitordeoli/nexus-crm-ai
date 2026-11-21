@@ -85,7 +85,7 @@ export default function NexusContactImport({onOperation,onReload,onClose}){
       {asLeads&&<div className="fx-import-list"><label htmlFor="nx-import-list">Nome da lista (vira a origem dos leads)</label>
         <input id="nx-import-list" value={listName} maxLength={80} onChange={e=>setListName(e.target.value)} disabled={busy} placeholder="Ex.: Prospecção novembro"/></div>}
       <div className="fx-import-actions">
-        <button type="button" className="fx-btn fx-btn--primary" onClick={send} disabled={busy||!preview.contacts.length}>{busy?'Importando...':'Importar '+preview.contacts.length+' '+(preview.contacts.length===1?'contato':'contatos')+(asLeads?' como leads':'')}</button>
+        <button type="button" className="fx-btn fx-btn--primary" onClick={send} disabled={busy||!preview.contacts.length}>{busy?'Importando…':'Importar '+preview.contacts.length+' '+(preview.contacts.length===1?'contato':'contatos')+(asLeads?' como leads':'')}</button>
         <button type="button" className="fx-btn" onClick={()=>{setPreview(null);setCsv('');setFileName('');if(input.current)input.current.value=''}} disabled={busy}>Cancelar</button>
       </div>
     </div>}

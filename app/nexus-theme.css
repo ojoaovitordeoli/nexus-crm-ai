@@ -1369,3 +1369,15 @@ body.dark{--nx-cat-1:#c27bea;--nx-cat-2:#3cc3ad;--nx-cat-3:#ff8a4c;--nx-cat-4:#6
 :root:root:root body .nx-semanas-pe{margin:6px 16px 10px;font-size:12px;line-height:1.45;color:var(--fx-muted);font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:reduce){:root:root:root body .nx-aviso{transition:none}}
 @media (max-width:760px){:root:root:root body .nx-avisos{grid-template-columns:1fr;gap:8px}}
+
+/* V57 — consistência: Vendas tem 4 colunas (a de ações quebrava a linha e desalinhava "Valor"); Editar na mesma linha da tarefa */
+:root:root:root body .fx-table--sales .fx-thead,:root:root:root body .fx-table--sales .fx-tr{grid-template-columns:minmax(0,1fr) minmax(0,140px) minmax(0,140px) minmax(120px,auto)}
+:root:root:root body .fx-table--sales .fx-thead span:nth-child(3),:root:root:root body .fx-table--sales .fx-tr>.fx-num{text-align:right;font-variant-numeric:tabular-nums}
+:root:root:root body .fx-table--sales .fx-row-actions{justify-content:flex-end}
+:root:root:root body .fx-taskline{grid-template-columns:24px minmax(0,1fr) auto auto}
+:root:root:root body .fx-taskline .fx-task-editlink{margin-left:0}
+@media (max-width:760px){
+  :root:root:root body .fx-table--sales .fx-thead,:root:root:root body .fx-table--sales .fx-tr{grid-template-columns:minmax(0,1fr) auto}
+  :root:root:root body .fx-taskline{grid-template-columns:28px minmax(0,1fr) auto}
+  :root:root:root body .fx-taskline .fx-task-editlink{grid-column:3;grid-row:1}
+}

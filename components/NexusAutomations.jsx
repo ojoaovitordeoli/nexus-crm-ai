@@ -2,7 +2,7 @@
 
 import {useCallback,useEffect,useState} from 'react';
 import dynamic from 'next/dynamic';
-const NexusAutomationGraph=dynamic(()=>import('./NexusAutomationGraph'),{ssr:false,loading:()=> <div className="fx-flow fx-flow--loading">Carregando prévia...</div>});
+const NexusAutomationGraph=dynamic(()=>import('./NexusAutomationGraph'),{ssr:false,loading:()=> <div className="fx-flow fx-flow--loading">Carregando prévia…</div>});
 import {CheckCircle2,Info,Pause,Play,Plus,RefreshCw,ShieldCheck,Trash2,X} from 'lucide-react';
 import {db} from '../lib/supabase';
 
@@ -113,13 +113,13 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
         <form onSubmit={create} className="fx-auto-form">
           <label>Nome<input value={name} maxLength={100} minLength={3} required placeholder="Ex.: Retorno dos interessados" onChange={e=>setName(e.target.value)}/></label>
           <label>Quando<select value={trigger} onChange={e=>setTrigger(e.target.value)}><option value="lead_stage_changed">O lead entrar numa etapa</option><option value="appointment_no_show">Alguém faltar ao agendamento</option><option value="appointment_completed">Alguém comparecer ao agendamento</option></select></label>
-          {trigger==='lead_stage_changed'&&<label>Etapa<select id="nx-workflow-stage" value={stage} required onChange={e=>setStage(e.target.value)}><option value="">Selecione uma etapa...</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}
+          {trigger==='lead_stage_changed'&&<label>Etapa<select id="nx-workflow-stage" value={stage} required onChange={e=>setStage(e.target.value)}><option value="">Selecione uma etapa…</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}
           <label>Criar a tarefa<input id="nx-workflow-task" value={title} maxLength={180} minLength={3} required onChange={e=>setTitle(e.target.value)}/></label>
           <label>Prazo da tarefa<select value={days} onChange={e=>setDays(e.target.value)}>{Array.from({length:15},(_,i)=>i).map(n=><option key={n} value={n}>{n===0?'Hoje':n===1?'Em 1 dia':'Em '+n+' dias'}</option>)}</select></label>
           <div className="fx-auto-preview"><span>Prévia</span><NexusAutomationGraph stageName={trigger==='appointment_no_show'?'Faltou ao agendamento':trigger==='appointment_completed'?'Compareceu':stages.find(x=>x.id===stage)?.name} taskTitle={title} delayDays={days}/></div>
           <div className="fx-auto-submit">
             {trigger==='lead_stage_changed'&&!stages.length&&<small>Nenhuma etapa de funil disponível para usar como gatilho.</small>}
-            <button type="submit" disabled={busy||loading||(trigger==='lead_stage_changed'&&!stage)} className="fx-btn fx-btn--primary">{busy?'Salvando...':'Criar regra'}</button>
+            <button type="submit" disabled={busy||loading||(trigger==='lead_stage_changed'&&!stage)} className="fx-btn fx-btn--primary">{busy?'Salvando…':'Criar regra'}</button>
           </div>
         </form>
       </section>}
@@ -138,7 +138,7 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
               <button type="button" className="fx-int-icon" aria-label={'Excluir '+rule.name} disabled={!canManage||readonly||busy} onClick={()=>remove(rule)}><Trash2 size={16}/></button>
             </span>
           </div>)}
-        </div>:<div className="fx-empty"><strong>{loading?'Carregando regras...':'Nenhuma regra cadastrada'}</strong>{!loading&&<p>{editable?'Use “Nova automação” para criar uma tarefa automática quando o lead mudar de etapa.':'As regras criadas pela gestão aparecerão aqui.'}</p>}</div>}
+        </div>:<div className="fx-empty"><strong>{loading?'Carregando regras…':'Nenhuma regra cadastrada'}</strong>{!loading&&<p>{editable?'Use “Nova automação” para criar uma tarefa automática quando o lead mudar de etapa.':'As regras criadas pela gestão aparecerão aqui.'}</p>}</div>}
       </section>
 
       <section className="fx-box">

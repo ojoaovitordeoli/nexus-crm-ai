@@ -157,13 +157,13 @@ export default function NexusAssistant({organizationId,organizationName,readonly
       {m.proposals?.map(p=><div key={p.id} className={'nx-ai-card is-'+p.state}>
         <span>{p.summary}</span>
         {p.state==='pending'&&<div className="nx-ai-card-actions"><button type="button" className="fx-btn fx-btn--primary" onClick={()=>decide(i,p,true)}><Check size={14}/> Confirmar</button><button type="button" className="fx-btn" onClick={()=>decide(i,p,false)}>Cancelar</button></div>}
-        {p.state==='running'&&<small>Salvando...</small>}
+        {p.state==='running'&&<small>Salvando…</small>}
         {p.state==='done'&&<small className="is-ok">✓ {p.note}</small>}
         {p.state==='cancelled'&&<small>Cancelado.</small>}
         {p.state==='failed'&&<small className="is-error">{p.note}</small>}
       </div>)}
     </div>)}
-    {busy&&<div className="nx-ai-msg nx-ai-msg--assistant"><p className="nx-ai-typing">Montando...</p></div>}
+    {busy&&<div className="nx-ai-msg nx-ai-msg--assistant"><p className="nx-ai-typing">Montando…</p></div>}
     {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
   </>;
 
@@ -171,9 +171,9 @@ export default function NexusAssistant({organizationId,organizationName,readonly
     {aberta?<>
       <button type="button" className="fx-btn nx-ai-voltar" onClick={()=>setAberta(null)}>← Minhas telas</button>
       {aberta.tela?<NexusViewCanvas tela={aberta.tela} estado={aberta.estado} erro={aberta.erro} onAtualizar={()=>abrirSalva(aberta)} onApagar={()=>apagarSalva(aberta)}/>
-        :<p className="nx-view-empty" role="status">{aberta.erro||'Abrindo...'}</p>}
+        :<p className="nx-view-empty" role="status">{aberta.erro||'Abrindo…'}</p>}
     </>:<>
-      {!minhas.carregado&&<p className="nx-view-empty">Carregando...</p>}
+      {!minhas.carregado&&<p className="nx-view-empty">Carregando…</p>}
       {minhas.erro&&<div className="fx-alert fx-alert--error" role="alert">{minhas.erro}</div>}
       {minhas.aviso&&<p className="nx-view-warn" role="status">{minhas.aviso}</p>}
       {minhas.carregado&&!minhas.lista.length&&!minhas.aviso&&!minhas.erro&&<div className="nx-ai-welcome"><p>Você ainda não salvou nenhuma tela. Peça uma na conversa ("monta um quadro dos meus leads por etapa") e clique em <strong>Salvar nas minhas telas</strong>.</p></div>}
@@ -202,7 +202,7 @@ export default function NexusAssistant({organizationId,organizationName,readonly
         </div>:aba==='conversa'?conversa:telas}
       </div>
       {(!status.checked||status.configured)&&aba==='conversa'&&<form className="nx-ai-input" onSubmit={e=>{e.preventDefault();ask(text)}}>
-        <textarea ref={inputRef} rows={1} maxLength={2000} placeholder="Peça uma tela ou uma ação..." value={text} onChange={e=>setText(e.target.value)}
+        <textarea ref={inputRef} rows={1} maxLength={2000} placeholder="Peça uma tela ou uma ação…" value={text} onChange={e=>setText(e.target.value)}
           onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask(text)}}} aria-label="Mensagem para o assistente"/>
         <button type="submit" className="fx-btn fx-btn--primary" disabled={busy||!text.trim()} aria-label="Enviar"><Send size={15}/></button>
       </form>}

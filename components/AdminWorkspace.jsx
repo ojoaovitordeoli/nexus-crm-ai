@@ -272,7 +272,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
                 <button className={!showArchived?'selected':''} onClick={()=>{setShowArchived(false);setSearch('')}}>Ativas <span>{activeCompanies.length}</span></button>
                 <button className={showArchived?'selected':''} onClick={()=>{setShowArchived(true);setSearch('')}}>Arquivadas <span>{archivedCompanies.length}</span></button>
               </div>
-              <label className="adm-search"><Search size={17}/><input aria-label="Buscar empresa" placeholder="Buscar empresa..." value={search} onChange={e=>setSearch(e.target.value)}/></label>
+              <label className="adm-search"><Search size={17}/><input aria-label="Buscar empresa" placeholder="Buscar empresa…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
             </div>
             <div className="adm-tablewrap"><table className="adm-table"><thead><tr><th>Empresa</th><th>Plano</th><th>Membros</th><th>Status</th><th className="adm-right">Gerenciar</th></tr></thead><tbody>
               {filteredCompanies.map(c=><tr key={c.id}>
@@ -300,7 +300,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
             <p>Um espaço independente para cada operação, com funil inicial preparado.</p>
             <form className="adm-form" onSubmit={createCompany}>
               <label>Nome da empresa<input id="adm-new-company" placeholder="Ex.: Ótica Exemplo" minLength={2} maxLength={150} required value={companyName} onChange={e=>setCompanyName(e.target.value)}/></label>
-              <button disabled={saving||companyName.trim().length<2} type="submit" className="adm-primary adm-wide">{saving?'Criando...':'Criar empresa'} <ArrowRight size={17}/></button>
+              <button disabled={saving||companyName.trim().length<2} type="submit" className="adm-primary adm-wide">{saving?'Criando…':'Criar empresa'} <ArrowRight size={17}/></button>
             </form>
             <div className="adm-form-note"><CircleCheck size={15}/> Funil de 8 etapas incluído</div>
           </aside>
@@ -311,7 +311,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
         <div className="adm-section-heading"><div><h3>Usuários da plataforma</h3><p>Convide sua equipe e controle quem pode entrar no CRM.</p></div></div>
         <div className="adm-columns">
           <div className="adm-surface adm-list-surface">
-            <div className="adm-list-controls"><div className="adm-count-title"><UsersRound size={18}/> Contas cadastradas <span>{users.length}</span></div><label className="adm-search"><Search size={17}/><input aria-label="Buscar usuário" placeholder="Buscar usuário..." value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
+            <div className="adm-list-controls"><div className="adm-count-title"><UsersRound size={18}/> Contas cadastradas <span>{users.length}</span></div><label className="adm-search"><Search size={17}/><input aria-label="Buscar usuário" placeholder="Buscar usuário…" value={search} onChange={e=>setSearch(e.target.value)}/></label></div>
             <div className="adm-tablewrap"><table className="adm-table"><thead><tr><th>Usuário</th><th>Permissão</th><th>Status</th><th className="adm-right">Ação</th></tr></thead><tbody>
               {filteredUsers.map(u=><tr key={u.id}>
                 <td><div className="adm-identity"><span className="adm-avatar">{initials(u.full_name)}</span><div><strong>{u.full_name||'Sem nome'}</strong><small>{u.id.slice(0,8)}</small></div></div></td>
@@ -331,7 +331,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
               <label>Nome completo<input required minLength={2} maxLength={150} placeholder="Nome e sobrenome" autoComplete="off" value={name} onChange={e=>setName(e.target.value)}/></label>
               <label>E-mail<input required type="email" placeholder="nome@empresa.com" autoComplete="off" value={email} onChange={e=>setEmail(e.target.value)}/></label>
               <label>Senha inicial <small>mínimo 12 caracteres</small><input required type="password" minLength={12} maxLength={128} placeholder="Senha forte e individual" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
-              <button disabled={saving} className="adm-primary adm-wide">{saving?'Cadastrando...':'Cadastrar usuário'}<ArrowRight size={17}/></button>
+              <button disabled={saving} className="adm-primary adm-wide">{saving?'Cadastrando…':'Cadastrar usuário'}<ArrowRight size={17}/></button>
             </form>
             <div className="adm-form-note"><LockKeyhole size={15}/> A criação exige autorização do Super Admin.</div>
           </aside>
@@ -358,7 +358,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
               <label>Usuário<select value={selectedUser} onChange={e=>setSelectedUser(e.target.value)} required><option value="">Selecionar usuário</option>{users.filter(u=>u.status==='active'&&!u.is_super_admin).map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</select></label>
               <label>Empresa<select value={selectedCompany} onChange={e=>setSelectedCompany(e.target.value)} required><option value="">Selecionar empresa</option>{activeCompanies.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
               <label>Função<select value={role} onChange={e=>setRole(e.target.value)}>{ROLES.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
-              <button disabled={saving||!selectedUser||!selectedCompany} className="adm-primary adm-wide">{saving?'Salvando...':'Salvar permissão'}<ArrowRight size={17}/></button>
+              <button disabled={saving||!selectedUser||!selectedCompany} className="adm-primary adm-wide">{saving?'Salvando…':'Salvar permissão'}<ArrowRight size={17}/></button>
             </form><div className="adm-form-note"><ShieldCheck size={15}/> Permissões verificadas no servidor.</div>
           </aside>
         </div>
@@ -388,7 +388,7 @@ export default function AdminWorkspace({isAdmin,onRefresh}) {
         <h3 id="adm-dialog-title">{confirm.action==='archive'?'Arquivar empresa?':confirm.action==='restore'?'Restaurar empresa?':'Excluir definitivamente?'}</h3>
         <p>{confirm.action==='archive'?<>A empresa <strong>{confirm.company.name}</strong> sairá das operações ativas. Os dados serão preservados e você poderá restaurá-la depois.</>:confirm.action==='restore'?<>A empresa <strong>{confirm.company.name}</strong> voltará a aparecer na operação.</>:<>Esta ação é irreversível. Só funciona para uma empresa <strong>arquivada e sem dados operacionais</strong>. Se houver registros, o sistema bloqueará a exclusão.</>}</p>
         {confirm.action==='delete'&&<label className="adm-confirm-label">Digite <strong>{confirm.company.name}</strong> para confirmar<input autoFocus value={confirmationName} onChange={e=>setConfirmationName(e.target.value)} placeholder="Nome exato da empresa"/></label>}
-        <div className="adm-dialog-actions"><button type="button" className="adm-secondary" autoFocus={confirm.action!=='delete'} disabled={saving} onClick={()=>{setConfirm(null);setConfirmationName('')}}>Cancelar</button><button className={'adm-primary '+(confirm.action==='delete'?'adm-primary--danger':'')} disabled={saving||(confirm.action==='delete'&&confirmationName!==confirm.company.name)} onClick={manageCompany}>{saving?'Processando...':confirm.action==='archive'?'Sim, arquivar':confirm.action==='restore'?'Restaurar empresa':'Excluir definitivamente'}</button></div>
+        <div className="adm-dialog-actions"><button type="button" className="adm-secondary" autoFocus={confirm.action!=='delete'} disabled={saving} onClick={()=>{setConfirm(null);setConfirmationName('')}}>Cancelar</button><button className={'adm-primary '+(confirm.action==='delete'?'adm-primary--danger':'')} disabled={saving||(confirm.action==='delete'&&confirmationName!==confirm.company.name)} onClick={manageCompany}>{saving?'Processando…':confirm.action==='archive'?'Sim, arquivar':confirm.action==='restore'?'Restaurar empresa':'Excluir definitivamente'}</button></div>
       </div>
     </div>}
   </div>;

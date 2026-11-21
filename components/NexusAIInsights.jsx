@@ -60,7 +60,7 @@ export default function NexusAIInsights({organizationId}){
   const ready=!loading&&configured;
   return <div className="fx-page fx-int fx-ai">
     <header className="fx-pagehead">
-      <div className="fx-pagehead-title"><h1>Copiloto</h1><span className="fx-count">{loading?'Verificando...':configured?'Consultivo · somente leitura':'Não ativado'}</span></div>
+      <div className="fx-pagehead-title"><h1>Copiloto</h1><span className="fx-count">{loading?'Verificando…':configured?'Consultivo · somente leitura':'Não ativado'}</span></div>
     </header>
     {error&&<div className="fx-alert fx-alert--error" role="alert">{error}</div>}
     {notice&&<div className="fx-alert fx-alert--ok" role="status"><CheckCircle2 size={16}/>{notice}</div>}
@@ -86,7 +86,7 @@ export default function NexusAIInsights({organizationId}){
           <label className="fx-ai-consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>Autorizo o envio desta pergunta e dos indicadores agregados ao provedor de IA. Não incluirei dados pessoais, telefones ou informações confidenciais.</span></label>
           <div className="fx-ai-submit">
             {!consent&&<small>Marque a autorização para gerar a análise.</small>}
-            <button type="submit" className="fx-btn fx-btn--primary" disabled={busy||!consent||question.trim().length<8}>{busy?'Analisando...':'Gerar análise'}</button>
+            <button type="submit" className="fx-btn fx-btn--primary" disabled={busy||!consent||question.trim().length<8}>{busy?'Analisando…':'Gerar análise'}</button>
           </div>
         </form>
       </section>

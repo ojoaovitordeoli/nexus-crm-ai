@@ -1,6 +1,7 @@
 'use client';
 
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import {dataCurta} from '../lib/formato.mjs';
 import {
   ArrowDownUp,CalendarPlus,Check,ChevronDown,
   ChevronLeft,ChevronRight,Clock3,Download,Filter,Layers3,
@@ -17,7 +18,7 @@ import NexusLeadFields from './NexusLeadFields';
 
 const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Contato sem nome';
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
-const date=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'Não informado';
+const date=v=>dataCurta(v,{vazio:'Não informado'});
 const dateTime=v=>v&&!Number.isNaN(Date.parse(v))?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Sem data';
 // Diferença em dias de calendário no fuso do navegador: lead de ontem às 22h é "ontem", não "hoje".
 const dayStart=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
@@ -105,7 +106,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
           <label htmlFor="nx13-stage" className="nx13-field-label">Etapa do funil</label>
           <div className="nx13-stage-select">
             <select id="nx13-stage" value={lead.pipeline_stage_id||''} disabled={readonly||busy||!stages.length} onChange={e=>onStageChange(lead,e.target.value)}>
-              {!stages.some(s=>s.id===lead.pipeline_stage_id)&&<option value={lead.pipeline_stage_id||''}>{lead.pipeline_stage_id?'Etapa fora deste funil':'Sem etapa definida'}</option>}
+              {!stages.some(s=>s.id===lead.pipeline_stage_id)&&<option value={lead.pipeline_stage_id||''}>{lead.pipeline_stage_id?'Etapa fora deste funil':(({new:'Novo',open:'Aberto',pending:'Pendente',qualified:'Qualificado',won:'Ganho',lost:'Perdido'})[String(lead.status||'').toLowerCase()]||'Sem etapa')+' · sem etapa no funil'}</option>}
               {stages.map(s=><option value={s.id} key={s.id}>{s.name}</option>)}
             </select><ChevronDown size={16}/>
           </div>
@@ -132,13 +133,13 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
             {canDelete&&<ConfirmButton label="Excluir lead" onConfirm={removeLead}/>}</div>}</>}
           {editing&&<form className="nx13-editform" onSubmit={saveEdit} aria-label="Editar lead">
             <label>Valor (R$)<input inputMode="decimal" placeholder="Ex.: 1.500,00" value={editValue} onChange={e=>setEditValue(e.target.value)} autoFocus/></label>
-            <label>Origem<input maxLength={120} placeholder="Instagram, indicação..." value={editSource} onChange={e=>setEditSource(e.target.value)}/></label>
+            <label>Origem<input maxLength={120} placeholder="Instagram, indicação…" value={editSource} onChange={e=>setEditSource(e.target.value)}/></label>
             {referralsReady&&<label>Indicado por<select value={editReferrer} onChange={e=>setEditReferrer(e.target.value)}>
               <option value="">Ninguém indicou</option>
               {lead.referred_by_contact_id&&!referrer&&<option value={lead.referred_by_contact_id}>Contato atual (fora da lista carregada)</option>}
               {contacts.filter(c=>c.id!==leadContactId).map(c=><option key={c.id} value={c.id}>{nameOf(c)}</option>)}
             </select></label>}
-            <div className="nx13-detail-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={editBusy}>{editBusy?'Salvando...':'Salvar'}</button><button type="button" className="fx-btn" onClick={()=>setEditing(false)} disabled={editBusy}>Cancelar</button></div>
+            <div className="nx13-detail-actions"><button type="submit" className="fx-btn fx-btn--primary" disabled={editBusy}>{editBusy?'Salvando…':'Salvar'}</button><button type="button" className="fx-btn" onClick={()=>setEditing(false)} disabled={editBusy}>Cancelar</button></div>
           </form>}
           {editError&&<p className="nx13-error" role="alert">{editError}</p>}
         </div>
@@ -156,7 +157,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
             <label>Data<input type="date" value={due} onChange={e=>setDue(e.target.value)}/></label>
             <label>Prioridade<select value={priority} onChange={e=>setPriority(e.target.value)}><option value="low">Baixa</option><option value="medium">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
           </div>
-          <button type="submit" disabled={readonly||saving||!note.trim()} className="nx13-submit">{saving?'Salvando...':'Adicionar tarefa'}</button>
+          <button type="submit" disabled={readonly||saving||!note.trim()} className="nx13-submit">{saving?'Salvando…':'Adicionar tarefa'}</button>
         </form>
         <p className="nx13-disclosure">A tarefa fica vinculada a este lead e aparece na aba Atividade. O nome do contato também vai no título para facilitar a leitura na lista de tarefas.</p>
       </div>}
@@ -266,18 +267,18 @@ export default function NexusOpportunityDesk({
     {!readonly&&creating&&<form className="fx-panel" onSubmit={createLead} aria-label="Novo lead">
       <label className="fx-panel-grow">Contato
         <select required value={newContactId} onChange={e=>setNewContactId(e.target.value)} aria-label="Contato do lead">
-          <option value="">Selecione o contato...</option>
+          <option value="">Selecione o contato…</option>
           {availableContacts.map(c=><option key={c.id} value={c.id}>{nameOf(c)}{c.whatsapp?' · '+formatPhoneBR(c.whatsapp):''}</option>)}
         </select>
       </label>
-      <label>Origem (opcional)<input maxLength={120} placeholder="Instagram, indicação..." value={newSource} onChange={e=>setNewSource(e.target.value)} aria-label="Origem do lead"/></label>
+      <label>Origem (opcional)<input maxLength={120} placeholder="Instagram, indicação…" value={newSource} onChange={e=>setNewSource(e.target.value)} aria-label="Origem do lead"/></label>
       {referralsReady&&<label>Indicado por (opcional)
         <select value={newReferrer} onChange={e=>{setNewReferrer(e.target.value);if(e.target.value&&!newSource.trim())setNewSource('Indicação')}} aria-label="Contato que indicou este lead">
           <option value="">Ninguém indicou</option>
           {contacts.filter(c=>c.id!==newContactId).map(c=><option key={c.id} value={c.id}>{nameOf(c)}</option>)}
         </select>
       </label>}
-      <button type="submit" className="fx-btn fx-btn--primary" disabled={creatingBusy||!newContactId}>{creatingBusy?'Criando...':'Criar lead'}</button>
+      <button type="submit" className="fx-btn fx-btn--primary" disabled={creatingBusy||!newContactId}>{creatingBusy?'Criando…':'Criar lead'}</button>
       {!availableContacts.length&&<span className="fx-form-hint">{contacts.length?'Todos os contatos carregados já têm atendimento aberto neste funil.':'Cadastre um contato na tela Contatos para criar o lead.'}</span>}
     </form>}
     <div className="nx13-layout">

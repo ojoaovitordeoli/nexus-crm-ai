@@ -53,7 +53,7 @@ export default function NexusLeadCapture({organizationId}){
     <div className="fx-boxhead"><h2 id="fx-capture-title"><KeyRound size={16}/> Captura de leads (formulário e landing page)</h2>
       {state.status==='ready'&&<span className={'fx-prosp-dot'+(info?.active?' is-on':'')}>{info?.active?'Ligada':'Desligada'}</span>}</div>
     <div className="fx-prosp-conn-body">
-      {state.status==='loading'&&<p className="fx-muted" role="status">Carregando...</p>}
+      {state.status==='loading'&&<p className="fx-muted" role="status">Carregando…</p>}
       {state.status==='not_installed'&&<p className="fx-muted">A captura de leads ainda não foi ativada no banco desta instalação.</p>}
       {state.status==='error'&&<p className="fx-muted" role="alert">{error} <button type="button" className="nx13-linkbutton" onClick={load}>Tentar novamente</button></p>}
       {state.status==='ready'&&<>
@@ -61,7 +61,7 @@ export default function NexusLeadCapture({organizationId}){
           ?<>Chave terminada em <code>…{info.hint}</code>. {info.last_used_at?'Último lead recebido: '+when(info.last_used_at)+'.':'Nenhum lead recebido ainda.'}</>
           :'Gere uma chave e coloque no n8n ou na função do seu site. Cada lead entra na primeira etapa do funil padrão, já como quente, morno ou frio.'}</p>
         <div className="fx-prosp-conn-actions">
-          <button type="button" className="fx-btn fx-btn--primary" disabled={!!busy} onClick={()=>tokenAction('rotate_token')}>{busy==='rotate_token'?'Gerando...':info?.active?'Gerar chave nova':'Gerar chave'}</button>
+          <button type="button" className="fx-btn fx-btn--primary" disabled={!!busy} onClick={()=>tokenAction('rotate_token')}>{busy==='rotate_token'?'Gerando…':info?.active?'Gerar chave nova':'Gerar chave'}</button>
           {info?.active&&<button type="button" className="nx13-linkbutton" disabled={!!busy} onClick={()=>tokenAction('revoke_token')}>Desligar captura</button>}
         </div>
         {newToken&&<div className="fx-prosp-token" role="group" aria-label="Chave nova">
