@@ -71,7 +71,6 @@ body.dark{
 .staff-logo strong span{color:var(--staff-accent)!important}
 .staff-logo small{font-size:9px;letter-spacing:.15em;font-weight:800}
 .staff-logo-icon{background:linear-gradient(140deg,#2e2e30,var(--fx-accent))!important;box-shadow:0 11px 22px rgba(95, 0, 230, .17)!important}
-.staff-nav-title{font-size:9px;letter-spacing:.16em}
 .staff-nav-item{
   min-height:43px;border-radius:11px;font-size:12px;font-weight:700;
   letter-spacing:-.01em;color:#707072;transition:background .21s,color .21s,transform .21s
@@ -97,7 +96,6 @@ body.dark{
 .staff-breadcrumb strong{font-weight:800}
 .staff-company-choice select,.staff-icon-button,.staff-replay-button,
 .staff-command-trigger,.staff-tour-button,.staff-global-search{border-radius:12px}
-.staff-connected{color:var(--staff-accent)!important}
 .nxp-premium{
   --nxp-ink:var(--staff-text);--nxp-muted:var(--staff-muted);
   --nxp-border:var(--staff-border);--nxp-surface:var(--staff-surface);
@@ -154,13 +152,6 @@ body.dark{
 .staff-shell .nxp-contact-card-person p,.staff-shell .nxp-table td{font-size:11.5px}
 .staff-shell .nxp-table th{font-size:10px}
 .staff-shell .nxp-board-column{background:rgba(217,219,209,.25)!important;border:1px solid rgba(142, 142, 144, .16)}
-.staff-shell .nxp-leads-summary,.staff-shell .nxp-contact-banner{
-  background:linear-gradient(114deg,rgba(255,252,243,.92),rgba(232,235,223,.72))!important;
-  border-color:var(--nexus-stroke)!important;color:#2f2f31!important
-}
-.staff-shell .nxp-leads-summary strong,.staff-shell .nxp-contact-banner h2{color:#2e2e30}
-.staff-shell .nxp-leads-summary .nxp-kicker,.staff-shell .nxp-contact-banner .nxp-overline{color:#646466!important}
-.staff-shell .nxp-leads-summary small,.staff-shell .nxp-contact-banner p{color:#747476}
 .dark .staff-shell .nxp-presentation{
   background:radial-gradient(ellipse 45% 70% at 85% 20%,rgba(95, 0, 230, .26),transparent 75%),linear-gradient(115deg,rgba(34, 34, 36, .96),rgba(44, 44, 46, .89))!important;
   color:#efeff1!important;border-color:rgba(95, 0, 230, .18)!important
@@ -168,13 +159,10 @@ body.dark{
 .dark .staff-shell .nxp-presentation h1{color:#efeff1!important}
 .dark .staff-shell .nxp-presentation p{color:#bcbcbe!important}
 .dark .staff-shell .nxp-orbit-logo{background:linear-gradient(130deg,#343436,var(--fx-accent))!important;color:#a8e8de!important}
-.dark .staff-shell .nxp-leads-summary,.dark .staff-shell .nxp-contact-banner{
-  background:linear-gradient(115deg,#2d2d2f,var(--fx-accent))!important;color:#eeeef0!important
-}
-.dark .staff-shell .nxp-leads-summary strong,.dark .staff-shell .nxp-contact-banner h2{color:#eeeef0}
-.dark .staff-shell .nxp-leads-summary small,.dark .staff-shell .nxp-contact-banner p{color:#b7b7b9}
 .dark .staff-shell .nxp-board-column{background:rgba(31, 31, 33, .62)!important}
-@media(max-width:930px){.staff-shell .nxp-presentation h1{font-size:36px}}
+@media(max-width:930px){
+  .staff-shell .nxp-presentation h1{font-size:36px}
+}
 @media(max-width:580px){
   .staff-body{padding-top:22px}
   .staff-shell .nxp-presentation{padding:29px 23px!important}
