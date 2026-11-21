@@ -38,25 +38,31 @@ function Regua({regua}){
   </section>;
 }
 
+// Gráfico do mês: SVG só com linhas (texto em SVG esticava quando o gráfico ficava largo);
+// a legenda vem em HTML embaixo, sempre legível.
 export function GraficoMes({mes}){
-  const W=400,H=150,base=140;
+  const W=400,H=140,base=134;
   const topo=Math.max(1,mes.alvo||0,mes.projecao,mes.feito)*1.06;
   const x=d=>d/mes.diasMes*W,y=v=>base-(v/topo)*(base-6);
   const pts=mes.acumulado.map((v,i)=>[x(i+1),y(v)]);
   const linha='M0 '+base+' '+pts.map(p=>'L'+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
   const ult=pts.at(-1)||[0,base];
-  const meio=topo/2;
-  return <svg className="nx-chart" viewBox={'0 0 '+W+' '+H} preserveAspectRatio="none" role="img"
-    aria-label={'Faturamento acumulado do mês: '+brl(mes.feito)+' até o dia '+mes.hoje+(mes.alvo?', meta '+brl(mes.alvo):'')+'; no ritmo atual fecha em '+brl(mes.projecao)}>
-    <line className="nx-chart-grid" x1="0" y1={base} x2={W} y2={base}/>
-    <line className="nx-chart-grid" x1="0" y1={y(meio)} x2={W} y2={y(meio)}/>
-    <text x="0" y={y(meio)-6}>{brl(meio)}</text>
-    {mes.alvo&&<><path className="nx-chart-goal" d={'M0 '+base+' L'+W+' '+y(mes.alvo)}/><text x={W*0.5} y={y(mes.alvo*0.5)+16} textAnchor="middle" dy="6">meta {brl(mes.alvo)}</text></>}
-    <path className="nx-chart-area" d={linha+' L'+ult[0].toFixed(1)+' '+base+' Z'}/>
-    <path className="nx-chart-acc" d={linha}/>
-    {mes.hoje<mes.diasMes&&<path className="nx-chart-proj" d={'M'+ult[0].toFixed(1)+' '+ult[1].toFixed(1)+' L'+W+' '+y(mes.projecao)}/>}
-    <circle className="nx-chart-dot" cx={ult[0]} cy={ult[1]} r="5"/>
-  </svg>;
+  return <figure className="nx-chart-fig"><div className="nx-chart-box">
+    <svg className="nx-chart" viewBox={'0 0 '+W+' '+H} preserveAspectRatio="none" role="img"
+      aria-label={'Faturamento acumulado do mês: '+brl(mes.feito)+' até o dia '+mes.hoje+(mes.alvo?', meta '+brl(mes.alvo):'')+'; no ritmo atual fecha em '+brl(mes.projecao)}>
+      <line className="nx-chart-grid" x1="0" y1={base} x2={W} y2={base}/>
+      {mes.alvo&&<path className="nx-chart-goal" d={'M0 '+base+' L'+W+' '+y(mes.alvo)} vectorEffect="non-scaling-stroke"/>}
+      <path className="nx-chart-area" d={linha+' L'+ult[0].toFixed(1)+' '+base+' Z'}/>
+      <path className="nx-chart-acc" d={linha} vectorEffect="non-scaling-stroke"/>
+      {mes.hoje<mes.diasMes&&<path className="nx-chart-proj" d={'M'+ult[0].toFixed(1)+' '+ult[1].toFixed(1)+' L'+W+' '+y(mes.projecao)} vectorEffect="non-scaling-stroke"/>}
+    </svg>
+    <span className="nx-chart-dot" style={{left:(ult[0]/W*100)+'%',top:(ult[1]/H*100)+'%'}} aria-hidden="true"/></div>
+    <figcaption className="nx-chart-leg">
+      <span><i className="is-acc"/>vendido até hoje · {brl(mes.feito)}</span>
+      {mes.hoje<mes.diasMes&&<span><i className="is-proj"/>no ritmo atual · {brl(mes.projecao)}</span>}
+      {mes.alvo&&<span><i className="is-goal"/>meta · {brl(mes.alvo)}</span>}
+    </figcaption>
+  </figure>;
 }
 
 export default function NexusHoje(props){
