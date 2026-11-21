@@ -47,12 +47,14 @@ export async function POST(request){
     const validated=validateFollowupRule(body);
     if(validated.error)return fail(validated.error);
     const {stage_id}=validated.data;
-    const {data:stage,error:stageError}=await auth.admin.from('pipeline_stages')
-      .select('id,pipeline_id').eq('id',stage_id).maybeSingle();
-    if(stageError||!stage)return fail('Etapa não encontrada.',404);
-    const {data:pipeline,error:pipelineError}=await auth.admin.from('pipelines')
-      .select('id').eq('id',stage.pipeline_id).eq('organization_id',orgId).maybeSingle();
-    if(pipelineError||!pipeline)return fail('Essa etapa não pertence à empresa.',403);
+    if(stage_id){
+      const {data:stage,error:stageError}=await auth.admin.from('pipeline_stages')
+        .select('id,pipeline_id').eq('id',stage_id).maybeSingle();
+      if(stageError||!stage)return fail('Etapa não encontrada.',404);
+      const {data:pipeline,error:pipelineError}=await auth.admin.from('pipelines')
+        .select('id').eq('id',stage.pipeline_id).eq('organization_id',orgId).maybeSingle();
+      if(pipelineError||!pipeline)return fail('Essa etapa não pertence à empresa.',403);
+    }
     const {count,error:countError}=await auth.admin.from('automation_rules')
       .select('id',{count:'exact',head:true}).eq('organization_id',orgId);
     if(countError)return fail('Automações não configuradas no Supabase.',503);
