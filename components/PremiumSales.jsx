@@ -2,6 +2,8 @@
 import {useMemo,useState} from 'react';
 import {CheckCircle2,Plus,Target,X} from 'lucide-react';
 import {parseBRL} from '../lib/shell-rules.mjs';
+import {mesMeta,brl} from '../lib/hoje.mjs';
+import {GraficoMes} from './NexusHoje';
 import {dataCurta} from '../lib/formato.mjs';
 import {PAYMENT_METHODS,paymentLabel,goalProgress} from '../lib/sale-rules.mjs';
 import ConfirmButton from './ConfirmButton';
@@ -19,7 +21,8 @@ const PAYMENT_OPTIONS=Object.entries(PAYMENT_METHODS);
 const personOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim();
 
 // Meta de faturamento do mês: realizado x meta, ritmo esperado para o dia e quanto falta.
-function GoalPanel({goal,canManage,readonly,onOperation,onReload}){
+function GoalPanel({goal,canManage,readonly,onOperation,onReload,sales=[]}){
+  const mes=mesMeta({sales,goal});
   const [editing,setEditing]=useState(false),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
   if(!goal)return null;
   const range=goal.from&&goal.to?{fromIso:goal.from,toIso:goal.to}:null;
@@ -48,8 +51,10 @@ function GoalPanel({goal,canManage,readonly,onOperation,onReload}){
       <div className="fx-goal-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100,p.pct)} aria-label={'Meta atingida em '+p.pct+'%'}>
         <span style={{width:Math.min(100,p.pct)+'%'}}/><i style={{left:Math.min(100,p.expected)+'%'}} title={'Esperado hoje: '+p.expected+'%'}/>
       </div>
+      <p className="nx62-meta-frase">No ritmo atual o mês fecha em <b>{brl(mes.projecao)}</b>{p.remaining>0&&mes.porDiaPrecisa!=null?<> · para bater a meta: <b>{brl(mes.porDiaPrecisa)} por dia</b> (a média até aqui é {brl(mes.media)})</>:null}.</p>
+      <GraficoMes mes={mes}/>
       <p className="fx-muted">{p.pct}% da meta · esperado para hoje: {p.expected}% · {p.remaining>0?'faltam '+money(p.remaining):'meta atingida'}{goal.sales_count!=null?' · '+goal.sales_count+(goal.sales_count===1?' venda no mês':' vendas no mês'):''}</p>
-    </div>:<div className="fx-goal-body"><p className="fx-muted">{goal.achieved!=null?'Faturamento do mês até agora: '+money(goal.achieved)+'. ':''}{canEdit?'Defina a meta para acompanhar o ritmo do mês.':'Nenhuma meta definida para este mês.'}</p></div>}
+    </div>:<div className="fx-goal-body"><p className="nx62-meta-frase">{goal.achieved!=null?<>Faturado no mês: <b>{money(goal.achieved)}</b>. </>:null}No ritmo atual o mês fecha em <b>{brl(mes.projecao)}</b>. {canEdit?'Defina a meta para ver quanto falta por dia.':'Nenhuma meta definida para este mês.'}</p><GraficoMes mes={mes}/></div>}
   </section>;
 }
 
@@ -125,7 +130,7 @@ export default function PremiumSales({sales=[],count=0,leads=[],goal=null,readon
       <label className="fx-sale-form-wide">Observação (opcional)<textarea maxLength={600} rows={2} placeholder="Parcelas, desconto combinado, entrega…" value={notes} onChange={e=>setNotes(e.target.value)}/></label>
       <button type="submit" className="fx-btn fx-btn--primary" disabled={saving||!value.trim()}>{saving?'Registrando…':'Salvar venda'}</button>
     </form>}
-    <GoalPanel goal={goal} canManage={canManage} readonly={readonly} onOperation={onOperation} onReload={onReload}/>
+    <GoalPanel goal={goal} canManage={canManage} readonly={readonly} onOperation={onOperation} onReload={onReload} sales={sales}/>
     <section className="fx-strip" aria-label="Resumo das vendas">
       <div><span>Total</span><strong>{money(revenue)}</strong></div>
       <div><span>Quantidade</span><strong>{shown.length}</strong></div>

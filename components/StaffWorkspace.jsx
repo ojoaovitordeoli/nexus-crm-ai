@@ -26,6 +26,7 @@ import ConfirmButton from './ConfirmButton';
 import NexusAssistant from './NexusAssistant';
 import NexusPersonalizar from './NexusPersonalizar';
 import {dataCurta} from '../lib/formato.mjs';
+import {mapaFaltas,fraseAgenda,PERIODOS} from '../lib/agenda-faltas.mjs';
 import NexusProspecting from './NexusProspecting';
 import {daysLate,lateLabel} from '../lib/sales-attribution.mjs';
 
@@ -623,6 +624,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           const leadById=new Map(data.leads.map(l=>[l.id,l]));
           // V45: compromissos de dias anteriores sem presença/falta registrada (antes ficavam escondidos).
           const awaiting=awaitingAttendance(data.appointments);
+          // V62: a frase do dia e onde estão as faltas (90 dias, só compareceu/faltou).
+          const faltas=mapaFaltas(data.appointments);
           const hour=v=>v&&!isNaN(Date.parse(v))?new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
           const localInput=v=>{if(!v)return '';const d=new Date(v);return [d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-')+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
           const row=(a,showDay)=>editApptId===a.id?<form className="fx-row fx-apptrow fx-appt-edit" key={a.id} onSubmit={e=>saveApptEdit(e,a)} aria-label="Reagendar compromisso">
@@ -653,7 +656,8 @@ export default function StaffWorkspace({section,session,profile,organizations,me
           </div>})();
           return <div className="fx-page fx-agenda">
           <header className="fx-pagehead">
-            <div className="fx-pagehead-title"><h1>Agenda</h1><span className="fx-count">{number(counts.appointments)} {counts.appointments===1?'agendamento':'agendamentos'}</span></div>
+            <div><div className="fx-pagehead-title"><h1>Agenda</h1><span className="fx-count">{number(counts.appointments)} {counts.appointments===1?'agendamento':'agendamentos'}</span></div>
+              <p className="nx61-resumo">{fraseAgenda({hoje:todays.filter(a=>!['cancelled','canceled'].includes(String(a.status||'').toLowerCase())).length,aguardando:awaiting.length,mapa:faltas})}</p></div>
             {!readonly&&<div className="fx-actions"><button type="button" className="fx-btn fx-btn--primary" aria-expanded={appointmentFormOpen} onClick={()=>setAppointmentFormOpen(v=>!v)}>{appointmentFormOpen?<><X size={16}/> Fechar</>:<><Plus size={16}/> Novo compromisso</>}</button></div>}
           </header>
           {!readonly&&appointmentFormOpen&&<form className="fx-panel" id="staff-agenda-form" onSubmit={createAppointment} aria-label="Novo compromisso">
@@ -686,10 +690,21 @@ export default function StaffWorkspace({section,session,profile,organizations,me
                 <div className="fx-boxfoot">Agenda interna do NEXUS CRM. Sincronização externa depende de uma integração autorizada.</div>
               </section>
             </div>
+            <div className="nx62-agenda-side">
             <MotionCalendar appointments={data.appointments} readonly={readonly} onPick={day=>{
               setAppointmentStart(day+'T09:00');setAppointmentFormOpen(true);
               setTimeout(()=>document.getElementById('staff-agenda-form')?.scrollIntoView({behavior:'smooth',block:'center'}),60);
             }}/>
+            <section className="fx-box nx62-faltas" aria-label="Onde estão as faltas">
+              <div className="fx-boxhead"><h2>Onde estão as faltas</h2><span className="fx-boxmeta">{faltas.dias} dias</span></div>
+              {faltas.total?<>
+                <table className="nx62-grade"><thead><tr><th><span className="fx-sr">Dia</span></th>{PERIODOS.map(p=><th key={p[0]}>{p[0]}</th>)}</tr></thead>
+                  <tbody>{faltas.linhas.map(l=><tr key={l.dia}><th>{l.dia}</th>{l.celulas.map((c,i)=><td key={i} className={c.total?'':'is-vazio'} style={c.total?{'--f':Math.min(1,(c.pct||0)/60)}:undefined}
+                    title={c.total?c.faltas+' de '+c.total+' faltaram':'sem atendimentos encerrados'}>{c.total?c.pct+'%':'—'}</td>)}</tr>)}</tbody></table>
+                <p className="nx62-faltas-frase">{faltas.frase||'Ainda há poucos atendimentos encerrados para tirar conclusão.'}</p>
+              </>:<p className="fx-empty-small">Quando a equipe marcar quem compareceu ou faltou, o mapa mostra os dias e horários com mais faltas.</p>}
+            </section>
+            </div>
           </div>
         </div>})()}
 
