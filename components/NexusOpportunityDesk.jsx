@@ -15,6 +15,7 @@ import {parseBRL} from '../lib/shell-rules.mjs';
 import ConfirmButton from './ConfirmButton';
 import NexusProposal from './NexusProposal';
 import NexusLeadFields from './NexusLeadFields';
+import {resumoLeads,proximoPasso,marcas} from '../lib/leads-hoje.mjs';
 
 const nameOf=c=>[c?.first_name,c?.last_name].filter(Boolean).join(' ').trim()||'Contato sem nome';
 const fmt=v=>new Intl.NumberFormat('pt-BR').format(Number(v)||0);
@@ -37,7 +38,7 @@ function Avatar({person,large=false}){
   const initials=person.trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase();
   return <span className={'nx13-avatar'+(large?' nx13-avatar-large':'')} aria-hidden="true">{initials||'?'}</span>;
 }
-function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose,canDelete=false,contacts=[],referralsReady=false}) {
+function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,onStageChange,onOperation,onReload,onClose,canDelete=false,contacts=[],referralsReady=false,passo=null}) {
   const person=nameOf(lead.contact),phone=lead.contact?.whatsapp||'',whatsapp=validPhone(phone);
   const leadContactId=lead.contact?.id||lead.contact_id||'';
   const referrer=lead.referred_by_contact_id?contacts.find(c=>c.id===lead.referred_by_contact_id):null;
@@ -61,6 +62,14 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
     catch(err){setEditError(err.message||'Não foi possível excluir.')}
   };
   const [saving,setSaving]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
+  // V61: próximo passo resolvido daqui (presença, retorno atrasado, confirmar agendamento).
+  const [passoBusy,setPassoBusy]=useState(false);
+  async function agirPasso(payload,msg){
+    if(readonly||passoBusy||!onOperation)return;
+    setPassoBusy(true);setError('');setMessage('');
+    try{await onOperation(payload);await onReload?.();setMessage(msg)}
+    catch(err){setError(err.message||'Não foi possível salvar.')}finally{setPassoBusy(false)}
+  }
   const [timeline,setTimeline]=useState({status:'idle',events:[],warnings:[],truncated:false});
   useEffect(()=>{setTab('detalhes');setNote('');setDue('');setPriority('medium');setMessage('');setError('');setTimeline({status:'idle',events:[],warnings:[],truncated:false})},[lead.id]);
   const loadTimeline=useCallback(async()=>{
@@ -89,6 +98,16 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
       <Avatar person={person} large/>
       <div><h2>{person}</h2><p>{formatPhoneBR(phone)||'Telefone não informado'}</p></div>
     </div>
+    {passo&&<div className={'nx61-passo is-'+passo.tom} role="region" aria-label="Próximo passo">
+      <div><span className="nx61-passo-k">Próximo passo</span><strong>{passo.titulo}</strong><p>{passo.detalhe}</p></div>
+      {!readonly&&passo.acao&&<div className="nx61-passo-acts">
+        {passo.acao==='presenca'&&<><button type="button" className="nx-mini is-ok" disabled={passoBusy} onClick={()=>agirPasso({action:'appointment_status',id:passo.appointmentId,status:'completed'},'Presença marcada.')}><Check size={14}/>Veio</button>
+          <button type="button" className="nx-mini is-no" disabled={passoBusy} onClick={()=>agirPasso({action:'appointment_status',id:passo.appointmentId,status:'no_show'},'Falta registrada.')}><X size={14}/>Faltou</button></>}
+        {passo.acao==='tarefa'&&<button type="button" className="nx-mini is-ok" disabled={passoBusy} onClick={()=>agirPasso({action:'task_status',id:passo.taskId,status:'completed'},'Retorno concluído.')}><Check size={14}/>Feito</button>}
+        {passo.acao==='confirmar'&&whatsapp&&<a className="nx-mini is-wa" href={whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={14}/>Confirmar no WhatsApp</a>}
+        {(passo.acao==='retorno'||passo.acao==='tarefa')&&<button type="button" className="nx-mini" onClick={()=>setTab('retorno')}><CalendarPlus size={14}/>{passo.acao==='tarefa'?'Novo retorno':'Marcar retorno'}</button>}
+      </div>}
+    </div>}
     <div className="nx13-actionbar">
       {whatsapp?<a href={whatsapp} target="_blank" rel="noopener noreferrer" className="nx13-action-primary"><MessageCircle size={17}/> WhatsApp</a>:
         <span className="nx13-action-disabled">WhatsApp indisponível</span>}
@@ -179,7 +198,7 @@ function Detail({lead,stages,transferTargets=[],organizationName,readonly,busy,o
 export default function NexusOpportunityDesk({
  leads=[],count=0,organizationName,readonly=false,stages=[],onOperation,onReload,onShowBoard,onConfigure,
  onRequestStage,pipelines=[],allStages=[],pipelineBar=null,contacts=[],pipelineId='',startCreating=false,focusLeadId='',canDelete=false,
- referralsReady=false
+ referralsReady=false,tasks=[],appointments=[]
 }){
   const [search,setSearch]=useState(''),[stageFilter,setStageFilter]=useState('all'),[presence,setPresence]=useState('all'),[order,setOrder]=useState('recent');
   const [selectedId,setSelectedId]=useState(null),[closed,setClosed]=useState(false),[busy,setBusy]=useState(''),[problem,setProblem]=useState(''),[notice,setNotice]=useState('');
@@ -212,14 +231,19 @@ export default function NexusOpportunityDesk({
   const staged=useMemo(()=>leads.map(l=>({...l,pipeline_stage_id:localStages[l.id]||l.pipeline_stage_id})),[leads,localStages]);
   // Etapa apagada ou de outro funil conta como "Sem etapa" neste funil.
   const knownStage=lead=>stages.find(s=>s.id===lead.pipeline_stage_id);
+  // V61: o resumo que conclui e os atalhos (quentes, parados, sem próximo passo).
+  const [atalho,setAtalho]=useState('all');
+  const resumo=useMemo(()=>resumoLeads(staged,{stages,tasks,appointments}),[staged,stages,tasks,appointments]);
+  const marcaDe=useCallback(l=>marcas(l,{stages,idx:resumo.idx}),[stages,resumo]);
   const stageOf=lead=>knownStage(lead)?.name||(stages.length?'Sem etapa':codeLabel(lead.status,'Sem etapa'));
   // Ao trocar de funil, um filtro de etapa do funil anterior deixaria a lista vazia.
   const activeStageFilter=stageFilter==='all'||stageFilter==='none'||stages.some(s=>s.id===stageFilter)?stageFilter:'all';
   const filtered=useMemo(()=>staged.filter(l=>{
     return matchesSearch(search,[nameOf(l.contact),l.source,stageOf(l)],[l.contact?.whatsapp])&&
       (activeStageFilter==='all'||(activeStageFilter==='none'?!knownStage(l):l.pipeline_stage_id===activeStageFilter))&&
-      (presence==='all'||(presence==='yes'?Boolean(validPhone(l.contact?.whatsapp)):!validPhone(l.contact?.whatsapp)));
-  }).sort((a,b)=>sortFn(a,b,order)),[staged,search,activeStageFilter,presence,order,stages]);
+      (presence==='all'||(presence==='yes'?Boolean(validPhone(l.contact?.whatsapp)):!validPhone(l.contact?.whatsapp)))&&
+      (atalho==='all'||Boolean(marcaDe(l)[atalho]));
+  }).sort((a,b)=>sortFn(a,b,order)),[staged,search,activeStageFilter,presence,order,stages,atalho,marcaDe]);
   const selected=filtered.find(l=>l.id===selectedId)||filtered[0]||null;
   const changeStage=async (lead,next,opts={})=>{
     if(!next||!onOperation||readonly||busy||lead.pipeline_stage_id===next)return;
@@ -256,6 +280,7 @@ export default function NexusOpportunityDesk({
     <header className="nx13-header">
       <div className="nx13-header-title">
         <div className="nx13-titleline"><h1>Leads</h1><span className="nx13-count">{fmt(total)}</span></div>
+        <p className="nx61-resumo">{resumo.frase}{partial?' (entre os carregados)':''}</p>
       </div>
       <div className="nx13-header-actions">
         <button type="button" onClick={exportList} disabled={!filtered.length} className="nx13-softbutton"><Download size={16}/> Exportar</button>
@@ -287,6 +312,10 @@ export default function NexusOpportunityDesk({
           <div className="nx13-viewline"><span className="nx13-count-small">{fmt(filtered.length)} {filtered.length===1?'exibido':'exibidos'}</span>
             <button type="button" className="nx13-viewbutton" onClick={onShowBoard}><Layers3 size={16}/> Quadro</button></div>
           <label className="nx13-search"><Search size={17}/><input type="search" aria-label="Pesquisar leads" placeholder="Buscar contato, telefone ou origem" value={search} onChange={e=>setSearch(e.target.value)}/>{search&&<button type="button" aria-label="Limpar busca" onClick={()=>setSearch('')}><X size={14}/></button>}</label>
+          <div className="nx61-atalhos" role="group" aria-label="Atalhos da lista">
+            {[['all','Todos',resumo.abertos],['semRetorno','Sem próximo passo',resumo.semRetorno],['parado','Parados',resumo.parados],['quente','Quentes',resumo.quentes]].map(([k,l,n])=>
+              <button key={k} type="button" aria-pressed={atalho===k} className={atalho===k?'is-on':''} onClick={()=>setAtalho(k)}>{l}<b>{fmt(n)}</b></button>)}
+          </div>
           <div className="nx13-filterline">
             <label><Filter size={14}/><select aria-label="Filtrar por etapa" value={activeStageFilter} onChange={e=>setStageFilter(e.target.value)}><option value="all">Todas as etapas</option><option value="none">Sem etapa</option>{stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select><ChevronDown size={13}/></label>
           </div>
@@ -301,16 +330,16 @@ export default function NexusOpportunityDesk({
                 className={'nx13-listrow'+(active?' is-selected':'')} onClick={()=>select(lead.id)}>
               <Avatar person={person}/>
               <span className="nx13-listrow-info"><strong>{person}</strong><small>{formatPhoneBR(lead.contact?.whatsapp)||'Sem telefone'}{phone&&<MessageCircle size={12} aria-hidden="true"/>}</small></span>
-              <span className="nx13-listrow-meta"><span className={'nx13-pip'+(!knownStage(lead)?' nx13-pip-empty':'')}>{stageOf(lead)}</span></span>
+              <span className="nx13-listrow-meta"><span className={'nx13-pip'+(!knownStage(lead)?' nx13-pip-empty':'')}>{stageOf(lead)}</span>{(()=>{const m=marcaDe(lead);return <>{m.quente&&<span className="nx61-hot" title="Lead quente">quente</span>}{m.parado&&<span className="nx61-age" title={'Sem mudar de etapa há '+m.dias+' dias'}>{m.dias}d parado</span>}</>})()}</span>
               <span className="nx13-col-source">{lead.source||'—'}</span>
               <span className="nx13-col-date">{since(lead.created_at)}</span>
               <ChevronRight size={16} className="nx13-listrow-chevron"/>
             </button>;
-          }):<div className="nx13-empty"><Users size={24}/><strong>Nenhum lead encontrado</strong><p>Altere a busca ou os filtros.</p><button type="button" onClick={()=>{setSearch('');setStageFilter('all');setPresence('all')}}>Limpar filtros</button></div>}
+          }):<div className="nx13-empty"><Users size={24}/><strong>Nenhum lead encontrado</strong><p>Altere a busca ou os filtros.</p><button type="button" onClick={()=>{setSearch('');setStageFilter('all');setPresence('all');setAtalho('all')}}>Limpar filtros</button></div>}
         </div>
         {(partial||readonly)&&<footer className="nx13-collection-foot">{partial?'Mostrando os 250 leads mais recentes.':''}{partial&&readonly?' ':''}{readonly?'Acesso somente leitura.':''}</footer>}
       </section>
-      {selected&&!closed?<Detail key={selected.id} lead={selected} canDelete={canDelete} contacts={contacts} referralsReady={referralsReady} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
+      {selected&&!closed?<Detail key={selected.id} lead={selected} canDelete={canDelete} contacts={contacts} referralsReady={referralsReady} passo={proximoPasso(selected,{stages,idx:resumo.idx})} organizationName={organizationName} stages={stages} transferTargets={transferTargets} readonly={readonly} busy={Boolean(busy)} onStageChange={changeStage} onOperation={onOperation} onReload={onReload} onClose={()=>setClosed(true)}/>:
         <div className="nx13-nodetail"><div><UserRound size={27}/><h2>{filtered.length?'Ficha recolhida':'Sem registros'}</h2><p>{filtered.length?'Selecione um contato para abrir a ficha.':'Os próximos leads aparecerão nesta lista.'}</p></div></div>}
     </div>
   </div>;

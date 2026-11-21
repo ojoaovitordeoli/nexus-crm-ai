@@ -245,6 +245,12 @@ try{
     if(await page.getByText('Application error: a client-side exception',{exact:false}).count())throw new Error('Client exception on '+route);
     await page.screenshot({path:'test-artifacts/'+file+'.png',fullPage:true});
     if(route==='leads'){
+      // V61: resumo que conclui, atalhos e o próximo passo na ficha.
+      await page.locator('.nx61-resumo').waitFor({timeout:5000});
+      if(!/lead aberto|leads abertos/.test(await page.locator('.nx61-resumo').innerText()))throw new Error('Resumo de leads sem conclusão');
+      await page.locator('.nx61-passo').waitFor({timeout:5000});
+      await page.getByRole('button',{name:/^Sem próximo passo/}).click();
+      await page.getByRole('button',{name:/^Todos/}).click();
       const search=page.getByRole('searchbox',{name:'Pesquisar leads'});
       await search.fill('não existe');
       await page.getByText('Nenhum lead encontrado').waitFor({timeout:5000});
