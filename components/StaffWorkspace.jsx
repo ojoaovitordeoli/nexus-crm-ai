@@ -81,6 +81,8 @@ function Empty({icon:Icon=Layers3,title,description}){return <div className="sta
 function IconButton({children,icon:Icon,onClick,disabled=false,title}){return <button type="button" className="staff-icon-button" onClick={onClick} disabled={disabled} aria-label={title||'Ação'} title={title}>{Icon?<Icon size={18}/>:children}</button>}
 function MiniStat({label,value,description,icon:Icon,tone,index}){return <div className={'staff-stat staff-stat--'+tone} style={{animationDelay:(index*45)+'ms'}}><div className="staff-stat-head"><span>{label}</span><span className="staff-stat-icon"><Icon size={19}/></span></div><strong>{value}</strong><small>{description}</small></div>}
 
+// V65: dados já baixados por empresa, válidos enquanto a aba estiver aberta (não vai para o disco).
+const CACHE_EMPRESA=new Map();
 export default function StaffWorkspace({section,session,profile,organizations,members,organizationId,onOrganizationChange,onSignOut,dark,onToggleTheme,isSuperAdmin=false}) {
   const [data,setData]=useState({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
   const [counts,setCounts]=useState({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
@@ -283,17 +285,27 @@ export default function StaffWorkspace({section,session,profile,organizations,me
     return result;
   },[organizationId]);
   const load=useCallback(async(options)=>{
-    const silent=options?.silent===true;
+    let silent=options?.silent===true;
     if(!validOrg){
       setData({leads:[],tasks:[],contacts:[],appointments:[],sales:[]});
       setCounts({leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages([]);setPipeline(null);setPipelines([]);setAllStages([]);setLoading(false);return;
     }
-    if(!silent){setLoading(true);setError('')}
     const orgAtCall=organizationId;
+    // V65: ao trocar de tela a página remonta; mostra na hora o que já foi baixado desta
+    // empresa (até 5 min) e atualiza por trás, em vez de "Carregando" a cada clique.
+    const guardado=options?.usarCache&&CACHE_EMPRESA.get(orgAtCall);
+    if(guardado&&Date.now()-guardado.em<300000){aplicar(guardado.result,orgAtCall);silent=true}
+    if(!silent){setLoading(true);setError('')}
     try{
       const result=await operation();
       if(currentOrgRef.current!==orgAtCall)return; // usuário trocou de empresa no meio do caminho
+      CACHE_EMPRESA.set(orgAtCall,{result,em:Date.now()});
+      aplicar(result,orgAtCall);
+    }catch(e){if(!silent&&currentOrgRef.current===orgAtCall)setError('Não foi possível carregar a empresa: '+e.message)}
+    finally{if(!silent&&currentOrgRef.current===orgAtCall)setLoading(false)}
+  },[validOrg,operation,organizationId]);
+  function aplicar(result,orgAtCall){
       setData({...(result.data||{leads:[],tasks:[],contacts:[],appointments:[],sales:[]}),referrals_ready:Boolean(result.referrals_ready),goal:result.goal||null});
       setCounts(result.counts||{leads:0,contacts:0,appointments:0,sales:0,tasks:0});
       setStages(result.stages||[]);
@@ -303,12 +315,10 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       if(result.warnings?.length)setError('Algumas informações não puderam ser carregadas: '+result.warnings.join(' · '));
       setLastSync(new Date());
       setLoadedOrg(orgAtCall);
-    }catch(e){if(!silent&&currentOrgRef.current===orgAtCall)setError('Não foi possível carregar a empresa: '+e.message)}
-    finally{if(!silent&&currentOrgRef.current===orgAtCall)setLoading(false)}
-  },[validOrg,operation,organizationId]);
+  }
   currentOrgRef.current=organizationId;
   const ready=!validOrg||loadedOrg===organizationId;
-  useEffect(()=>{load()},[load]);
+  useEffect(()=>{load({usarCache:true})},[load]);
   useEffect(()=>{
     if(!validOrg||!db||!organizationId)return;
     let refreshTimer=null;

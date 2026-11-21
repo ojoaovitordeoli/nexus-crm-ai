@@ -34,7 +34,10 @@ test('V63 resumo: mais urgente primeiro e frase que conclui', () => {
     {id: 'c', nome: 'Loja C', metricas: {semPresenca: 1, leadsNovos30: 1, leadsAbertos: 1}}
   ], {agora});
   assert.deepEqual(r.linhas.map(l => l.id), ['b', 'c', 'a']);
-  assert.equal(r.frase, '1 empresa pede ação hoje, 1 merece atenção de 3.');
+  assert.equal(r.frase, '1 empresa pede ação hoje, 1 merece atenção de 3 com movimento.');
   assert.equal(r.faturamentoTotal, 9000);
   assert.equal(resumoAgencia([{id: 'a', nome: 'A', metricas: {leadsNovos30: 1}}], {agora}).frase, 'A empresa está em dia.');
+  // V65: empresa sem nenhum movimento não "merece atenção"
+  const vazia = resumoAgencia([{id: 'v', nome: 'Vazia', metricas: {}}], {agora});
+  assert.equal(vazia.linhas[0].aval.situacao, 'vazia'); assert.deepEqual(vazia.linhas[0].aval.alertas, []);
 });

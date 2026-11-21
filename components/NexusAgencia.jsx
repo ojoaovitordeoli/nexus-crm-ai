@@ -46,9 +46,9 @@ export default function NexusAgencia({onOpen}){
         <div className="nx63-mes">
           <span><b>{brl(a.feito)}</b>{a.alvo?<> de {brl(a.alvo)}</>:<> · sem meta</>}</span>
           {a.alvo?<span className="nx63-bar" role="img" aria-label={a.pctMeta+'% da meta; o mês está em '+a.esperado+'%'}><span style={{width:Math.min(100,a.pctMeta)+'%'}}/><i style={{left:a.esperado+'%'}}/></span>
-            :<small>fecha em {brl(a.projecao)} no ritmo atual</small>}
+            :a.feito>0?<small>fecha em {brl(a.projecao)} no ritmo atual</small>:null}
         </div>
-        <div className="nx63-alertas">{a.alertas.length?a.alertas.slice(0,3).map(x=><span key={x.txt} className={'nx63-tag is-'+x.tom}>{x.txt}</span>):<span className="nx63-ok">Tudo em dia</span>}</div>
+        <div className="nx63-alertas">{a.situacao==='vazia'?<span className="nx63-vazia">Sem movimento ainda</span>:a.alertas.length?a.alertas.slice(0,3).map(x=><span key={x.txt} className={'nx63-tag is-'+x.tom}>{x.txt}</span>):<span className="nx63-ok">Tudo em dia</span>}</div>
         <div><button type="button" className="nx-mini" onClick={()=>onOpen?.(l.id)} aria-label={'Abrir '+l.nome}>Abrir<ArrowUpRight size={14} aria-hidden="true"/></button></div>
       </div>})}
     </section>}

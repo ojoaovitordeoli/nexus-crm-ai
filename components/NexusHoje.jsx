@@ -159,7 +159,7 @@ export default function NexusHoje(props){
             <div><div className="nx-fr-bar" style={{width:Math.max(e.n/maxFunil*100,e.n?6:0)+'%'}}>{int(e.n)}</div></div>
             <span className="nx-fr-cv">{e.taxa!=null?e.taxa+'%':''}{e.taxa!=null&&<small> passam</small>}</span>
           </div>)}</div>
-          {funil.nota&&<p className="nx-fnote"><b>O vazamento é em {funil.nota.etapa}:</b> {int(funil.nota.perdidos)} {funil.nota.perdidos===1?'lead passou':'leads passaram'} de "{funil.nota.de}" e não {funil.nota.etapa==='agendaram'?'agendou':funil.nota.etapa==='vieram'?'veio':'comprou'}. {funil.nota.dica}</p>}
+          {funil.nota&&<p className="nx-fnote"><b>O funil perde mais em "{funil.nota.etapa}":</b> {int(funil.nota.perdidos)} {funil.nota.perdidos===1?'lead ficou':'leads ficaram'} em "{funil.nota.de}" e não {funil.nota.perdidos===1?({agendaram:'agendou',vieram:'veio',compraram:'comprou'})[funil.nota.etapa]:funil.nota.etapa}. {funil.nota.dica}</p>}
           <p className="nx-foot">Conta só agendamentos e vendas vinculados ao lead.{coverage.leads?' Base: os últimos registros carregados.':''}</p></>
           :<p className="nx-foot">Nenhum lead novo nos últimos {funil.dias} dias.</p>}
         </section>
@@ -170,7 +170,7 @@ export default function NexusHoje(props){
           <div className="nx-sh"><h2>{new Date().toLocaleDateString('pt-BR',{month:'long'}).replace(/^./,c=>c.toUpperCase())}</h2><span>{mes.alvo?'acumulado contra a meta':'acumulado do mês'}</span><Link href="/sales">Vendas<ArrowUpRight size={14} aria-hidden="true"/></Link></div>
           <div className="nx-mhead"><span className="nx-mval">{brl(mes.feito)}</span>
             <span className="nx-mof">{mes.alvo?'de '+brl(mes.alvo)+' · ':''}no ritmo atual fecha em <b>{brl(mes.projecao)}</b></span></div>
-          <GraficoMes mes={mes}/>
+          {mes.feito>0||mes.alvo?<GraficoMes mes={mes}/>:<p className="nx-chart-vazio">Nenhuma venda registrada neste mês ainda. Quando a equipe lançar vendas, o acumulado e a projeção aparecem aqui.</p>}
           <div className="nx-facts">
             {mes.alvo?<div><span>Por dia até o fim</span><b>{mes.porDiaPrecisa!=null?brl(mes.porDiaPrecisa):'—'}</b><small className={mes.porDiaPrecisa>mes.media?'is-down':'is-up'}>a média é {brl(mes.media)}</small></div>
               :<div><span>Meta do mês</span><b>—</b><small><Link href="/sales">Definir meta</Link></small></div>}

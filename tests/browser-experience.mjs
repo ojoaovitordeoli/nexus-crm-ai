@@ -234,7 +234,7 @@ try{
   await page.goto(host+'/agencia',{waitUntil:'domcontentloaded'});
   await page.locator('.nx63-row').first().waitFor({timeout:8000});
   const agenciaTitulo=await page.locator('.nx63 h1').innerText();
-  if(!/de 3\.$/.test(agenciaTitulo))throw new Error('Visão da agência sem a frase: '+agenciaTitulo);
+  if(!/de 3 com movimento\.$/.test(agenciaTitulo))throw new Error('Visão da agência sem a frase: '+agenciaTitulo);
   const primeira=await page.locator('.nx63-row strong').first().innerText();
   if(primeira!=='Ótica Vista Clara')throw new Error('A empresa mais urgente não veio primeiro: '+primeira);
   await page.waitForTimeout(700);

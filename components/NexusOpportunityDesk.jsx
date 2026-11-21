@@ -329,8 +329,8 @@ export default function NexusOpportunityDesk({
             return <button key={lead.id} type="button" data-lead-row="true" aria-current={active?'true':undefined}
                 className={'nx13-listrow'+(active?' is-selected':'')} onClick={()=>select(lead.id)}>
               <Avatar person={person}/>
-              <span className="nx13-listrow-info"><strong>{person}</strong><small>{formatPhoneBR(lead.contact?.whatsapp)||'Sem telefone'}{phone&&<MessageCircle size={12} aria-hidden="true"/>}</small></span>
-              <span className="nx13-listrow-meta"><span className={'nx13-pip'+(!knownStage(lead)?' nx13-pip-empty':'')}>{stageOf(lead)}</span>{(()=>{const m=marcaDe(lead);return <>{m.quente&&<span className="nx61-hot" title="Lead quente">quente</span>}{m.parado&&<span className="nx61-age" title={'Sem mudar de etapa há '+m.dias+' dias'}>{m.dias}d parado</span>}</>})()}</span>
+              <span className="nx13-listrow-info"><strong>{person}</strong><small>{formatPhoneBR(lead.contact?.whatsapp)||'Sem telefone'}{phone&&<MessageCircle size={12} aria-hidden="true"/>}{(()=>{const m=marcaDe(lead);return <>{m.quente&&<span className="nx61-hot" title="Lead quente">quente</span>}{m.parado&&<span className="nx61-age" title={'Sem mudar de etapa há '+m.dias+' dias'}>{m.dias}d parado</span>}</>})()}</small></span>
+              <span className="nx13-listrow-meta"><span className={'nx13-pip'+(!knownStage(lead)?' nx13-pip-empty':'')}>{stageOf(lead)}</span></span>
               <span className="nx13-col-source">{lead.source||'—'}</span>
               <span className="nx13-col-date">{since(lead.created_at)}</span>
               <ChevronRight size={16} className="nx13-listrow-chevron"/>
