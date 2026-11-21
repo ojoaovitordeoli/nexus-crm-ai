@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Activity,ArrowRight,ArrowUpRight,Bell,BriefcaseBusiness,CalendarDays,Compass,
   Check,CheckCircle2,ChevronDown,ChevronRight,Clock3,ContactRound,Flame,
-  LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,Sparkles,
+  LayoutDashboard,Layers3,ListTodo,LogOut,Menu,MessageCircle,Minus,Workflow,SlidersHorizontal,Sparkles,
   Moon,Plus,Play,RefreshCw,Search,ShieldCheck,Sun,TrendingUp,
   ReceiptText,Radar,UserRound,UsersRound,X,Zap
 } from 'lucide-react';
@@ -24,6 +24,7 @@ import NexusAIInsights from './NexusAIInsights';
 import PremiumSales from './PremiumSales';
 import ConfirmButton from './ConfirmButton';
 import NexusAssistant from './NexusAssistant';
+import NexusPersonalizar from './NexusPersonalizar';
 import NexusProspecting from './NexusProspecting';
 import {daysLate,lateLabel} from '../lib/sales-attribution.mjs';
 
@@ -35,6 +36,7 @@ const MENU=[
   {path:'whatsapp',label:'WhatsApp',icon:MessageCircle},
   {path:'prospeccao',label:'Prospecção',icon:Radar},
   {path:'automations',label:'Automações',icon:Workflow},
+  {path:'personalizar',label:'Personalizar',icon:SlidersHorizontal},
 
   {path:'agenda',label:'Agenda',icon:CalendarDays},
   {path:'tasks',label:'Minhas tarefas',icon:ListTodo},
@@ -45,9 +47,9 @@ const MENU=[
 const NAV_GROUPS=[
   {title:'Comercial',paths:['dashboard','leads','sales','contacts']},
   {title:'Atendimento',paths:['prospeccao','whatsapp','agenda','tasks']},
-  {title:'Gestão',paths:['reports','automations','settings','minha-area']}
+  {title:'Gestão',paths:['reports','personalizar','automations','settings','minha-area']}
 ];
-const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',prospeccao:'Prospecção',automations:'Automações',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
+const PAGES={dashboard:'Visão geral',leads:'Leads',sales:'Vendas',contacts:'Contatos',whatsapp:'WhatsApp',prospeccao:'Prospecção',automations:'Automações',personalizar:'Personalizar',insights:'Copiloto IA',agenda:'Agenda',tasks:'Minhas tarefas',reports:'Relatórios',settings:'Configurações','minha-area':'Meu perfil'};
 const ROLES={AGENCY_ADMIN:'Admin da agência',ORGANIZATION_ADMIN:'Admin da empresa',MANAGER:'Gerente',SDR:'SDR',SELLER:'Vendedor',VIEWER:'Visualizador'};
 const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n)||0);
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
@@ -503,7 +505,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
       <div className="staff-workspace-picker"><span className="staff-workspace-icon"><BriefcaseBusiness size={20}/></span><div><small>Empresa atual</small><strong>{currentOrganization?.name||'Sem empresa'}</strong></div>{organizations.length>1&&<ChevronDown size={15}/>}
         {organizations.length>1&&<select className="staff-company-select" aria-label="Alternar empresa" value={organizationId} onChange={e=>onOrganizationChange(e.target.value)} style={companySelectStyle}>{organizations.filter(c=>c.status==='active').map(c=><option key={c.id} value={c.id} style={companySelectStyle}>{c.name}</option>)}</select>}</div>
       <nav aria-label="Área de trabalho" className="staff-nav">
-        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin)&&(item.path!=='prospeccao'||canSeeProspecting)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
+        {NAV_GROUPS.map(group=><div key={group.title} className="staff-nav-group">{MENU.filter(item=>group.paths.includes(item.path)&&(item.path!=='automations'||isSuperAdmin||canManagePipeline)&&(item.path!=='prospeccao'||canSeeProspecting)&&item.path!=='minha-area').map(({path,label,icon:Icon})=><Link key={path} href={'/'+path} onClick={e=>navigate(e,path)} className={'staff-nav-item '+(section===path?'staff-nav-item--active':'')} aria-current={section===path?'page':undefined}><Icon size={18} strokeWidth={1.7}/><span>{label}</span>{section===path&&<span className="staff-nav-dot"/>}</Link>)}</div>)}
         {isSuperAdmin&&<Link href="/admin" className="staff-nav-item staff-super-admin-link"><ShieldCheck size={19}/><span>Painel Super Admin</span><ArrowUpRight size={15}/></Link>}
       </nav>
       <div className="staff-sidebar-footer"><div className="staff-session"><Initials name={displayName}/><div><strong>{displayName}</strong><small>{roleLabel}</small></div></div><button type="button" className="staff-logout" onClick={onSignOut}><LogOut size={17}/> Sair da conta</button></div>
@@ -578,6 +580,7 @@ export default function StaffWorkspace({section,session,profile,organizations,me
         {section==='automations'&&<NexusAutomations
           organizationId={organizationId} stages={stages} readonly={readonly}
         />}
+        {section==='personalizar'&&validOrg&&<NexusPersonalizar organizationId={organizationId} stages={stages} canManage={isSuperAdmin||canManagePipeline} readonly={readonly}/>}
         {section==='insights'&&<NexusAIInsights organizationId={organizationId}/>}
 
         {ready&&section==='reports'&&<PremiumReports data={data} counts={counts} orgName={orgName} readonly={readonly}/>}

@@ -114,3 +114,18 @@ test('V52: campo que não existe na empresa avisa com os campos reais', async ()
   assert.match(tela.aviso, /Convênio/);
   assert.equal(validarReceita({tipo: 'grafico', fonte: 'leads', agrupar_por: 'campo'}).ok, false);
 });
+
+test('V55: agendamentos ficam na empresa e mostram situação em português (sem telefone)', async () => {
+  const dados = {...base, appointments: [
+    {__orgId: ORG, id: 'a1', title: 'Exame — Ana', start_at: '2026-11-20T15:00:00Z', status: 'no_show', type: 'exam'},
+    {__orgId: ORG, id: 'a2', title: 'Exame — Bia', start_at: '2026-11-21T15:00:00Z', status: 'completed', type: 'exam'},
+    {__orgId: OUTRA, id: 'x', title: 'Outra empresa', start_at: '2026-11-21T15:00:00Z', status: 'no_show', type: 'exam'}]};
+  const admin = fakeAdmin(dados);
+  const tela = await montarTela({admin, orgId: ORG, spec: validarReceita({tipo: 'grafico', fonte: 'agendamentos', agrupar_por: 'situacao', estilo: 'pizza'}).spec});
+  assert.ok(admin.consultas.find(q => q.tabela === 'appointments').filtros.some(f => f[0] === 'eq' && f[1] === 'organization_id' && f[2] === ORG));
+  assert.deepEqual(tela.grupos.map(g => g.grupo).sort(), ['Compareceu', 'Faltou']);
+  assert.equal(JSON.stringify(tela).includes('Outra empresa'), false);
+  const lista = await montarTela({admin: fakeAdmin(dados), orgId: ORG, spec: validarReceita({tipo: 'lista', fonte: 'agendamentos'}).spec});
+  assert.deepEqual(lista.colunas, ['Agendamento', 'Quando', 'Tipo', 'Situação']);
+  assert.equal(lista.linhas[0][2], 'Exame');
+});

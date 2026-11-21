@@ -80,3 +80,17 @@ test('mês no fuso de São Paulo e descrição legível', () => {
   assert.match(descreverReceita(spec), /últimos 30 dias/);
   assert.match(descreverReceita(spec), /quentes/);
 });
+
+test('V55: agendamentos, estilo do gráfico e agrupar por semana', async () => {
+  const {semanaDe, diaDaSemana} = await import('../lib/views/spec.mjs');
+  const a = validarReceita({tipo: 'grafico', fonte: 'agendamentos', agrupar_por: 'dia_semana', estilo: 'linha', filtros: {situacao: 'faltaram', proximos_dias: 7}});
+  assert.equal(a.ok, true);
+  assert.equal(a.spec.estilo, 'linha');
+  assert.deepEqual(a.spec.filtros, {situacao: 'faltaram', proximos_dias: 7});
+  assert.equal(validarReceita({tipo: 'grafico', fonte: 'leads', agrupar_por: 'origem', estilo: 'linha'}).spec.estilo, 'barras', 'linha só no tempo');
+  assert.equal(validarReceita({tipo: 'grafico', fonte: 'leads', estilo: 'pizza'}).spec.estilo, 'pizza');
+  assert.equal(validarReceita({tipo: 'lista', fonte: 'leads', estilo: 'pizza'}).spec.estilo, undefined);
+  assert.equal(validarReceita({tipo: 'grafico', fonte: 'agendamentos', filtros: {situacao: 'abertas'}}).spec.filtros.situacao, undefined, 'situação de tarefa não vale em agendamento');
+  assert.equal(semanaDe('2026-11-20T15:00:00Z').rotulo, 'sem 16/11');
+  assert.equal(diaDaSemana('2026-11-20T15:00:00Z').rotulo, 'sex');
+});

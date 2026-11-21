@@ -135,6 +135,11 @@ try{
   // V51/V53: "Minhas telas" (sem telas fixadas no teste; vocabulário geral).
   await page.route('**/api/views**',async route=>{
     if(route.request().method()==='GET')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({telas:[],vocab:{ramo:'geral',rotulo:'Geral',sugestoes:[]}})});
+    // V55: "Ver prévia" no Personalizar devolve uma tela fictícia SÓ no teste.
+    const body=JSON.parse(route.request().postData()||'{}');
+    if(body.acao==='abrir')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({tela:{titulo:'Leads por etapa',descricao:'Leads · por etapa',geradoEm:new Date().toISOString(),
+      spec:{tipo:'grafico',estilo:'pizza',medida:'quantidade'},grupos:[{grupo:'Novo',quantidade:5,valor:0},{grupo:'Proposta',quantidade:3,valor:0},{grupo:'Fechamento',quantidade:1,valor:0}],total:{quantidade:9,valor:0}}})});
+    if(body.acao==='salvar')return route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({tela:{id:'00000000-0000-4000-8000-0000000000aa',nome:'Leads por etapa',spec:body.spec}})});
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true})});
   });
   await page.route('**/api/team**',async route=>{
@@ -219,6 +224,21 @@ try{
   await page.getByRole('button',{name:'Concluir Retornar para Ana'}).click();
   for(let k=0;k<40&&completedTasks!==1;k++)await sleep(100);
   if(completedTasks!==1)throw new Error('Dashboard did not complete the task through the operation API');
+  // V55: Personalizar — montar uma tela por menus (sem IA), ver a prévia e salvar.
+  await page.goto(host+'/personalizar',{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Personalizar'}).waitFor({timeout:8000});
+  await page.getByRole('radio',{name:'Pizza'}).click();
+  await page.getByRole('button',{name:'Ver prévia'}).click();
+  await page.locator('.nx-view-pie').waitFor({timeout:5000});
+  await page.screenshot({path:'test-artifacts/personalizar-v55-desktop.png',fullPage:true});
+  await page.getByRole('button',{name:'Salvar tela'}).click();
+  await page.getByText('Tela salva',{exact:false}).waitFor({timeout:5000});
+  for(const aba of ['Campos extras','Automações','Ramo'])await page.getByRole('tab',{name:aba}).waitFor({timeout:3000});
+  await page.setViewportSize({width:390,height:844});
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'Personalizar'}).waitFor({timeout:8000});
+  await page.screenshot({path:'test-artifacts/personalizar-v55-mobile.png',fullPage:true});
+  await page.setViewportSize({width:1440,height:900});
   for(const [route,file] of [['leads','leads-desktop'],['contacts','contacts-desktop'],['sales','sales-desktop']]){
     await page.goto(host+'/'+route,{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(500);
