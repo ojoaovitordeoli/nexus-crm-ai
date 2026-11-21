@@ -232,7 +232,7 @@ try{
   await page.locator('.nx-view-pie').waitFor({timeout:5000});
   await page.screenshot({path:'test-artifacts/personalizar-v55-desktop.png',fullPage:true});
   await page.getByRole('button',{name:'Salvar tela'}).click();
-  await page.getByText('Tela salva',{exact:false}).waitFor({timeout:5000});
+  await page.getByText('Tela salva',{exact:false}).first().waitFor({timeout:5000});
   for(const aba of ['Campos extras','Automações','Ramo'])await page.getByRole('tab',{name:aba}).waitFor({timeout:3000});
   await page.setViewportSize({width:390,height:844});
   await page.reload({waitUntil:'domcontentloaded'});
