@@ -5,6 +5,7 @@ import Link from 'next/link';
 import NexusHomeTelas from './NexusHomeTelas';
 import {normalizeLeadSearch,getSnapshotCoverage} from '../lib/dashboard-snapshot.mjs';
 import {dueDate,contactSearchTerm} from '../lib/shell-rules.mjs';
+import {avisos as calcularAvisos,comparar,textoVariacao,porSemana,dataVenda} from '../lib/visao-geral.mjs';
 import {
   CalendarDays,Check,ChevronRight,CircleCheck,ContactRound,MessageCircle,Plus,Search
 } from 'lucide-react';
@@ -24,12 +25,33 @@ const dueDay=value=>dueDate(value)?.toLocaleDateString('pt-BR',{day:'2-digit',mo
 const whatsapp=value=>{const n=String(value||'').replace(/\D/g,'');return n.length>=10&&n.length<=13?'https://wa.me/'+(n.length<=11?'55'+n:n):''};
 const taskOpen=t=>!['done','completed','cancelled','canceled'].includes(String(t.status||'').toLowerCase());
 function Initial({name}){return <span className="fx-avatar" aria-hidden="true">{name.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()}</span>}
+// V56: leads e vendas por semana (8 semanas), barras lado a lado. Só dados carregados.
+function Semanas({serie}){
+  const W=268,H=132,base=H-18,max=Math.max(1,...serie.map(s=>Math.max(s.leads,s.vendas)));
+  const passo=W/serie.length,bw=Math.max(4,Math.min(12,passo/2-3));
+  const ult=serie.at(-1)||{leads:0,vendas:0},tot=serie.reduce((a,s)=>({l:a.l+s.leads,v:a.v+s.vendas}),{l:0,v:0});
+  const q=(n,um,v)=>n+' '+(n===1?um:v);
+  const resumo='Últimas 8 semanas: '+q(tot.l,'lead','leads')+' e '+q(tot.v,'venda','vendas')+'. Esta semana: '+q(ult.leads,'lead','leads')+' e '+q(ult.vendas,'venda','vendas')+'.';
+  return <section className="fx-box nx-semanas" aria-label="Leads e vendas por semana">
+    <h2>Por semana</h2>
+    <div className="nx-semanas-leg"><span><i className="nx-cat-bg-1"/>Leads</span><span><i className="nx-cat-bg-2"/>Vendas</span></div>
+    <svg viewBox={'0 0 '+W+' '+H} role="img" aria-label={resumo} preserveAspectRatio="none">
+      <line x1="0" x2={W} y1={base} y2={base} className="nx-semanas-eixo"/>
+      {serie.map((s,i)=>{const x=i*passo+passo/2,hl=s.leads/max*(base-8),hv=s.vendas/max*(base-8);return <g key={s.ordem}>
+        <rect x={x-bw-1} y={base-hl} width={bw} height={hl} rx="2" className="nx-cat-fill-1"><title>{s.rotulo}: {s.leads} leads</title></rect>
+        <rect x={x+1} y={base-hv} width={bw} height={hv} rx="2" className="nx-cat-fill-2"><title>{s.rotulo}: {s.vendas} vendas</title></rect>
+        {(i%2===1||i===serie.length-1)&&<text x={x} y={H-4} textAnchor="middle">{i===serie.length-1?'esta':s.rotulo}</text>}
+      </g>})}
+    </svg>
+    <p className="nx-semanas-pe">{tot.l===0&&tot.v===0?'Sem leads nem vendas nas últimas 8 semanas.':resumo.replace('Últimas 8 semanas: ','8 semanas: ')}</p>
+  </section>;
+}
 function Title({title,link,href,children}){return <div className="fx-boxhead"><h2>{title}</h2>{children}{href&&<Link href={href} className="fx-link">{link||'Ver todos'}</Link>}</div>}
 export default function NexusExecutiveHome({organizationId='',data,counts,organizationName,onOperation,onReload,readonly=false,loading,openTasks=[],overdueTasks=[],pipelineStages=[],pipelines=[],activePipelineId='',onPipelineChange,lastSync}) {
   const d=data||{},leads=d.leads||[],sales=d.sales||[],tasks=d.tasks||[],appointments=d.appointments||[];
   const pending=Array.isArray(openTasks)?openTasks:tasks.filter(taskOpen);
   const latestMs=Date.now()-30*86400000,leads30=leads.filter(x=>toDate(x.created_at)?.getTime()>=latestMs);
-  const sales30=sales.filter(x=>toDate(x.created_at)?.getTime()>=latestMs),revenue=sales30.reduce((acc,x)=>acc+(Number(x.value)||0),0);
+  const sales30=sales.filter(x=>toDate(dataVenda(x))?.getTime()>=latestMs),revenue=sales30.reduce((acc,x)=>acc+(Number(x.value)||0),0);
   const today=new Date();today.setHours(0,0,0,0);
   const tomorrow=new Date(today);tomorrow.setDate(tomorrow.getDate()+1);
   // Prazo é data de calendário: dueDate evita que "2026-11-10T00:00:00Z" vire dia 09 no fuso de Brasília.
@@ -61,6 +83,12 @@ export default function NexusExecutiveHome({organizationId='',data,counts,organi
   const nextAppointments=useMemo(()=>appointments.filter(x=>x.start_at&&toDate(x.start_at)?.getTime()>=Date.now()&&!['cancelled','completed'].includes(String(x.status||'').toLowerCase()))
     .sort((a,b)=>toDate(a.start_at)-toDate(b.start_at)).slice(0,3),[appointments]);
   const coverage=getSnapshotCoverage(counts,d);
+  // V56: avisos (número + ação), comparação com os 30 dias antes e série semanal.
+  const listaAvisos=useMemo(()=>calcularAvisos({leads,sales,tasks,appointments,stages:pipelineStages,goal:d.goal,cobertura:coverage}),[leads,sales,tasks,appointments,pipelineStages,d.goal,coverage.leads,coverage.sales]);
+  const deltaLeads=textoVariacao(comparar(leads,{campo:'created_at',incompleta:coverage.leads}));
+  const deltaVendas=textoVariacao(comparar(sales,{campo:dataVenda,incompleta:coverage.sales}));
+  const deltaReceita=textoVariacao(comparar(sales,{campo:dataVenda,valor:x=>x.value,incompleta:coverage.sales}));
+  const serie=useMemo(()=>porSemana({leads,sales}),[leads,sales]);
   const filteredCounts=Object.values(coverage).some(Boolean);
   const snapshot=lastSync?'Atualizado às '+lastSync.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Aguardando atualização';
   async function action(payload,kind){
@@ -122,6 +150,13 @@ export default function NexusExecutiveHome({organizationId='',data,counts,organi
       <button type="submit" disabled={readonly||submitting||!newTask.trim()}>Criar</button>
       <button type="button" className="fx-btn-text" onClick={()=>setCompose(false)}>Cancelar</button>
     </form>}
+    {!loading&&<section className="nx-avisos" aria-label="O que pede atenção agora">
+      {listaAvisos.map(a=><Link key={a.id} href={a.href} className={'nx-aviso nx-aviso--'+a.tom}>
+        <span className="nx-aviso-ponto" aria-hidden="true"/>
+        <span className="nx-aviso-corpo"><strong>{a.titulo}</strong><small>{a.texto}</small></span>
+        <span className="nx-aviso-acao">{a.acao}<ChevronRight size={15} aria-hidden="true"/></span>
+      </Link>)}
+    </section>}
     {organizationId&&<NexusHomeTelas organizationId={organizationId}/>}
     <section className="fx-funnel" aria-label="Funil de vendas">
       <div className="fx-funnel-head"><h2>Funil</h2>{pipelines.length>1&&<select className="fx-funnel-select" aria-label="Escolher funil" value={activePipelineId} onChange={e=>onPipelineChange?.(e.target.value)}>{pipelines.map(p=><option key={p.id} value={p.id}>{p.name}{p.is_default?' (padrão)':''}</option>)}</select>}<span>{loading?'—':int(funnelTotal)} {funnelTotal===1?'lead':'leads'}{coverage.leads?' · amostra carregada':''}</span><Link href="/leads" className="fx-link">Ver quadro</Link></div>
@@ -168,13 +203,14 @@ export default function NexusExecutiveHome({organizationId='',data,counts,organi
           <h2>Últimos 30 dias</h2>
           <dl className="fx-kv">
             {[
-              {label:'Novos leads',value:int(leads30.length),sample:coverage.leads,to:'/leads'},
-              {label:'Vendas',value:int(sales30.length),sample:coverage.sales,to:'/sales'},
-              {label:'Receita registrada',value:brl(revenue),sample:coverage.sales,to:'/sales'},
+              {label:'Novos leads',value:int(leads30.length),sample:coverage.leads,to:'/leads',delta:deltaLeads},
+              {label:'Vendas',value:int(sales30.length),sample:coverage.sales,to:'/sales',delta:deltaVendas},
+              {label:'Receita registrada',value:brl(revenue),sample:coverage.sales,to:'/sales',delta:deltaReceita},
               {label:'Compromissos futuros',value:int(upcomingAppointments),sample:false,to:'/agenda'}
-            ].map(s=><div key={s.label} className="fx-stat"><dt><Link href={s.to}>{s.label}</Link>{s.sample&&<small>amostra</small>}</dt><dd>{loading?'—':s.value}</dd></div>)}
+            ].map(s=><div key={s.label} className="fx-stat"><dt><Link href={s.to}>{s.label}</Link>{s.sample&&<small>amostra</small>}</dt><dd>{loading?'—':s.value}{!loading&&s.delta&&<small className={'nx-delta'+(s.delta.startsWith('▲')?' is-up':s.delta.startsWith('▼')?' is-down':'')}>{s.delta}</small>}</dd></div>)}
           </dl>
         </section>
+        {!loading&&<Semanas serie={serie}/>}
         {filteredCounts&&<p className="fx-note">Há mais registros no banco do que os carregados aqui; números marcados como amostra não são totais. Veja os totais em Relatórios.</p>}
       </aside>
     </div>
