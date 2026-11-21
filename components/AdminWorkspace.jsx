@@ -18,7 +18,7 @@ const stamp = iso => iso ? new Date(iso).toLocaleString('pt-BR',{dateStyle:'shor
 const clean = value => String(value ?? '').toLocaleLowerCase('pt-BR');
 const initials = value => String(value || '?').trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()).join('');
 const percent = (count,total) => Math.min(100,Math.round(count / Math.max(total,1) * 100));
-const roleColor = ['#4f72ff','#19b6a4','#90efd7','#f4b95c','#f18c84','#9da9bd'];
+const roleColor = ['#4f72ff','#19b6a4','#b58af5','#f4b95c','#f18c84','#9da9bd'];
 const AUDIT_LABEL = {
   membership_create:'Acesso vinculado',membership_update:'Acesso alterado',membership_status:'Status de acesso alterado',
   profile_status:'Status de usuário alterado',user_create:'Usuário criado',organization_archive:'Empresa arquivada',

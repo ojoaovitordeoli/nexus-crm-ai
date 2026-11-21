@@ -2,7 +2,7 @@
 .staff-agenda-form{display:grid;grid-template-columns:minmax(175px,1.4fr) minmax(175px,1fr) minmax(130px,.65fr) minmax(150px,1fr);gap:14px;align-items:end;padding:0 24px 25px}
 .staff-agenda-form label{display:flex;flex-direction:column;gap:8px;color:var(--staff-muted);font-size:10px;font-weight:800}
 .staff-agenda-form input,.staff-agenda-form select{height:43px;border:1px solid var(--staff-border);border-radius:10px;padding:0 12px;background:var(--staff-surface);color:var(--staff-text);min-width:0;font-size:11px}
-.staff-agenda-form input:focus,.staff-agenda-form select:focus,.staff-new-task input:focus,.staff-new-task select:focus{outline:2px solid rgba(29,201,158, .3);outline-offset:1px}
+.staff-agenda-form input:focus,.staff-agenda-form select:focus,.staff-new-task input:focus,.staff-new-task select:focus{outline:2px solid rgba(95, 0, 230, .3);outline-offset:1px}
 .staff-agenda-form>.staff-btn{height:43px;grid-column:1/-1;justify-self:end}
 .nxp-premium input:focus-visible,.nxp-premium button:focus-visible,.nxp-premium a:focus-visible,.nxp-premium select:focus-visible{outline:2px solid var(--fx-accent-text);outline-offset:3px}
 .nxp-pill,.nxp-chip{transition:background-color .2s,color .2s}

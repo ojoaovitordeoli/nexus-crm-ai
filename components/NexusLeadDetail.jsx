@@ -17,7 +17,10 @@ const phoneLink=whatsappUrl;
 function SummaryRow({title,value}){
   return <div className="v11-detail-row"><span>{title}</span><strong>{value||'Não informado'}</strong></div>;
 }
-export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=false,onStageChange,onOperation,onReload,onClose}){
+export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=false,onStageChange,onOperation,onReload,onClose,passo=null}){
+  // V64: o mesmo "Próximo passo" da ficha da lista, também no quadro.
+  const [passoBusy,setPassoBusy]=useState(false),[passoMsg,setPassoMsg]=useState('');
+  async function agirPasso(payload,msg){if(readonly||passoBusy||!onOperation)return;setPassoBusy(true);setPassoMsg('');try{await onOperation(payload);await onReload?.();setPassoMsg(msg)}catch(err){setPassoMsg(err.message||'Não foi possível salvar.')}finally{setPassoBusy(false)}}
   const root=useRef(null);
   const opener=useRef(null);
   const closeRef=useRef(onClose);
@@ -97,6 +100,16 @@ export default function NexusLeadDetail({lead,stages=[],readonly=false,pending=f
           <span className="v11-detail-unavailable"><Phone size={16}/> WhatsApp não informado</span>}
         {!readonly&&<button type="button" onClick={()=>setTab('retorno')} className="v11-detail-secondary"><CalendarPlus size={17}/> Criar retorno</button>}
       </div>
+      {passo&&<div className={'nx61-passo nx64-passo is-'+passo.tom} role="region" aria-label="Próximo passo">
+        <div><span className="nx61-passo-k">Próximo passo</span><strong>{passo.titulo}</strong><p>{passoMsg||passo.detalhe}</p></div>
+        {!readonly&&passo.acao&&<div className="nx61-passo-acts">
+          {passo.acao==='presenca'&&<><button type="button" className="nx-mini is-ok" disabled={passoBusy} onClick={()=>agirPasso({action:'appointment_status',id:passo.appointmentId,status:'completed'},'Presença marcada.')}><Check size={14}/>Veio</button>
+            <button type="button" className="nx-mini is-no" disabled={passoBusy} onClick={()=>agirPasso({action:'appointment_status',id:passo.appointmentId,status:'no_show'},'Falta registrada.')}><X size={14}/>Faltou</button></>}
+          {passo.acao==='tarefa'&&<button type="button" className="nx-mini is-ok" disabled={passoBusy} onClick={()=>agirPasso({action:'task_status',id:passo.taskId,status:'completed'},'Retorno concluído.')}><Check size={14}/>Feito</button>}
+          {passo.acao==='confirmar'&&wa&&<a className="nx-mini is-wa" href={wa} target="_blank" rel="noopener noreferrer"><MessageCircle size={14}/>Confirmar no WhatsApp</a>}
+          {(passo.acao==='retorno'||passo.acao==='tarefa')&&<button type="button" className="nx-mini" onClick={()=>setTab('retorno')}><CalendarPlus size={14}/>{passo.acao==='tarefa'?'Novo retorno':'Marcar retorno'}</button>}
+        </div>}
+      </div>}
       <nav aria-label="Informações do atendimento" className="v11-detail-tabs">
         {[['resumo','Resumo'],...(readonly?[]:[['retorno','Próxima ação']]),['atividade','Atividade']].map(([key,value])=>
           <button key={key} type="button" className={key===tab?'active':''} onClick={()=>setTab(key)} aria-current={key===tab?'page':undefined}>{value}</button>)}

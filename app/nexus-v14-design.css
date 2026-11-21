@@ -33,7 +33,7 @@ body .staff-shell .staff-logo strong{color:#f8f8fa!important;font:750 17px/1.18 
 body .staff-shell .staff-logo strong span{color:#d4d4d6!important}
 body .staff-shell .staff-logo small{font-size:10px!important;color:#a0a0a2!important;letter-spacing:.025em!important;margin-top:5px!important}
 body .staff-shell .staff-workspace-picker{background:rgba(192, 192, 194, .052)!important;color:#f5f5f7!important;border:1px solid rgba(211, 211, 213, .14)!important;border-radius:11px!important;box-shadow:none!important;margin:0 2px 28px!important;padding:13px 12px!important;min-height:66px!important}
-body .staff-shell .staff-workspace-icon{background:rgba(29,201,158, .12)!important;color:#cfcfd1!important;border:1px solid rgba(192, 192, 194, .10)!important;border-radius:9px!important}
+body .staff-shell .staff-workspace-icon{background:rgba(95, 0, 230, .12)!important;color:#cfcfd1!important;border:1px solid rgba(192, 192, 194, .10)!important;border-radius:9px!important}
 body .staff-shell .staff-workspace-picker strong{color:#f3f3f5!important;font-weight:700!important;font-size:12px!important}
 body .staff-shell .staff-workspace-picker small{color:#ababad!important;font-size:10px!important;letter-spacing:0!important}
 body .staff-shell .staff-nav-item{border:1px solid transparent!important;min-height:42px!important;height:42px!important;border-radius:8px!important;padding:0 12px!important;margin-bottom:2px!important;font:565 12.5px Inter,system-ui,sans-serif!important;color:#b0b0b2!important;background:transparent!important;box-shadow:none!important;gap:12px!important}
@@ -41,8 +41,8 @@ body .staff-shell .staff-nav-item svg{color:#909092!important;stroke-width:1.7!i
 body .staff-shell .staff-nav-item:hover{background:rgba(193, 193, 195, .08)!important;color:#fff!important}
 body .staff-shell .staff-nav-item:hover svg{color:#c5c5c7!important}
 body .staff-shell .staff-nav-item--active,body .staff-shell .staff-nav-item--active:hover{
-  color:#f0f0f2!important;background:rgba(29,201,158, .13)!important;
-  border:1px solid rgba(29,201,158, .16)!important;box-shadow:none!important;font-weight:700!important
+  color:#f0f0f2!important;background:rgba(95, 0, 230, .13)!important;
+  border:1px solid rgba(95, 0, 230, .16)!important;box-shadow:none!important;font-weight:700!important
 }
 body .staff-shell .staff-nav-item--active svg{color:#c2f6e8!important}
 body .staff-shell .staff-nav-dot{display:none!important}
@@ -76,7 +76,7 @@ body .staff-shell .staff-nav-item:active,body .staff-shell .staff-icon-button:ac
 .v14-hero{border-radius:18px;min-height:260px;position:relative;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(220px,.72fr);gap:30px;overflow:hidden;
   background:linear-gradient(113deg,var(--v14-hero-start) 0%,var(--v14-hero-mid) 58%,var(--v14-hero-end) 100%);
   color:#f5f5f7;border:1px solid var(--v14-hero-border);box-shadow:0 17px 48px rgba(24, 24, 26, .14);padding:34px clamp(26px,3.7vw,56px);margin-bottom:19px}
-.v14-hero:after{position:absolute;content:"";inset:0;background:linear-gradient(90deg,transparent 30%,rgba(29,201,158, .055));pointer-events:none}
+.v14-hero:after{position:absolute;content:"";inset:0;background:linear-gradient(90deg,transparent 30%,rgba(95, 0, 230, .055));pointer-events:none}
 .v14-hero h1{font-size:clamp(32px,3.8vw,53px)!important;color:#fff!important;font-weight:680!important;line-height:1.1!important;margin:0 0 11px!important;letter-spacing:-.065em!important}
 .v14-hero p{font-size:13px;color:#d5d5d7;margin:0;max-width:510px}
 .v14-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:19px}

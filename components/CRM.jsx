@@ -109,10 +109,10 @@ export default function CRM({section}){
  if(isAuthScreen){
   return <div className="authwrap authwrap--v4"><div className={'glass auth auth--v4 '+(forgot?'auth--recover':'')}>
    <div className="auth-v4-aura" aria-hidden="true"/>
-   <div className="auth-v4-top"><HeaderLogo/><span>ACESSO SEGURO</span></div>
+   <div className="auth-v4-top"><HeaderLogo/></div>
    <div className="auth-v4-blade" aria-hidden="true" onAnimationEnd={()=>setAuthSwitching(false)}/>
    <div className="auth-v4-content">
-   <div className="eyebrow" style={{marginTop:32}}>ÁREA DE TRABALHO</div><h1>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
+   <h1 style={{marginTop:28}}>{section==='reset-password'?'Criar nova senha':forgot?'Recuperar acesso':'Bem-vindo de volta'}</h1><p className="muted">{section==='reset-password'?'Escolha uma nova senha para a sua conta.':forgot?'Enviaremos as instruções de recuperação por e-mail.':'Entre para administrar e acompanhar suas operações.'}</p>
    <form onSubmit={section==='reset-password'?changePassword:forgot?recover:signIn}>
    {section!=='reset-password'&&<label className="field">E-mail<input ref={emailInput} value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="seu@email.com" autoComplete="email" required/></label>}
    {(!forgot||section==='reset-password')&&<label className="field">{section==='reset-password'?'Nova senha':'Senha'}<span className="pass-wrap"><input value={pass} onChange={e=>setPass(e.target.value)} type={showPass?'text':'password'} minLength={6} placeholder="Sua senha" autoComplete={section==='reset-password'?'new-password':'current-password'} autoCapitalize="none" spellCheck={false} required/><button type="button" className="pass-toggle" onClick={()=>setShowPass(v=>!v)} aria-label={showPass?'Ocultar senha':'Mostrar senha'} aria-pressed={showPass} title={showPass?'Ocultar senha':'Mostrar senha'}>{showPass?<EyeOff size={18} aria-hidden="true"/>:<Eye size={18} aria-hidden="true"/>}</button></span></label>}
