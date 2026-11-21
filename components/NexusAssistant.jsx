@@ -78,6 +78,14 @@ export default function NexusAssistant({organizationId,organizationName,readonly
         const json=await res.json().catch(()=>null);
         if(!res.ok)throw new Error(json?.error||'Não consegui salvar o ramo.');
         r={message:json?.message||'Ramo salvo.'};setMinhas(m=>({...m,carregado:false}));
+      }else if(proposal.payload?.action==='automation_create'||proposal.payload?.action==='automation_toggle'){
+        // V54: automações — /api/automations (só gerente/admin). Criar já liga a regra: o "Confirmar" é a aprovação.
+        const post=async body=>{const res=await fetch('/api/automations',{method:'POST',headers:await authHeaders(),body:JSON.stringify({org_id:organizationId,...body})});const json=await res.json().catch(()=>null);if(!res.ok)throw new Error(json?.error||'Não consegui salvar a automação.');return json};
+        if(proposal.payload.action==='automation_create'){
+          const created=await post({action:'create',...proposal.payload.rule});
+          await post({action:'toggle',rule_id:created.rule.id,enabled:true});
+          r={message:'Automação criada e ligada. Ela cria a tarefa sozinha a partir de agora.'};
+        }else{await post({action:'toggle',rule_id:proposal.payload.rule_id,enabled:proposal.payload.enabled});r={message:'Automação pausada.'}}
       }else r=await onOperation(proposal.payload);
       set('done',r?.message||'Feito.');onChanged?.();
     }

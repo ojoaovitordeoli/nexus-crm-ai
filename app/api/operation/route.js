@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
-import {runLeadStageAutomations} from '../../../lib/automation-runner';
+import {runAppointmentAutomations,runLeadStageAutomations} from '../../../lib/automation-runner';
 import {describeRequirement,evaluateRequirements,normalizeAnswer,statusForStage} from '../../../lib/stage-requirements.mjs';
 import {comoRequisito} from '../../../lib/custom-fields-chat.mjs';
 import {buildLeadTimeline,canManagePipeline,canWriteOperation,localDateISO,parseDateTime,planPipelineStages,READ_ACTIONS,safeCalendarDate} from '../../../lib/operation-rules.mjs';
@@ -293,14 +293,16 @@ export async function POST(request){
     const status=['scheduled','confirmed','completed','cancelled','no_show'].includes(payload?.status)?payload.status:null;
     if(!status)return fails('Status inválido.');
     const {data,error}=await admin.from('appointments').update({status})
-      .eq('id',payload.id).eq('organization_id',orgId).select('id,status').maybeSingle();
+      .eq('id',payload.id).eq('organization_id',orgId).select('id,status,lead_id,title').maybeSingle();
     if(error)return dbFail('Falha ao atualizar agendamento.',error);
     if(!data)return fails('Agendamento não encontrado.',404);
     // Trilha da presença/falta (auditLog é declarado mais abaixo nesta função; aqui grava direto).
     const audit=await admin.from('audit_logs').insert({user_id:auth.user.id,organization_id:orgId,action:'appointment_status',entity_type:'appointment',entity_id:data.id,before:null,after:{status}});
     if(audit.error)logInternal('audit appointment_status',audit.error);
-    const msg={completed:'Presença registrada.',no_show:'Falta registrada.'}[status]||'Agendamento atualizado.';
-    return reply({ok:true,message:msg,item:data});
+    // V54: regras "faltou"/"compareceu" (só criam tarefa; uma vez por agendamento e status).
+    const automation=await runAppointmentAutomations(admin,{organizationId:orgId,appointment:data,status,actorId:auth.user.id});
+    const msg=({completed:'Presença registrada.',no_show:'Falta registrada.'}[status]||'Agendamento atualizado.')+(automation?.executed?' '+automation.executed+' tarefa(s) criada(s) pela automação.':'');
+    return reply({ok:true,message:msg,item:{id:data.id,status:data.status},automation});
   }
   if(action==='lead_stage_requirements'||action==='lead_stage'){
     const gate=await loadStageGate(admin,orgId,payload);

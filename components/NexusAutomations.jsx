@@ -128,7 +128,7 @@ export default function NexusAutomations({organizationId,stages=[],readonly=fals
           <div className="fx-thead" role="row"><span role="columnheader">Regra</span><span role="columnheader">Quando entrar em</span><span role="columnheader">Tarefa criada</span><span role="columnheader">Prazo</span><span role="columnheader" className="fx-cell-end">Ações</span></div>
           {rules.map(rule=><div className="fx-tr" role="row" key={rule.id}>
             <span role="cell"><strong>{rule.name}</strong><span className={'fx-int-status '+(rule.enabled?'is-on':'is-off')}>{rule.enabled?'Ativa':'Pausada'}</span></span>
-            <span role="cell" className="fx-muted">{stageLabel(rule.stage_id)}</span>
+            <span role="cell" className="fx-muted">{rule.trigger_type==='appointment_no_show'?'Quando faltar ao agendamento':rule.trigger_type==='appointment_completed'?'Quando comparecer ao agendamento':stageLabel(rule.stage_id)}</span>
             <span role="cell">{rule.task_title}</span>
             <span role="cell" className="fx-muted">{rule.delay_days===0?'No mesmo dia':'+'+rule.delay_days+' dia(s)'}</span>
             <span role="cell" className="fx-cell-end fx-auto-actions">
