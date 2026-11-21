@@ -133,6 +133,12 @@ try{
       fields:[],pipelines:[],stages:[],requirements:[]})});
   });
   // V51/V53: "Minhas telas" (sem telas fixadas no teste; vocabulário geral).
+  // V63: visão da agência (mock: o servidor real decide as empresas pela sessão).
+  await page.route('**/api/agencia**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({geradoEm:new Date().toISOString(),empresas:[
+    {id:'00000000-0000-4000-8000-0000000000a1',nome:'Ótica Vista Clara',metricas:{leadsAbertos:42,parados:15,leadsNovos30:38,tarefasVencidas:7,semPresenca:2,faltas30:6,compareceram30:18,faturamentoMes:9400,vendasMes:9,meta:30000}},
+    {id:'00000000-0000-4000-8000-0000000000a2',nome:'Clínica Bem Estar',metricas:{leadsAbertos:20,parados:2,leadsNovos30:25,tarefasVencidas:1,semPresenca:0,faltas30:1,compareceram30:20,faturamentoMes:21000,vendasMes:14,meta:25000}},
+    {id:'00000000-0000-4000-8000-0000000000a3',nome:'Loja Centro',metricas:{leadsAbertos:5,parados:0,leadsNovos30:6,tarefasVencidas:0,semPresenca:0,faltas30:0,compareceram30:0,faturamentoMes:4000,vendasMes:3,meta:null}}
+  ]})}));
   await page.route('**/api/views**',async route=>{
     if(route.request().method()==='GET')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({telas:[],vocab:{ramo:'geral',rotulo:'Geral',sugestoes:[]}})});
     // V55: "Ver prévia" no Personalizar devolve uma tela fictícia SÓ no teste.
@@ -224,6 +230,21 @@ try{
   await page.getByRole('button',{name:'Concluir Retornar para Ana'}).click();
   for(let k=0;k<40&&completedTasks!==1;k++)await sleep(100);
   if(completedTasks!==1)throw new Error('Dashboard did not complete the task through the operation API');
+  // V63: visão da agência — a mais urgente primeiro, com a frase que conclui.
+  await page.goto(host+'/agencia',{waitUntil:'domcontentloaded'});
+  await page.locator('.nx63-row').first().waitFor({timeout:8000});
+  const agenciaTitulo=await page.locator('.nx63 h1').innerText();
+  if(!/de 3\.$/.test(agenciaTitulo))throw new Error('Visão da agência sem a frase: '+agenciaTitulo);
+  const primeira=await page.locator('.nx63-row strong').first().innerText();
+  if(primeira!=='Ótica Vista Clara')throw new Error('A empresa mais urgente não veio primeiro: '+primeira);
+  await page.waitForTimeout(700);
+  await page.screenshot({path:'test-artifacts/agencia-v63-desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('.nx63-row').first().waitFor({timeout:8000});
+  await page.waitForTimeout(700);
+  await page.screenshot({path:'test-artifacts/agencia-v63-mobile.png',fullPage:true});
+  await page.setViewportSize({width:1440,height:900});
   // V55: Personalizar — montar uma tela por menus (sem IA), ver a prévia e salvar.
   await page.goto(host+'/personalizar',{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'Personalizar'}).waitFor({timeout:8000});
