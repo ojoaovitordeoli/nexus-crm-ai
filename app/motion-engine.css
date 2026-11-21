@@ -49,12 +49,8 @@
 .staff-motion-scene--dashboard .nxp-graph-line-dot{animation:nexus-dot-pop .33s var(--motion-ease) 1.22s both;transform-box:fill-box;transform-origin:center}
 @keyframes nexus-dot-pop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
 .staff-motion-scene--agenda .staff-page-header{animation:nexus-fade-up .34s var(--motion-ease) .03s both}
-.staff-motion-scene--agenda .motion-calendar-grid{animation:nexus-calendar-open .6s var(--motion-ease) .09s both}
-.staff-motion-scene--agenda .staff-agenda-create{animation:nexus-panel-reveal .5s var(--motion-ease) .17s both}
-.staff-motion-scene--agenda .staff-data-card{animation:nexus-panel-reveal .5s var(--motion-ease) .25s both}
 @keyframes nexus-calendar-open{from{opacity:0;transform:translate3d(0,19px,0) scale(.984);filter:blur(3px);clip-path:inset(0 0 24% 0 round 20px)}to{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0);clip-path:inset(0 0 0 0 round 20px)}}
 .staff-motion-scene--leads .nxp-page-head,.staff-motion-scene--contacts .nxp-page-head{animation:nexus-fade-up .36s var(--motion-ease) .04s both}
-.staff-motion-scene--leads .nxp-leads-summary,.staff-motion-scene--contacts .nxp-contact-banner{animation:nexus-panel-reveal .52s var(--motion-ease) .12s both}
 .staff-motion-scene--leads .nxp-leads-workarea,.staff-motion-scene--contacts .nxp-leads-workarea{animation:nexus-panel-reveal .52s var(--motion-ease) .2s both}
 .nxp-board-column{animation:nexus-column-in .5s var(--motion-ease) both;transform-origin:top}
 .nxp-board-column:nth-child(1){animation-delay:.28s}
@@ -78,20 +74,12 @@
 .nxp-contact-card:nth-child(3n+2){animation-delay:.27s}
 .nxp-contact-card:nth-child(3n+3){animation-delay:.34s}
 .staff-motion-scene--tasks .staff-page-header,.staff-motion-scene--reports .v4-report-header{animation:nexus-fade-up .34s var(--motion-ease) both}
-.staff-motion-scene--tasks .staff-task-page{animation:nexus-panel-reveal .46s var(--motion-ease) .11s both}
-.staff-task-row{animation:nexus-task-reveal .33s var(--motion-ease) both}
-.staff-task-row:nth-child(1){animation-delay:.13s}
-.staff-task-row:nth-child(2){animation-delay:.18s}
-.staff-task-row:nth-child(3){animation-delay:.23s}
-.staff-task-row:nth-child(4){animation-delay:.28s}
-.staff-task-row:nth-child(n+5){animation-delay:.32s}
 .staff-nav-item{overflow:hidden;isolation:isolate}
 .staff-nav-item:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 10%,rgba(95, 0, 230, .11) 45%,transparent 80%);transform:translateX(-112%);opacity:0}
 .staff-nav-item--active:before{animation:nexus-nav-shimmer .55s var(--motion-ease) .12s both}
 @keyframes nexus-nav-shimmer{0%{transform:translateX(-110%);opacity:0}25%{opacity:1}100%{transform:translateX(110%);opacity:0}}
 .staff-nav-item--active>svg{animation:nexus-nav-icon .31s var(--motion-ease) .11s both}
 @keyframes nexus-nav-icon{from{transform:scale(.78);opacity:.5}to{transform:scale(1);opacity:1}}
-.staff-motion-scene--reports .v4-report-tile,.staff-motion-scene--reports .v4-report-panel{will-change:transform,opacity}
 .staff-sidebar .staff-logo-icon{transition:transform .24s var(--motion-ease)}
 .staff-sidebar .staff-logo-icon:hover{transform:rotate(-8deg) scale(1.06)}
 .staff-icon-button:active,.nxp-button:active,.staff-btn:active{transform:scale(.96)}
@@ -104,7 +92,6 @@
   .staff-motion-scene--leaving{opacity:1!important}
   .nxp-graph-line-path{stroke-dashoffset:0!important}
 }
-
 /* Donut em SVG: cada faixa cresce de 0 até o percentual real. */
 .nxp-donut--svg{background:transparent!important;overflow:visible;animation:none!important}
 .nxp-donut--svg::after{display:none!important}
@@ -113,4 +100,6 @@
 .nxp-donut-segment{fill:none;stroke-width:23;stroke-linecap:butt;stroke-dasharray:var(--segment-dash);animation:nexus-ring-grow .92s var(--motion-ease) both}
 @keyframes nexus-ring-grow{0%{stroke-dasharray:0 100;opacity:.2}100%{stroke-dasharray:var(--segment-dash);opacity:1}}
 .nxp-donut--svg .nxp-donut-inner{position:relative;z-index:1}
-@media(prefers-reduced-motion:reduce){.nxp-donut-segment{animation:none!important;stroke-dasharray:var(--segment-dash)!important}}
+@media(prefers-reduced-motion:reduce){
+  .nxp-donut-segment{animation:none!important;stroke-dasharray:var(--segment-dash)!important}
+}
