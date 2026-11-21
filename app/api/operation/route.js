@@ -122,6 +122,7 @@ export async function GET(request){
   if(auth.error)return fails(auth.error,auth.status);
 
   const names=['leads','tasks','contacts','appointments','sales'];
+  const LIMITE={leads:1500,contacts:1500,sales:1500,tasks:600,appointments:600};
   const fields=[
     'id,organization_id,source,status,temperature,created_at,closed_at,stage_changed_at,pipeline_id,pipeline_stage_id,estimated_value,contact:contacts!leads_contact_id_fkey(id,first_name,last_name,whatsapp)',
     'id,title,status,priority,due_date,due_time,created_at,created_by,assigned_to,completed_at,lead_id',
@@ -138,7 +139,8 @@ export async function GET(request){
   const requestRows=names.map((name,i)=>{
     let q=live(admin.from(name).select(fields[i]).eq('organization_id',orgId),name);
     if(name==='appointments')q=q.gte('start_at',agendaDesde);
-    return q.order(name==='appointments'?'start_at':'created_at',{ascending:name==='appointments'?true:false}).limit(250);
+    // V65: 250 deixava relatório e busca errados em empresas maiores (ex.: 636 leads contados como 250).
+    return q.order(name==='appointments'?'start_at':'created_at',{ascending:name==='appointments'?true:false}).limit(LIMITE[name]||250);
   });
   const requestCounts=names.map(name=>live(admin.from(name).select('id',{count:'exact',head:true}).eq('organization_id',orgId),name));
   const [rows,counts,pipelines]=await Promise.all([

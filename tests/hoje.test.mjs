@@ -78,8 +78,10 @@ test('V60 origem: conversão por origem e a frase só com base mínima', () => {
 });
 
 test('V60 manchete e WhatsApp', () => {
-  assert.equal(manchete({mes: {alvo: 30000, feito: 18400, atras: 2600}, fila: {itens: [{tom: 'alerta'}, {tom: 'atencao'}, {tom: 'alerta'}, {tom: 'frio'}]}}).replace(/\s/g, ' '), 'Você está R$ 2.600 atrás da meta. Três coisas resolvem hoje.');
+  assert.equal(manchete({mes: {alvo: 30000, feito: 18400, atras: 2600}, fila: {itens: [{tom: 'alerta'}, {tom: 'atencao'}, {tom: 'alerta'}, {tom: 'frio'}]}}).replace(/\s/g, ' '), 'Você está R$ 2.600 atrás da meta. 4 coisas pedem você hoje.');
   assert.equal(manchete({mes: {alvo: null}, fila: {itens: []}}), 'Tudo em dia por aqui.');
+  // V65: lead parado também conta (antes a tela dizia "Tudo em dia" com 239 parados embaixo)
+  assert.equal(manchete({mes: {alvo: null}, fila: {itens: [{tom: 'frio', titulo: '239 leads parados há 7 dias ou mais'}]}}), '239 leads parados há 7 dias ou mais.');
   assert.equal(whatsLink('(48) 9 9999-0000'), 'https://wa.me/5548999990000');
   assert.equal(whatsLink('123'), '');
 });

@@ -54,7 +54,7 @@ function GoalPanel({goal,canManage,readonly,onOperation,onReload,sales=[]}){
       <p className="nx62-meta-frase">No ritmo atual o mês fecha em <b>{brl(mes.projecao)}</b>{p.remaining>0&&mes.porDiaPrecisa!=null?<> · para bater a meta: <b>{brl(mes.porDiaPrecisa)} por dia</b> (a média até aqui é {brl(mes.media)})</>:null}.</p>
       <GraficoMes mes={mes}/>
       <p className="fx-muted">{p.pct}% da meta · esperado para hoje: {p.expected}% · {p.remaining>0?'faltam '+money(p.remaining):'meta atingida'}{goal.sales_count!=null?' · '+goal.sales_count+(goal.sales_count===1?' venda no mês':' vendas no mês'):''}</p>
-    </div>:<div className="fx-goal-body"><p className="nx62-meta-frase">{goal.achieved!=null?<>Faturado no mês: <b>{money(goal.achieved)}</b>. </>:null}No ritmo atual o mês fecha em <b>{brl(mes.projecao)}</b>. {canEdit?'Defina a meta para ver quanto falta por dia.':'Nenhuma meta definida para este mês.'}</p><GraficoMes mes={mes}/></div>}
+    </div>:<div className="fx-goal-body"><p className="nx62-meta-frase">{goal.achieved!=null?<>Faturado no mês: <b>{money(goal.achieved)}</b>. </>:null}No ritmo atual o mês fecha em <b>{brl(mes.projecao)}</b>. {canEdit?'Defina a meta para ver quanto falta por dia.':'Nenhuma meta definida para este mês.'}</p>{mes.feito>0&&<GraficoMes mes={mes}/>}</div>}
   </section>;
 }
 

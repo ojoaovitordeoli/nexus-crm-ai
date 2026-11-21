@@ -1616,3 +1616,13 @@ body.dark .nx-toast button{color:#6e0099}
 :root:root:root body .nx64-passo{margin:0 24px 6px}
 :root:root:root body .auth-v4-top .brand{letter-spacing:-.01em!important}
 :root:root:root body .nx-chart-box{position:relative}
+
+/* ===================== V65 — consertos vistos com dados reais ===================== */
+/* Hoje e Agência ocupam a mesma largura das outras telas (antes paravam em 1280px). */
+:root:root:root body .nx-hoje,:root:root:root body .nx63{max-width:none}
+:root:root:root body .nx-chart-vazio{margin:14px 0 4px;padding:14px;border:1px dashed var(--fx-border-strong);border-radius:10px;color:var(--fx-muted);font-size:13.5px}
+:root:root:root body .nx13-listrow-info small{display:flex;align-items:center;flex-wrap:wrap;gap:2px 0}
+:root:root:root body .nx13-listrow-info small .nx61-hot,:root:root:root body .nx13-listrow-info small .nx61-age{margin-left:8px}
+:root:root:root body .nx63-row.is-vazia .nx63-nome i{background:var(--fx-border-strong)}
+:root:root:root body .nx63-row.is-vazia{opacity:.75}
+:root:root:root body .nx63-vazia{font-size:13px;color:var(--fx-faint)}
