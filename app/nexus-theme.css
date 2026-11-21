@@ -4,7 +4,7 @@
    hover, fundo suave, texto de destaque e indicador do menu derivam dele. */
 :root{
   --fx-font:'Archivo',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
-  --fx-purple:#6e0099;
+  --fx-purple:#138669;
   --fx-purple-hover:color-mix(in srgb,var(--fx-purple) 82%,#000);
   --fx-purple-line:color-mix(in srgb,var(--fx-purple) 62%,#fff); /* indicador sobre o menu preto */
   --fx-radius:8px;
@@ -992,12 +992,12 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 .nx-ai-welcome p{margin:0 0 12px;color:var(--fx-muted,#6b6b76)}
 .nx-ai-chips{display:flex;flex-direction:column;gap:8px}
 .nx-ai-chips button{text-align:left;border:1px solid var(--fx-border,#e6e6ea);background:transparent;color:var(--fx-text,#15151a);border-radius:10px;padding:9px 12px;font:inherit;font-size:13.5px;cursor:pointer}
-.nx-ai-chips button:hover{border-color:var(--fx-purple,#6e0099)}
+.nx-ai-chips button:hover{border-color:var(--fx-purple,#138669)}
 .nx-ai-msg p{margin:0;white-space:pre-wrap;word-break:break-word}
-.nx-ai-msg--user{align-self:flex-end;max-width:85%;background:var(--fx-purple,#6e0099);color:#fff;border-radius:12px 12px 2px 12px;padding:8px 12px}
+.nx-ai-msg--user{align-self:flex-end;max-width:85%;background:var(--fx-purple,#138669);color:#fff;border-radius:12px 12px 2px 12px;padding:8px 12px}
 .nx-ai-msg--assistant{align-self:flex-start;max-width:95%}
 .nx-ai-typing{color:var(--fx-muted,#6b6b76);font-style:italic}
-.nx-ai-card{margin-top:10px;border:1px solid var(--fx-border,#e6e6ea);border-left:3px solid var(--fx-purple,#6e0099);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.nx-ai-card{margin-top:10px;border:1px solid var(--fx-border,#e6e6ea);border-left:3px solid var(--fx-purple,#138669);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .nx-ai-card span{font-weight:600}
 .nx-ai-card-actions{display:flex;gap:8px}
 .nx-ai-card small{color:var(--fx-muted,#6b6b76)}
@@ -1008,7 +1008,7 @@ input::placeholder,textarea::placeholder{color:var(--fx-faint)}
 .nx-ai-off p{margin:6px 0 0;color:var(--fx-muted,#6b6b76);font-size:13.5px}
 .nx-ai-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--fx-border,#e6e6ea)}
 .nx-ai-input textarea{flex:1;resize:none;min-height:40px;max-height:120px;border:1px solid var(--fx-border,#e6e6ea);border-radius:10px;padding:9px 12px;font:inherit;background:var(--fx-surface,#fff);color:var(--fx-text,#15151a)}
-.nx-ai-input textarea:focus-visible{outline:2px solid var(--fx-purple,#6e0099);outline-offset:1px}
+.nx-ai-input textarea:focus-visible{outline:2px solid var(--fx-purple,#138669);outline-offset:1px}
 .nx-ai-foot{margin:0;padding:0 16px 12px;font-size:11.5px;color:var(--fx-muted,#6b6b76)}
 body.dark .nx-ai{background:#141418;color:#f4f4f6;border-color:#2a2a31}
 body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;border-color:#2a2a31;background:#141418}
@@ -1081,7 +1081,7 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
 }
 /* V40 — presença em um clique e confirmação pelo WhatsApp na agenda */
 :root:root:root body .fx-apptrow{grid-template-columns:104px minmax(0,1fr) auto auto}
-:root:root:root body .fx-apptrow--attend{background:color-mix(in srgb,var(--fx-accent,#5f00e6) 5%,transparent)}
+:root:root:root body .fx-apptrow--attend{background:color-mix(in srgb,var(--fx-accent,#1dc99e) 5%,transparent)}
 :root:root:root body .fx-attend{display:inline-flex;gap:6px;align-items:center}
 :root:root:root body .fx-attend button{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px;border-radius:7px;font:600 12.5px var(--fx-font,inherit);cursor:pointer;border:1px solid var(--fx-line,#e5e5e7);background:var(--fx-surface,#fff);color:var(--fx-ink,#2b2b2d)}
 :root:root:root body .fx-attend .fx-attend-yes{border-color:#9fd3b4;color:#14653a;background:#ecf8f0}
@@ -1089,7 +1089,7 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
 :root:root:root body.dark .fx-attend .fx-attend-yes{border-color:#2d5b40;color:#8fe0b0;background:#14261c}
 :root:root:root body.dark .fx-attend .fx-attend-no{border-color:#6d2a30;color:#f2a1a8;background:#2f1619}
 :root:root:root body .fx-attend button:disabled{opacity:.55;cursor:wait}
-:root:root:root body .fx-attend button:focus-visible{outline:2px solid var(--fx-accent-text,#5f00e6);outline-offset:2px}
+:root:root:root body .fx-attend button:focus-visible{outline:2px solid var(--fx-accent-text,#1dc99e);outline-offset:2px}
 :root:root:root body .fx-appt-links{display:inline-flex;gap:12px;align-items:center;justify-content:flex-end}
 @media(max-width:760px){
   :root:root:root body .fx-apptrow{grid-template-columns:92px minmax(0,1fr)}
@@ -1114,7 +1114,7 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
 :root:root:root body .fx-goal-status--on_track{color:#1f4f99;border-color:#a9c3ec;background:#eef4fd}
 :root:root:root body .fx-goal-status--behind{color:#9a5b00;border-color:#e8c27a;background:#fff6e3}
 :root:root:root body .fx-goal-bar{position:relative;height:10px;border-radius:999px;background:color-mix(in srgb,var(--fx-ink,#2b2b2d) 9%,transparent);overflow:visible}
-:root:root:root body .fx-goal-bar>span{display:block;height:100%;border-radius:999px;background:var(--fx-accent,#5f00e6)}
+:root:root:root body .fx-goal-bar>span{display:block;height:100%;border-radius:999px;background:var(--fx-accent,#1dc99e)}
 :root:root:root body .fx-goal-bar>i{position:absolute;top:-3px;width:2px;height:16px;background:var(--fx-ink,#2b2b2d);opacity:.55;transform:translateX(-1px)}
 :root:root:root body.dark .fx-goal-status--done{color:#8fe0b0;border-color:#2d5b40;background:#14261c}
 :root:root:root body.dark .fx-goal-status--on_track{color:#a9c8f5;border-color:#2c4468;background:#142033}
@@ -1228,8 +1228,8 @@ body.dark .nx-ai-chips button,body.dark .nx-ai-input textarea{color:#f4f4f6;bord
 .nx-ai-pin:focus-visible{outline:2px solid var(--fx-accent);outline-offset:1px}
 .nx-ai-telas-dica{margin:0;font-size:12.5px;color:var(--fx-muted)}
 /* ===== V55 · Pizza e linha nas telas + paleta categórica (claro/escuro) ===== */
-:root{--nx-cat-1:#6e0099;--nx-cat-2:#0f7b6c;--nx-cat-3:#d9480f;--nx-cat-4:#1c64c4;--nx-cat-5:#b7791f;--nx-cat-6:#7a7a85}
-body.dark{--nx-cat-1:#c27bea;--nx-cat-2:#3cc3ad;--nx-cat-3:#ff8a4c;--nx-cat-4:#6aa6ff;--nx-cat-5:#e2b04a;--nx-cat-6:#a3a3ad}
+:root{--nx-cat-1:#138669;--nx-cat-2:#0f7b6c;--nx-cat-3:#d9480f;--nx-cat-4:#1c64c4;--nx-cat-5:#b7791f;--nx-cat-6:#7a7a85}
+body.dark{--nx-cat-1:#7beace;--nx-cat-2:#3cc3ad;--nx-cat-3:#ff8a4c;--nx-cat-4:#6aa6ff;--nx-cat-5:#e2b04a;--nx-cat-6:#a3a3ad}
 .nx-cat-1{stroke:var(--nx-cat-1)}
 .nx-cat-2{stroke:var(--nx-cat-2)}
 .nx-cat-3{stroke:var(--nx-cat-3)}
@@ -1362,3 +1362,64 @@ body.dark{--nx-cat-1:#c27bea;--nx-cat-2:#3cc3ad;--nx-cat-3:#ff8a4c;--nx-cat-4:#6
 /* V58 — tema escuro: o campo de busca do topo não mostra fundo próprio (aparecia um retângulo claro) */
 :root:root:root body .staff-global-search input[type="search"]{background:transparent!important;-webkit-appearance:none;appearance:none}
 :root:root:root body .staff-global-search input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}
+
+/* ===================== V60 — nova cara do NEXUS =====================
+   Verde-petróleo no lugar do roxo, cinza mineral, letra Schibsted Grotesk e
+   menu claro (no escuro, o menu continua escuro). Só tokens e o menu: as telas
+   herdam tudo pelos --fx-*. */
+:root{
+  --fx-font:'Schibsted Grotesk',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --fx-purple:#0d5c4b;--fx-purple-hover:#094636;--fx-purple-line:#0d5c4b;
+  --fx-bg:#eef1ef;--fx-surface:#ffffff;--fx-subtle:#f3f5f4;--fx-hover:#eef2f0;
+  --fx-border:#e1e6e3;--fx-border-strong:#ccd4d0;
+  --fx-text:#12201c;--fx-muted:#4a5a54;--fx-faint:#5c6b66;
+  --fx-accent:#0d5c4b;--fx-accent-text:#0b4d3f;--fx-accent-soft:#dcede6;--fx-on-accent:#ffffff;
+  --fx-nav:#e6ebe8;--fx-nav-hover:rgba(18,32,28,.06);--fx-nav-active:#ffffff;--fx-nav-text:#3f4f4a;--fx-nav-faint:#5c6b66;
+  --fx-danger:#b03a31;--fx-danger-soft:#f7e1de;--fx-success:#0e7a50;--fx-success-soft:#dcf0e5;--fx-warning:#9a6705;--fx-warning-soft:#fbf0d6;
+  --fx-night:#10201c;--fx-night-line:#2a3d37;--fx-night-ink:#e6f0ec;--fx-night-mute:#9bb0a9;--fx-mint:#8fe0c6;
+  --fx-shadow:0 1px 2px rgba(18,32,28,.05);--fx-shadow-lg:0 12px 32px rgba(18,32,28,.14);
+}
+body.dark{
+  --fx-purple:#3fb48f;--fx-purple-hover:#55c9a3;--fx-purple-line:#3fb48f;
+  --fx-bg:#0c1412;--fx-surface:#121c19;--fx-subtle:#17231f;--fx-hover:#1a2723;
+  --fx-border:#22302c;--fx-border-strong:#2f403a;
+  --fx-text:#e7efec;--fx-muted:#b2c2bc;--fx-faint:#93a79f;
+  --fx-accent:#3fb48f;--fx-accent-text:#7fd9b9;--fx-accent-soft:#173a30;--fx-on-accent:#07211a;
+  --fx-nav:#0a110f;--fx-nav-hover:rgba(255,255,255,.05);--fx-nav-active:#17231f;--fx-nav-text:#b9c8c2;--fx-nav-faint:#8fa39c;
+  --fx-danger:#ef8a7f;--fx-danger-soft:#3a1e1b;--fx-success:#6fd7a6;--fx-success-soft:#14332a;--fx-warning:#e2a93a;--fx-warning-soft:#33280f;
+  --fx-night:#08110f;--fx-night-line:#24352f;
+}
+::selection{background:var(--fx-accent-soft);color:var(--fx-text)}
+:root:root:root body .staff-sidebar .staff-logo-icon{background:var(--fx-text)!important}
+body.dark .staff-sidebar .staff-logo-icon{background:#e7efec!important}
+:root:root:root body .staff-sidebar .staff-logo-icon svg{color:var(--fx-mint)!important}
+body.dark .staff-sidebar .staff-logo-icon svg{color:#0d5c4b!important}
+/* menu claro */
+:root:root:root body:not(.dark) .staff-sidebar{border-right:1px solid var(--fx-border)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-logo strong{color:var(--fx-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-logo strong span{color:var(--fx-faint)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-workspace-picker{background:var(--fx-surface)!important;border-color:var(--fx-border)!important;color:var(--fx-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-workspace-icon{background:#c9e4da!important;color:#0b4d3f!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-workspace-icon svg{color:#0b4d3f!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-workspace-picker small{color:var(--fx-faint)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-workspace-picker strong{color:var(--fx-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-nav-item svg{color:var(--fx-nav-faint)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-nav-item:hover{color:var(--fx-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-nav-item:hover svg{color:var(--fx-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-nav-item--active{color:var(--fx-text)!important;box-shadow:0 1px 2px rgba(18,32,28,.08),0 0 0 1px var(--fx-border)!important}
+:root:root:root body .staff-sidebar .staff-nav-item--active svg{color:var(--fx-accent)!important}
+body.dark .staff-sidebar .staff-nav-item--active{box-shadow:inset 2px 0 0 var(--fx-accent)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-sidebar-footer{border-top-color:var(--fx-border)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-session strong{color:var(--fx-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-session small{color:var(--fx-faint)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-initials{background:var(--fx-accent-soft)!important;color:var(--fx-accent-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-logout{border-color:var(--fx-border-strong)!important;color:var(--fx-muted)!important}
+:root:root:root body:not(.dark) .staff-sidebar .staff-logout:hover{color:var(--fx-text)!important}
+:root:root:root body:not(.dark) .staff-sidebar :focus-visible{outline-color:var(--fx-accent)!important}
+:root:root:root body .fx-btn--primary,:root:root:root body .staff-primary-action{color:var(--fx-on-accent)!important}
+/* V60: paleta de categorias dos gráficos sem roxo e sem dois verdes parecidos */
+:root{--nx-cat-1:#0d5c4b;--nx-cat-2:#2a5dbe;--nx-cat-3:#d9480f;--nx-cat-4:#b57a06;--nx-cat-5:#2f8fa6;--nx-cat-6:#7a8580}
+body.dark{--nx-cat-1:#3fb48f;--nx-cat-2:#7ea6ee;--nx-cat-3:#ff8a4c;--nx-cat-4:#e2b04a;--nx-cat-5:#62c3db;--nx-cat-6:#a3aea9}
+/* V60: na Schibsted, algarismos tabulares abrem espaço em volta de ":", "," e "." ("08 : 45").
+   Algarismos alinhados (lining) proporcionais ficam corretos; colunas de número alinham pela direita. */
+:root:root:root body,:root:root:root body *{font-variant-numeric:lining-nums!important;font-feature-settings:normal!important}

@@ -464,7 +464,7 @@ try{
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
   if(themeAndFonts.dark)throw new Error('Light theme must be the default for a new workspace');
-  if(!themeAndFonts.font.includes('Archivo'))throw new Error('Dashboard titles are not using Archivo (tema Fluxo): '+themeAndFonts.font);
+  if(!themeAndFonts.font.includes('Schibsted'))throw new Error('Títulos não usam Schibsted Grotesk (V60): '+themeAndFonts.font);
   if(!await page.locator('.v14-tasks-panel .v14-rows').count())throw new Error('Operational task list missing');
   // V56: avisos com número + ação, calculados dos dados de teste (tarefa vencida e presença pendente).
   await page.locator('.nx-avisos .nx-aviso').first().waitFor({timeout:5000});

@@ -2,24 +2,24 @@
 :root{
   --app-bg:#f8f8fa;--panel:rgba(255,255,255,.85);--panel-solid:#fff;
   --panel-soft:#f6f6f8;--text-main:#29292b;--text-muted:#8c8c8e;
-  --border-soft:rgba(95, 0, 230, .16);--brand-blue:var(--fx-accent-text);
+  --border-soft:rgba(29,201,158, .16);--brand-blue:var(--fx-accent-text);
   --brand-blue-soft:#eeeef0;--success:var(--fx-accent-text);--warning:#f5b84b;
-  --danger:#ed6b76;--shadow-panel:0 18px 50px rgba(95, 0, 230, .075);
+  --danger:#ed6b76;--shadow-panel:0 18px 50px rgba(29,201,158, .075);
   --bg:#f8f8fa;--text:#29292b;--muted:#8c8c8e;
-  --line:rgba(95, 0, 230, .15);--panel:rgba(255,255,255,.88);
+  --line:rgba(29,201,158, .15);--panel:rgba(255,255,255,.88);
   --solid:#fff;--accent:var(--fx-accent-text);
 }
 body:not(.dark){background:
-  radial-gradient(circle at 88% 7%,rgba(95, 0, 230, .21),transparent 32%),
+  radial-gradient(circle at 88% 7%,rgba(29,201,158, .21),transparent 32%),
   radial-gradient(circle at 8% 86%,rgba(226, 226, 228, .16),transparent 31%),#f8f8fa}
 body.dark{
   --app-bg:#18181a;--panel:rgba(41, 41, 43, .88);--panel-solid:#28282a;
   --panel-soft:#323234;--text-main:#f6f6f8;--text-muted:#acacae;
-  --border-soft:rgba(95, 0, 230, .15);--brand-blue:#8eafff;
-  --brand-blue-soft:rgba(95, 0, 230, .14);
+  --border-soft:rgba(29,201,158, .15);--brand-blue:#8eafff;
+  --brand-blue-soft:rgba(29,201,158, .14);
   --bg:#18181a;--text:#f6f6f8;--muted:#acacae;
-  --line:rgba(95, 0, 230, .15);--solid:#28282a;--accent:#8eafff;
-  background:radial-gradient(circle at 82% 6%,rgba(95, 0, 230, .22),transparent 43%),#18181a
+  --line:rgba(29,201,158, .15);--solid:#28282a;--accent:#8eafff;
+  background:radial-gradient(circle at 82% 6%,rgba(29,201,158, .22),transparent 43%),#18181a
 }
 .staff-shell{
   --staff-text:var(--text-main);--staff-muted:var(--text-muted);
@@ -30,7 +30,7 @@ body.dark{
 .staff-sidebar{
   color:#7f7f81;background:rgba(255,255,255,.91);
   border-right:1px solid var(--border-soft);
-  box-shadow:8px 0 45px rgba(95, 0, 230, .032);
+  box-shadow:8px 0 45px rgba(29,201,158, .032);
   backdrop-filter:blur(19px);-webkit-backdrop-filter:blur(19px);
 }
 .staff-logo strong{color:#122e55}
@@ -38,22 +38,22 @@ body.dark{
 .staff-logo small{color:#ababad}
 .staff-logo-icon{
   background:linear-gradient(140deg,var(--fx-accent),var(--fx-accent));
-  color:#fff;box-shadow:0 10px 20px rgba(95, 0, 230, .18)
+  color:#fff;box-shadow:0 10px 20px rgba(29,201,158, .18)
 }
 .staff-workspace-picker{
   background:linear-gradient(117deg,#fbfbfd,#f6f6f8);
-  border-color:rgba(95, 0, 230, .13);
+  border-color:rgba(29,201,158, .13);
 }
-.staff-workspace-icon{background:rgba(95, 0, 230, .095);color:var(--fx-accent-text)}
+.staff-workspace-icon{background:rgba(29,201,158, .095);color:var(--fx-accent-text)}
 .staff-workspace-picker small{color:#a6a6a8}
 .staff-workspace-picker strong{color:var(--fx-accent-text)}
 .staff-workspace-picker>svg{color:#a9a9ab}
 .staff-nav-item{color:#868688;transition:background-color .18s ease,color .18s ease,box-shadow .18s ease}
 .staff-nav-item svg{color:#9d9d9f}
-.staff-nav-item:hover{color:var(--fx-accent-text);background:rgba(95, 0, 230, .065)}
+.staff-nav-item:hover{color:var(--fx-accent-text);background:rgba(29,201,158, .065)}
 .staff-nav-item--active{
-  color:var(--fx-accent-text);background:linear-gradient(100deg,rgba(95, 0, 230, .13),rgba(95, 0, 230, .055));
-  border-color:rgba(95, 0, 230, .12);box-shadow:inset 3px 0 var(--fx-accent-text)
+  color:var(--fx-accent-text);background:linear-gradient(100deg,rgba(29,201,158, .13),rgba(29,201,158, .055));
+  border-color:rgba(29,201,158, .12);box-shadow:inset 3px 0 var(--fx-accent-text)
 }
 .staff-nav-item--active svg{color:var(--fx-accent-text)}
 .staff-nav-dot{background:var(--fx-accent)}
@@ -62,9 +62,9 @@ body.dark{
 .staff-session small{color:#a0a0a2}
 .staff-session .staff-initials{background:linear-gradient(135deg,#eeeef0,#b9d4ff);color:var(--fx-accent-text)}
 .staff-logout{
-  background:rgba(95, 0, 230, .035);color:#8e8e90;border-color:var(--staff-border)
+  background:rgba(29,201,158, .035);color:#8e8e90;border-color:var(--staff-border)
 }
-.staff-logout:hover{background:rgba(95, 0, 230, .1);color:var(--fx-accent-text)}
+.staff-logout:hover{background:rgba(29,201,158, .1);color:var(--fx-accent-text)}
 .staff-topbar{
   height:77px;background:rgba(255,255,255,.48);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
@@ -72,7 +72,7 @@ body.dark{
 .staff-breadcrumb{gap:8px}
 .staff-body{padding-top:33px}
 .staff-icon-button{transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease}
-.staff-icon-button:hover{transform:translateY(-1px);box-shadow:0 6px 15px rgba(95, 0, 230, .08)}
+.staff-icon-button:hover{transform:translateY(-1px);box-shadow:0 6px 15px rgba(29,201,158, .08)}
 .nxp-premium{
   --nxp-ink:var(--text-main);--nxp-muted:var(--text-muted);
   --nxp-surface:var(--panel-solid);--nxp-border:var(--border-soft);
@@ -87,20 +87,20 @@ body.dark{
 .nxp-surface{border-radius:23px}
 .nxp-metric{border-radius:20px}
 .nxp-metric:hover,.nxp-contact-card:hover,.nxp-lead-card:hover{
-  border-color:rgba(95, 0, 230, .26)!important
+  border-color:rgba(29,201,158, .26)!important
 }
 .nxp-presentation{
   background:
-    radial-gradient(circle at 81% 16%,rgba(95, 0, 230, .15),transparent 32%),
+    radial-gradient(circle at 81% 16%,rgba(29,201,158, .15),transparent 32%),
     linear-gradient(110deg,rgba(255,255,255,.94),rgba(246, 246, 248, .91));
-  color:#303032;border:1px solid rgba(95, 0, 230, .14);
-  box-shadow:0 22px 58px rgba(95, 0, 230, .085);
+  color:#303032;border:1px solid rgba(29,201,158, .14);
+  box-shadow:0 22px 58px rgba(29,201,158, .085);
   backdrop-filter:blur(18px)
 }
 .nxp-presentation::before{
   opacity:.6;background-image:
-  linear-gradient(rgba(95, 0, 230, .075) 1px,transparent 1px),
-  linear-gradient(90deg,rgba(95, 0, 230, .075) 1px,transparent 1px)
+  linear-gradient(rgba(29,201,158, .075) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(29,201,158, .075) 1px,transparent 1px)
 }
 .nxp-presentation h1{color:#172b52}
 .nxp-presentation h1 em{
@@ -111,71 +111,71 @@ body.dark{
 .nxp-presentation .nxp-overline{color:#848486}
 .nxp-presentation-actions .nxp-white-button{
   background:linear-gradient(110deg,var(--fx-accent),var(--fx-accent));
-  color:#fff;border-color:rgba(95, 0, 230, .6);
-  box-shadow:0 9px 20px rgba(95, 0, 230, .14)
+  color:#fff;border-color:rgba(29,201,158, .6);
+  box-shadow:0 9px 20px rgba(29,201,158, .14)
 }
-.nxp-presentation-actions .nxp-white-button:hover{box-shadow:0 12px 24px rgba(95, 0, 230, .22)}
+.nxp-presentation-actions .nxp-white-button:hover{box-shadow:0 12px 24px rgba(29,201,158, .22)}
 .nxp-live-text,.nxp-presentation-foot span{color:#939395}
-.nxp-orbit{border-color:rgba(95, 0, 230, .18)}
-.nxp-orbit--two{border-color:rgba(95, 0, 230, .16)}
+.nxp-orbit{border-color:rgba(29,201,158, .18)}
+.nxp-orbit--two{border-color:rgba(29,201,158, .16)}
 .nxp-orbit-logo{
   background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(232, 232, 234, .74));
-  border-color:rgba(95, 0, 230, .25);
+  border-color:rgba(29,201,158, .25);
   color:var(--fx-accent-text);box-shadow:0 24px 49px rgba(122, 122, 124, .12),inset 0 0 22px rgba(180,207,255,.35)
 }
 .nxp-orbit-glow{background:#8ebfff}
 .nxp-wa-shell{
   background:
-    radial-gradient(circle at 80% 13%,rgba(95, 0, 230, .16),transparent 38%),
+    radial-gradient(circle at 80% 13%,rgba(29,201,158, .16),transparent 38%),
     linear-gradient(110deg,#fcfcfe,#f4f4f6);
   border:1px solid var(--border-soft);color:var(--fx-accent-text);
   box-shadow:var(--shadow-panel)
 }
 .nxp-wa-hero .nxp-kicker{color:#858587}
 .nxp-wa-hero p{color:#929294}
-.nxp-wa-hero-icon{color:var(--fx-accent-text);background:rgba(95, 0, 230, .1);border-color:rgba(95, 0, 230, .15)}
+.nxp-wa-hero-icon{color:var(--fx-accent-text);background:rgba(29,201,158, .1);border-color:rgba(29,201,158, .15)}
 .nxp-wa-actions .nxp-button--ghost{color:#6b6b6d;border-color:var(--border-soft)}
-.nxp-wa-display{background:radial-gradient(circle at center,rgba(95, 0, 230, .17),transparent 68%)}
-.nxp-wa-device{background:rgba(95, 0, 230, .12);border-color:rgba(95, 0, 230, .3)}
+.nxp-wa-display{background:radial-gradient(circle at center,rgba(29,201,158, .17),transparent 68%)}
+.nxp-wa-device{background:rgba(29,201,158, .12);border-color:rgba(29,201,158, .3)}
 .nxp-wa-device-top,.nxp-wa-device-bottom{color:#8a8a8c}
-.nxp-wa-placeholder span{background:rgba(95, 0, 230, .22)}
+.nxp-wa-placeholder span{background:rgba(29,201,158, .22)}
 .dark .staff-sidebar{
   color:#bcbcbe;background:rgba(31, 31, 33, .94);
-  border-color:rgba(95, 0, 230, .1)
+  border-color:rgba(29,201,158, .1)
 }
 .dark .staff-logo strong{color:#f8f8fa}
 .dark .staff-logo small{color:#9d9d9f}
-.dark .staff-workspace-picker{background:rgba(114, 114, 116, .1);border-color:rgba(95, 0, 230, .1)}
+.dark .staff-workspace-picker{background:rgba(114, 114, 116, .1);border-color:rgba(29,201,158, .1)}
 .dark .staff-workspace-picker strong{color:#f2f2f4}
 .dark .staff-workspace-picker small,.dark .staff-nav-title{color:#9b9b9d}
 .dark .staff-nav-item{color:#aeaeb0}
 .dark .staff-nav-item svg{color:#a2a2a4}
-.dark .staff-nav-item:hover{color:#e3e3e5;background:rgba(95, 0, 230, .1)}
-.dark .staff-nav-item--active{color:#bad0ff;background:rgba(95, 0, 230, .17);border-color:rgba(95, 0, 230, .12);box-shadow:inset 3px 0 #8aafff}
+.dark .staff-nav-item:hover{color:#e3e3e5;background:rgba(29,201,158, .1)}
+.dark .staff-nav-item--active{color:#bad0ff;background:rgba(29,201,158, .17);border-color:rgba(29,201,158, .12);box-shadow:inset 3px 0 #8aafff}
 .dark .staff-nav-item--active svg{color:#9bb9ff}
 .dark .staff-session strong{color:#f4f4f6}
 .dark .staff-session small{color:#a3a3a5}
-.dark .staff-logout{color:#b8b8ba;background:rgba(95, 0, 230, .08)}
+.dark .staff-logout{color:#b8b8ba;background:rgba(29,201,158, .08)}
 .dark .staff-logout:hover{color:#f4f4f6}
 .dark .staff-topbar{background:rgba(34, 34, 36, .48)}
 .dark .nxp-surface,.dark .nxp-metric,.dark .staff-card,.dark .staff-stat{
   background:rgba(41, 41, 43, .86)!important;
-  border-color:rgba(95, 0, 230, .13)!important;
+  border-color:rgba(29,201,158, .13)!important;
   box-shadow:0 18px 46px rgba(0,0,0,.13)
 }
 .dark .nxp-presentation{
-  background:radial-gradient(circle at 83% 11%,rgba(95, 0, 230, .15),transparent 43%),linear-gradient(110deg,rgba(37, 37, 39, .93),rgba(27,58,83,.88));
-  border-color:rgba(95, 0, 230, .15);color:#f8f8fa;box-shadow:0 22px 48px rgba(0,0,0,.15)
+  background:radial-gradient(circle at 83% 11%,rgba(29,201,158, .15),transparent 43%),linear-gradient(110deg,rgba(37, 37, 39, .93),rgba(27,58,83,.88));
+  border-color:rgba(29,201,158, .15);color:#f8f8fa;box-shadow:0 22px 48px rgba(0,0,0,.15)
 }
 .dark .nxp-presentation h1{color:#f8f8fa}
 .dark .nxp-presentation h1 em{background:linear-gradient(95deg,#85a9ff,var(--fx-accent));-webkit-background-clip:text;background-clip:text;color:transparent}
 .dark .nxp-presentation p{color:#c4c4c6}
 .dark .nxp-presentation .nxp-overline,.dark .nxp-live-text,.dark .nxp-presentation-foot span{color:var(--fx-accent-text)}
-.dark .nxp-orbit-logo{background:linear-gradient(130deg,#183b5f,var(--fx-accent));border-color:rgba(95, 0, 230, .16);color:#bddeff}
-.dark .nxp-leads-summary,.dark .nxp-contact-banner,.dark .nxp-wa-shell{background:radial-gradient(circle at 80% 14%,rgba(95, 0, 230, .1),transparent 38%),linear-gradient(110deg,#2d2d2f,#1c3a55);color:#f8f8fa;border-color:rgba(95, 0, 230, .14)}
+.dark .nxp-orbit-logo{background:linear-gradient(130deg,#183b5f,var(--fx-accent));border-color:rgba(29,201,158, .16);color:#bddeff}
+.dark .nxp-leads-summary,.dark .nxp-contact-banner,.dark .nxp-wa-shell{background:radial-gradient(circle at 80% 14%,rgba(29,201,158, .1),transparent 38%),linear-gradient(110deg,#2d2d2f,#1c3a55);color:#f8f8fa;border-color:rgba(29,201,158, .14)}
 .dark .nxp-leads-summary .nxp-kicker,.dark .nxp-contact-banner .nxp-overline,.dark .nxp-wa-hero .nxp-kicker{color:#9fbafd}
 .dark .nxp-leads-summary small,.dark .nxp-contact-banner p,.dark .nxp-wa-hero p{color:#b6b6b8}
-.dark .nxp-wa-device{background:rgba(95, 0, 230, .1)}
+.dark .nxp-wa-device{background:rgba(29,201,158, .1)}
 .dark .nxp-wa-device-top,.dark .nxp-wa-device-bottom{color:#b5cbe9}
 .dark .nxp-wa-actions .nxp-button--ghost{color:#c5ddf4}
 @media(max-width:800px){
