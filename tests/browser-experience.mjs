@@ -466,6 +466,12 @@ try{
   if(themeAndFonts.dark)throw new Error('Light theme must be the default for a new workspace');
   if(!themeAndFonts.font.includes('Archivo'))throw new Error('Dashboard titles are not using Archivo (tema Fluxo): '+themeAndFonts.font);
   if(!await page.locator('.v14-tasks-panel .v14-rows').count())throw new Error('Operational task list missing');
+  // V56: avisos com número + ação, calculados dos dados de teste (tarefa vencida e presença pendente).
+  await page.locator('.nx-avisos .nx-aviso').first().waitFor({timeout:5000});
+  const avisosV56=await page.locator('.nx-avisos .nx-aviso strong').allTextContents();
+  if(!avisosV56.includes('1 tarefa vencida'))throw new Error('Aviso de tarefa vencida ausente: '+avisosV56.join(' | '));
+  if(!avisosV56.some(t=>/sem presença marcada/.test(t)))throw new Error('Aviso de presença pendente ausente: '+avisosV56.join(' | '));
+  if(!await page.locator('.nx-semanas svg rect').count())throw new Error('Gráfico semanal ausente');
   await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
   if(!await page.locator('.v14-stats').count())throw new Error('V14 metrics section missing');
   if(!await page.locator('.v14-workgrid').count())throw new Error('V14 actionable work section missing');
