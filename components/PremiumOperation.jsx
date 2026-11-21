@@ -157,7 +157,7 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
   const chartPoints=trend.map((d,i)=>[16+i*(268/6),105-(d.value/max)*90]);
   const chartLine=chartPoints.map(([x,y],i)=>(i===0?'M':'L')+x+' '+y).join(' ');
   const chartArea=chartLine+' L 284 110 L 16 110 Z';
-  const colors=['#5778f7','#39c6ad','#9981ed','#f1ba66','#8090ad'];
+  const colors=['#5778f7','#39c6ad','#81edd2','#f1ba66','#8090ad'];
   let cursor=0;
   const segments=stages.map(([name,count],i)=>{
     const offset=cursor,percent=100*count/Math.max(currentLeads.length,1);
@@ -243,8 +243,8 @@ export function PremiumDashboard({data,counts,loading,organizationName,firstName
 }
 
 function PipelineEditor({pipeline,stages=[],readonly,onOperation,onReload,onClose}){
-  const palette=['#3b82f6','#06b6d4','#8b5cf6','#f59e0b','#f97316','#ec4899','#10b981','#ef4444','#64748b'];
-  const standard=[['Novo lead','#3b82f6',false,false],['Contato inicial','#06b6d4',false,false],['Qualificado','#8b5cf6',false,false],['Proposta enviada','#f59e0b',false,false],['Negociação','#f97316',false,false],['Agendamento','#ec4899',false,false],['Fechado','#10b981',true,false],['Perdido','#ef4444',false,true]];
+  const palette=['#3b82f6','#06b6d4','#69e9c9','#f59e0b','#f97316','#4ee6c0','#10b981','#ef4444','#64748b'];
+  const standard=[['Novo lead','#3b82f6',false,false],['Contato inicial','#06b6d4',false,false],['Qualificado','#69e9c9',false,false],['Proposta enviada','#f59e0b',false,false],['Negociação','#f97316',false,false],['Agendamento','#4ee6c0',false,false],['Fechado','#10b981',true,false],['Perdido','#ef4444',false,true]];
   const [name,setName]=useState(pipeline?.name||'Modelo comercial');
   const [rows,setRows]=useState(()=>stages.length?stages.map(x=>({...x})):standard.map(([n,c,w,l],position)=>({name:n,color:c,is_won:w,is_lost:l,position})));
   const [busy,setBusy]=useState(false);const [error,setError]=useState('');

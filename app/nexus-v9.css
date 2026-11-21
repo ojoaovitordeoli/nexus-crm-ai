@@ -59,7 +59,7 @@
 .dark .staff-topbar{background:rgba(30, 30, 32, .86);border-bottom-color:#3d3d3f}
 .dark .staff-nav-item--active{background:#eeeef0;color:var(--fx-accent-text)}
 /* Dashboard components: a restrained V4/V5 visual system, designed for day-to-day use */
-.n9-primary-button{display:inline-flex;gap:12px;align-items:center;justify-content:center;background:var(--fx-accent);color:#fff!important;padding:13px 18px;border-radius:11px;font-size:13px;font-weight:750;box-shadow:0 8px 18px rgba(95, 0, 230, .12);white-space:nowrap;min-height:46px}
+.n9-primary-button{display:inline-flex;gap:12px;align-items:center;justify-content:center;background:var(--fx-accent);color:#fff!important;padding:13px 18px;border-radius:11px;font-size:13px;font-weight:750;box-shadow:0 8px 18px rgba(29,201,158, .12);white-space:nowrap;min-height:46px}
 .n9-primary-button:hover{background:var(--fx-accent)}
 .n9-period{border:1px solid #eaeaec;background:#fff;border-radius:12px;padding:4px;display:flex;gap:2px}
 .n9-period button{border:0;border-radius:9px;padding:8px 12px;color:#868688;background:transparent;font-size:12px;font-weight:700;min-width:52px}

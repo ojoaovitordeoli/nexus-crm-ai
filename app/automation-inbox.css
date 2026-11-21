@@ -1,3 +1,3 @@
 /* NEXUS automations and WhatsApp inbox, shared glass language */
 @keyframes nx-auto-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes nx-flow-pulse{50%{box-shadow:0 0 25px rgba(95, 0, 230, .19)}}
+@keyframes nx-flow-pulse{50%{box-shadow:0 0 25px rgba(29,201,158, .19)}}

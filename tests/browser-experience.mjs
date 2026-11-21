@@ -232,7 +232,7 @@ try{
   await page.locator('.nx-view-pie').waitFor({timeout:5000});
   await page.screenshot({path:'test-artifacts/personalizar-v55-desktop.png',fullPage:true});
   await page.getByRole('button',{name:'Salvar tela'}).click();
-  await page.getByText('Tela salva',{exact:false}).waitFor({timeout:5000});
+  await page.getByText('Tela salva',{exact:false}).first().waitFor({timeout:5000});
   for(const aba of ['Campos extras','Automações','Ramo'])await page.getByRole('tab',{name:aba}).waitFor({timeout:3000});
   await page.setViewportSize({width:390,height:844});
   await page.reload({waitUntil:'domcontentloaded'});
@@ -456,31 +456,33 @@ try{
   }
   await page.setViewportSize({width:1440,height:900});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.locator('.nx-hoje h1').waitFor();
   await page.waitForTimeout(400);
   const themeAndFonts=await page.evaluate(()=>{
-    const heading=document.querySelector('.v14-hero h1');
+    const heading=document.querySelector('.nx-hoje h1');
     const body=document.body;
     return {dark:body.classList.contains('dark'),font:heading?getComputedStyle(heading).fontFamily:'',glass:getComputedStyle(document.documentElement).getPropertyValue('--glass-bg').trim()};
   });
   if(themeAndFonts.dark)throw new Error('Light theme must be the default for a new workspace');
-  if(!themeAndFonts.font.includes('Archivo'))throw new Error('Dashboard titles are not using Archivo (tema Fluxo): '+themeAndFonts.font);
-  if(!await page.locator('.v14-tasks-panel .v14-rows').count())throw new Error('Operational task list missing');
-  // V56: avisos com número + ação, calculados dos dados de teste (tarefa vencida e presença pendente).
-  await page.locator('.nx-avisos .nx-aviso').first().waitFor({timeout:5000});
-  const avisosV56=await page.locator('.nx-avisos .nx-aviso strong').allTextContents();
-  if(!avisosV56.includes('1 tarefa vencida'))throw new Error('Aviso de tarefa vencida ausente: '+avisosV56.join(' | '));
-  if(!avisosV56.some(t=>/sem presença marcada/.test(t)))throw new Error('Aviso de presença pendente ausente: '+avisosV56.join(' | '));
-  if(!await page.locator('.nx-semanas svg rect').count())throw new Error('Gráfico semanal ausente');
-  await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
-  if(!await page.locator('.v14-stats').count())throw new Error('V14 metrics section missing');
-  if(!await page.locator('.v14-workgrid').count())throw new Error('V14 actionable work section missing');
-  if(!await page.locator('.fx-funnel').count())throw new Error('Funnel overview missing');
+  if(!themeAndFonts.font.includes('Schibsted'))throw new Error('Títulos não usam Schibsted Grotesk (V60): '+themeAndFonts.font);
+  // V60: tela Hoje — régua do dia, fila que resolve na linha, mês, funil e origem.
+  await page.locator('.nx-queue .nx-qi').first().waitFor({timeout:5000});
+  const filaV60=await page.locator('.nx-queue .nx-qi strong').allTextContents();
+  if(!filaV60.some(t=>t.includes('Retornar para Ana')))throw new Error('Fila sem a tarefa vencida: '+filaV60.join(' | '));
+  if(!filaV60.some(t=>/veio\?/.test(t)))throw new Error('Fila sem a presença por marcar: '+filaV60.join(' | '));
+  for(const sel of ['.nx-ruler','.nx-chart','.nx-funnel','.nx-otab'])if(!await page.locator(sel).count())throw new Error('Tela Hoje sem '+sel);
   if(await page.locator('.v16-brief').count())throw new Error('Duplicated task summary (removed in V26) is back');
-  if(await page.locator('.v14-hero-motif').count())throw new Error('Legacy decorative hero motif still present');
   if(await page.locator('.n9-kpi').count())throw new Error('Legacy KPI template still visible');
-  await page.getByRole('button',{name:'Vencidas'}).click();
-  await page.getByRole('button',{name:'Em aberto'}).click();
+  await page.screenshot({path:'test-artifacts/dashboard-dark.png',fullPage:true});
+  const antesVeio=apptStatus.length;
+  await page.locator('.nx-qi').filter({hasText:'veio?'}).first().getByRole('button',{name:/^Veio:/}).click();
+  for(let k=0;k<40&&apptStatus.length===antesVeio;k++)await sleep(100);
+  if(apptStatus.at(-1)!=='completed')throw new Error('Veio não enviou appointment_status completed');
+  await page.locator('.nx-toast.is-on').getByRole('button',{name:'Desfazer'}).waitFor({timeout:4000});
+  await page.screenshot({path:'test-artifacts/hoje-v60-veio.png'});
+  await page.locator('.nx-toast.is-on').getByRole('button',{name:'Desfazer'}).click();
+  for(let k=0;k<40&&apptStatus.at(-1)==='completed';k++)await sleep(100);
+  if(!['scheduled','confirmed'].includes(apptStatus.at(-1)))throw new Error('Desfazer não voltou a presença: '+apptStatus.join(','));
   // V27: topo enxuto — busca e notificações. Tema fica em Configurações; dados atualizam sozinhos.
   for(const name of ['Alternar tema','Atualizar dados','Abrir paleta de comandos Ctrl K','Iniciar tour do CRM'])
     if(await page.getByRole('button',{name}).count())throw new Error('Topbar voltou a ter o botão: '+name);
@@ -488,7 +490,7 @@ try{
   await page.screenshot({path:'test-artifacts/dashboard-light.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(450);
-  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.locator('.nx-hoje h1').waitFor();
   const pageWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
   if(pageWidth>395)throw new Error('Dashboard overflows 390px mobile viewport: '+pageWidth);
   await page.screenshot({path:'test-artifacts/dashboard-mobile.png',fullPage:true});
@@ -512,7 +514,7 @@ try{
   // V58: navegar com Tab sempre mostra onde está o foco (anel no elemento ou na caixa que o contém).
   await page.setViewportSize({width:1440,height:900});
   await page.goto(host+'/dashboard',{waitUntil:'domcontentloaded'});
-  await page.getByRole('heading',{name:/Visão geral/}).waitFor();
+  await page.locator('.nx-hoje h1').waitFor();
   await page.mouse.click(5,450);
   const semAnel=[];let focados=0;
   for(let i=0;i<14;i++){

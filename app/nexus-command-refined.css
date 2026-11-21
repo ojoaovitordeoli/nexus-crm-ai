@@ -8,16 +8,16 @@
 .nexus-command-brand{display:inline-flex;align-items:center;gap:9px;font:850 10px 'DM Sans',sans-serif;letter-spacing:.15em;color:var(--fx-accent-text)}
 .nexus-command-brand svg{background:linear-gradient(135deg,#2e2e30,var(--fx-accent));color:white;width:27px;height:27px;padding:6px;border-radius:9px}
 .nexus-command-close{width:29px;height:29px;border:0;border-radius:8px;background:transparent;color:#727274;display:grid;place-items:center;cursor:pointer}
-.nexus-command-close:hover{background:rgba(95, 0, 230, .11)}
+.nexus-command-close:hover{background:rgba(29,201,158, .11)}
 .nexus-command-input-wrap{height:74px!important;padding:0 23px!important;gap:13px!important;color:var(--fx-accent-text)!important}
 .nexus-command-input-wrap>input{font:650 16px 'DM Sans',sans-serif!important;color:#2e2e30!important}
 .nexus-command-input-wrap>input::placeholder{color:#8e8e90!important}
 .nexus-command-list{flex:1;min-height:0;max-height:min(54vh,500px)!important;padding:10px 12px 17px!important;overflow-y:auto!important}
 .nexus-command-list [cmdk-group-heading]{font:850 10px 'DM Sans',sans-serif!important;letter-spacing:.15em;color:#929294!important;padding:15px 12px 9px!important}
 .nexus-command-list [cmdk-item]{min-height:62px!important;padding:9px 12px!important;gap:12px!important;border-radius:12px!important}
-.nexus-command-list [cmdk-item][data-selected=true]{background:linear-gradient(90deg,rgba(95, 0, 230, .14),rgba(201,227,210,.14))!important;color:var(--fx-accent-text)!important}
+.nexus-command-list [cmdk-item][data-selected=true]{background:linear-gradient(90deg,rgba(29,201,158, .14),rgba(201,227,210,.14))!important;color:var(--fx-accent-text)!important}
 .nexus-command-list [cmdk-item][data-selected=true] .nexus-command-arrow{color:var(--fx-accent-text);transform:translateX(3px)}
-.nexus-command-item-icon{width:42px!important;height:42px!important;background:rgba(95, 0, 230, .09)!important;color:var(--fx-accent-text)!important;border-radius:12px!important}
+.nexus-command-item-icon{width:42px!important;height:42px!important;background:rgba(29,201,158, .09)!important;color:var(--fx-accent-text)!important;border-radius:12px!important}
 .nexus-command-item-copy strong{font:800 13px 'DM Sans',sans-serif!important;color:inherit!important}
 .nexus-command-item-copy small{font-size:11.5px!important;line-height:1.5;color:#808082!important}
 .nexus-command-item--accent .nexus-command-item-icon{background:rgba(205,163,92,.18)!important;color:#a57733!important}
@@ -25,13 +25,13 @@
 .nexus-command-empty svg{color:var(--fx-accent-text)}.nexus-command-empty strong{font-size:13px;color:#404042}
 .nexus-command-footer{height:52px!important;padding:0 22px!important;background:rgba(239,243,235,.64);gap:16px!important}
 .nexus-command-footer kbd{color:#747476;background:#f0f2ea!important}.nexus-command-footer strong{color:var(--fx-accent-text)!important}
-.dark .nexus-command-dialog{--staff-text:#eeeef0;--staff-muted:#b4b4b6;--staff-border:rgba(95, 0, 230, .18);--staff-bg:#222224;--staff-accent:var(--fx-accent-text);--staff-surface:#2a2a2c;background:rgba(34, 34, 36, .97)!important;border-color:rgba(95, 0, 230, .21)!important;color:#f2f2f4!important}
-.dark .nexus-command-heading{background:linear-gradient(110deg,#303032,#2c2c2e);border-color:rgba(95, 0, 230, .18)}
+.dark .nexus-command-dialog{--staff-text:#eeeef0;--staff-muted:#b4b4b6;--staff-border:rgba(29,201,158, .18);--staff-bg:#222224;--staff-accent:var(--fx-accent-text);--staff-surface:#2a2a2c;background:rgba(34, 34, 36, .97)!important;border-color:rgba(29,201,158, .21)!important;color:#f2f2f4!important}
+.dark .nexus-command-heading{background:linear-gradient(110deg,#303032,#2c2c2e);border-color:rgba(29,201,158, .18)}
 .dark .nexus-command-brand{color:var(--fx-accent-text)}.dark .nexus-command-input-wrap{color:var(--fx-accent-text)!important}
 .dark .nexus-command-input-wrap>input{color:#f2f2f4!important}.dark .nexus-command-input-wrap>input::placeholder{color:#9e9ea0!important}
 .dark .nexus-command-list [cmdk-group-heading]{color:#a0a0a2!important}
-.dark .nexus-command-list [cmdk-item][data-selected=true]{background:rgba(95, 0, 230, .2)!important;color:#f2f2f4!important}
-.dark .nexus-command-item-icon{color:var(--fx-accent-text)!important;background:rgba(95, 0, 230, .14)!important}
+.dark .nexus-command-list [cmdk-item][data-selected=true]{background:rgba(29,201,158, .2)!important;color:#f2f2f4!important}
+.dark .nexus-command-item-icon{color:var(--fx-accent-text)!important;background:rgba(29,201,158, .14)!important}
 .dark .nexus-command-item-copy small{color:#a9a9ab!important}
 .dark .nexus-command-footer{background:rgba(26, 26, 28, .76)}.dark .nexus-command-footer kbd{background:var(--fx-accent)!important;color:#d4d4d6}.dark .nexus-command-footer strong{color:var(--fx-accent-text)!important}
 @media(max-width:700px){.nexus-command-dialog{top:5vh!important;width:calc(100vw - 18px)!important;max-height:87vh;border-radius:16px!important}.nexus-command-heading{padding:12px 14px}.nexus-command-input-wrap{height:62px!important;padding:0 15px!important}.nexus-command-input-wrap>input{font-size:13px!important}.nexus-command-list{max-height:66vh!important}.nexus-command-footer{height:45px!important;padding:0 12px!important;gap:9px!important}}

@@ -47,7 +47,7 @@
 .nxp-timeline{position:relative;padding:0 24px 12px}
 .nxp-timeline:before{
   content:'';position:absolute;left:44px;top:12px;bottom:26px;width:1px;
-  background:linear-gradient(to bottom,rgba(95, 0, 230, .26),rgba(95, 0, 230, .05));pointer-events:none
+  background:linear-gradient(to bottom,rgba(29,201,158, .26),rgba(29,201,158, .05));pointer-events:none
 }
 .nxp-timeline-row{
   display:flex;align-items:center;gap:14px;position:relative;min-height:67px;
@@ -55,15 +55,15 @@
   text-decoration:none;border-bottom:1px solid var(--staff-border);
   border-radius:9px;transition:background-color .17s,transform .17s
 }
-.nxp-timeline-row:hover{background:rgba(95, 0, 230, .04);transform:translateX(3px)}
+.nxp-timeline-row:hover{background:rgba(29,201,158, .04);transform:translateX(3px)}
 .nxp-timeline-row:last-child{border-bottom:0}
 .nxp-timeline-marker{
   display:grid;place-items:center;flex-shrink:0;width:39px;height:39px;
-  border:1px solid rgba(95, 0, 230, .14);background:var(--staff-surface);
+  border:1px solid rgba(29,201,158, .14);background:var(--staff-surface);
   color:var(--fx-accent-text);border-radius:12px;position:relative;z-index:1
 }
-.nxp-timeline-row--sale .nxp-timeline-marker{color:var(--fx-accent-text);background:rgba(95, 0, 230, .06)}
-.nxp-timeline-row--task .nxp-timeline-marker{color:#9675dc;background:rgba(142,112,220,.065)}
+.nxp-timeline-row--sale .nxp-timeline-marker{color:var(--fx-accent-text);background:rgba(29,201,158, .06)}
+.nxp-timeline-row--task .nxp-timeline-marker{color:#75dcc2;background:rgba(112,220,193,.065)}
 .nxp-timeline-row--appointment .nxp-timeline-marker{color:#db9a46;background:rgba(225,164,70,.07)}
 .nxp-timeline-copy{display:grid;gap:5px;flex:1;min-width:0}
 .nxp-timeline-copy strong{font-size:11px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -73,19 +73,19 @@
 .staff-motion-scene--dashboard .nxp-timeline-row{animation:nexus-timeline-build .42s cubic-bezier(.2,.8,.2,1) var(--entry-delay,1s) both}
 @keyframes nexus-timeline-build{from{opacity:0;transform:translate3d(-11px,8px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 .nxp-metric::after{
-  background:radial-gradient(225px circle at var(--pointer-x,50%) var(--pointer-y,15%),rgba(95, 0, 230, .12),transparent 66%)!important;
+  background:radial-gradient(225px circle at var(--pointer-x,50%) var(--pointer-y,15%),rgba(29,201,158, .12),transparent 66%)!important;
   opacity:0!important;transition:opacity .22s ease;pointer-events:none;
 }
 .nxp-metric:hover::after{opacity:1!important}
 .nxp-surface,.nxp-contact-card,.nxp-lead-card{position:relative;isolation:isolate}
 .nxp-surface::before{
   content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
-  background:radial-gradient(300px circle at var(--pointer-x,50%) var(--pointer-y,0%),rgba(95, 0, 230, .072),transparent 62%);
+  background:radial-gradient(300px circle at var(--pointer-x,50%) var(--pointer-y,0%),rgba(29,201,158, .072),transparent 62%);
   opacity:0;transition:opacity .22s
 }
 .nxp-surface:hover::before{opacity:1}
 .dark .nxp-surface::before{
-  background:radial-gradient(300px circle at var(--pointer-x,50%) var(--pointer-y,0%),rgba(95, 0, 230, .085),transparent 63%)
+  background:radial-gradient(300px circle at var(--pointer-x,50%) var(--pointer-y,0%),rgba(29,201,158, .085),transparent 63%)
 }
 /* visible transitions for views and agenda, without blocking actions */
 .staff-motion-scene--leads .nxp-board-column,.staff-motion-scene--contacts .nxp-contact-card{

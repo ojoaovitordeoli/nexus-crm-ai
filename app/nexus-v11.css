@@ -14,7 +14,7 @@ body:not(.dark){
   --v11-warning:#a66e41;--v11-shadow:rgba(49, 49, 51, .035);
 }
 body.dark .staff-shell::before{
-  background:radial-gradient(ellipse 45% 36% at 90% -10%,rgba(95, 0, 230, .105),transparent 85%),
+  background:radial-gradient(ellipse 45% 36% at 90% -10%,rgba(29,201,158, .105),transparent 85%),
     linear-gradient(135deg,#121214,#141416 72%,#161618)!important;
 }
 body.dark .staff-sidebar{background:#161618!important;border-right:1px solid #303032!important;backdrop-filter:none!important}
@@ -37,7 +37,7 @@ body:not(.dark) .staff-topbar{background:rgba(255,255,255,.96)!important}
 body:not(.dark) .staff-nav-item--active{background:#ebebed!important;color:var(--fx-accent-text)!important}
 .v11-date-pills{display:flex;gap:3px;padding:3px;border:1px solid var(--v11-line);border-radius:8px}
 .v11-date-pills button{font:660 11px var(--v11-text);border:0;background:transparent;border-radius:5px;padding:7px 10px;color:var(--v11-secondary)}
-.v11-date-pills button.active{background:rgba(95, 0, 230, .19);color:var(--v11-ink)}
+.v11-date-pills button.active{background:rgba(29,201,158, .19);color:var(--v11-ink)}
 .v11-stage{display:grid;gap:8px}
 .v11-stage>div:first-child{display:flex;align-items:center;gap:10px}
 .v11-stage strong{font-size:12px;font-weight:660;flex:1}
@@ -52,7 +52,7 @@ body:not(.dark) .staff-nav-item--active{background:#ebebed!important;color:var(-
 .v11-detail-crumb span{padding:0 8px;color:var(--v11-faint)}
 .v11-detail-top button{height:35px;width:35px;border-radius:8px;display:grid;place-items:center;background:transparent;border:1px solid var(--v11-line);color:var(--v11-secondary)}
 .v11-detail-hero{padding:28px 30px 19px;display:flex;gap:18px;align-items:center}
-.v11-detail-avatar{height:60px;width:60px;border-radius:14px;background:rgba(95, 0, 230, .15);color:var(--v11-accent);display:grid;place-items:center;flex-shrink:0;font-size:16px;font-weight:730}
+.v11-detail-avatar{height:60px;width:60px;border-radius:14px;background:rgba(29,201,158, .15);color:var(--v11-accent);display:grid;place-items:center;flex-shrink:0;font-size:16px;font-weight:730}
 .v11-detail-hero h2{font:610 25px/1.23 var(--v11-sora);margin:5px 0;color:var(--v11-ink);letter-spacing:-.04em}
 .v11-detail-hero p{font-size:12px;color:var(--v11-faint);margin:0}
 .v11-detail-eyebrow{font-size:10px;font-weight:740;letter-spacing:.07em;color:var(--v11-accent)}
@@ -93,7 +93,7 @@ body:not(.dark) .v11-detail-save{color:#fff}
 .v11-detail-timeline strong{font-size:13px}
 .v11-detail-timeline p{font-size:12px;color:var(--v11-secondary);margin:5px 0}
 .v11-detail-success,.v11-detail-error{border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:12px;line-height:1.5}
-.v11-detail-success{display:flex;gap:8px;align-items:center;background:rgba(95, 0, 230, .12);color:var(--v11-accent)}
+.v11-detail-success{display:flex;gap:8px;align-items:center;background:rgba(29,201,158, .12);color:var(--v11-accent)}
 .v11-detail-error{background:rgba(210,97,97,.13);color:#edaaaa}
 .v11-detail-footer{border-top:1px solid var(--v11-line);padding:16px 30px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--v11-faint)}
 .v11-detail-footer svg{color:var(--v11-accent)}
@@ -137,7 +137,7 @@ body.dark .nxp-premium .nxp-contact-card{background:rgba(36, 36, 38, .85)!import
 .nxp-premium .nxp-button--primary{border-radius:8px!important}
 body.dark .nxp-premium .nxp-button--primary{background:var(--fx-accent)!important;color:#1f1f21!important;border-color:var(--fx-accent)!important}
 body:not(.dark) .nxp-premium .nxp-button--primary{background:var(--fx-accent)!important;color:white!important}
-body.dark .nxp-premium .nxp-button--ghost{background:rgba(95, 0, 230, .075)!important;color:#d8d8da!important;border-color:var(--v11-line)!important}
+body.dark .nxp-premium .nxp-button--ghost{background:rgba(29,201,158, .075)!important;color:#d8d8da!important;border-color:var(--v11-line)!important}
 .nxp-premium .nxp-footnote{font:490 11px/1.6 var(--v11-text)!important}
 @media(max-width:760px){
   .nxp-premium .nxp-page-head{align-items:flex-start}

@@ -17,18 +17,18 @@ body:not(.dark){
 }
 body.dark .staff-shell:before{
   background:
-    radial-gradient(ellipse 45% 38% at 73% -3%,rgba(95, 0, 230, .16),transparent 79%),
+    radial-gradient(ellipse 45% 38% at 73% -3%,rgba(29,201,158, .16),transparent 79%),
     radial-gradient(ellipse 23% 27% at 98% 92%,rgba(153,100,57,.085),transparent 77%),
     linear-gradient(132deg,#101012 0%,#151517 66%,#151517 100%)!important
 }
 body.dark .staff-sidebar{
   background:rgba(18, 18, 20, .95)!important;
-  border-right:1px solid rgba(95, 0, 230, .11)!important;
+  border-right:1px solid rgba(29,201,158, .11)!important;
   box-shadow:none!important;
 }
 body.dark .staff-topbar{
   background:rgba(19, 19, 21, .75)!important;
-  border-bottom:1px solid rgba(95, 0, 230, .12)!important;
+  border-bottom:1px solid rgba(29,201,158, .12)!important;
 }
 .staff-shell .staff-sidebar{padding:27px 13px 18px}
 .staff-shell .staff-logo{margin:0 12px 31px;gap:11px}
@@ -39,7 +39,7 @@ body.dark .staff-topbar{
 .staff-shell .staff-workspace-picker strong{font-size:12px!important}
 .staff-shell .staff-nav{gap:2px}
 .staff-shell .staff-nav-item{border-radius:9px!important;min-height:43px;padding:10px 13px;font:590 13px var(--w10-body)!important}
-body.dark .staff-shell .staff-nav-item--active{border-radius:9px!important;background:rgba(95, 0, 230, .12)!important;color:#f5f5f7!important;border:1px solid rgba(194, 194, 196, .16)!important;box-shadow:inset 2px 0 var(--fx-accent)!important}
+body.dark .staff-shell .staff-nav-item--active{border-radius:9px!important;background:rgba(29,201,158, .12)!important;color:#f5f5f7!important;border:1px solid rgba(194, 194, 196, .16)!important;box-shadow:inset 2px 0 var(--fx-accent)!important}
 .staff-shell .staff-topbar{height:69px!important;padding:0 clamp(22px,2.6vw,46px)!important}
 .staff-shell .staff-breadcrumb{gap:9px}
 .staff-shell .staff-breadcrumb strong{font-weight:680!important}
@@ -54,7 +54,7 @@ body.dark .staff-shell .staff-session strong{font-weight:660}
 .staff-shell .staff-session small{font-size:10px}
 .staff-shell .staff-logout{margin-top:10px}
 body.dark .staff-shell .staff-icon-button,body.dark .staff-shell .staff-command-trigger,body.dark .staff-shell .staff-global-search{
-  border:1px solid rgba(95, 0, 230, .13)!important;background:rgba(161, 161, 163, .05)!important;
+  border:1px solid rgba(29,201,158, .13)!important;background:rgba(161, 161, 163, .05)!important;
   box-shadow:none!important
 }
 body.dark .staff-shell .staff-command-trigger:hover,body.dark .staff-shell .staff-icon-button:hover{border-color:rgba(193, 193, 195, .35)!important}
@@ -65,13 +65,13 @@ body.dark .staff-shell .staff-breadcrumb strong{color:#dddddf!important}
 /* Asymmetric central composition with one dominant chart */
 .w10-pills{display:flex;gap:2px;padding:3px;border:1px solid var(--w10-hairline);border-radius:9px;background:rgba(152, 152, 154, .045)}
 .w10-pills button{background:transparent;border:0;color:var(--w10-subtle);font-size:11px;font-weight:710;border-radius:7px;padding:8px 10px;white-space:nowrap}
-.w10-pills button.is-active{background:rgba(95, 0, 230, .17);color:var(--w10-text)}
+.w10-pills button.is-active{background:rgba(29,201,158, .17);color:var(--w10-text)}
 /* A strip of funnel stages, not another set of overdesigned cards */
 /* Bottom — data table + activity as actual operational records */
 .w10-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 @keyframes w10-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 /* Login: replace AI marketing language and orbit art with precision, preserve real auth. */
-body.dark .authwrap--v4{background:radial-gradient(ellipse 40% 48% at 87% 7%,rgba(95, 0, 230, .21),transparent 78%),#121214!important}
+body.dark .authwrap--v4{background:radial-gradient(ellipse 40% 48% at 87% 7%,rgba(29,201,158, .21),transparent 78%),#121214!important}
 body.dark .auth-v4-cover{background:linear-gradient(155deg,#212123,#141416)!important}
 body.dark .auth-v4-cover-orbit{display:none!important}
 body.dark .auth-v4-cover-kicker{font-size:11px!important;letter-spacing:.09em!important}
